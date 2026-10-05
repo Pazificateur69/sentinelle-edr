@@ -319,6 +319,33 @@ mod tests {
     }
 
     #[test]
+    fn full_attack_chain_triggers_key_detections() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let mut fired = std::collections::HashSet::new();
+        for ev in crate::scenario::attack_chain("h") {
+            for a in eng.ingest(ev) {
+                fired.insert(a.rule_id);
+            }
+        }
+        // Bout en bout : la chaîne simulée doit couvrir toute la kill chain.
+        for rid in [
+            "SNT-0001", // macro Office -> interpréteur
+            "SNT-0010", // PowerShell encodé
+            "SNT-0011", // download cradle
+            "SNT-0021", // dump LSASS
+            "SNT-0020", // mimikatz
+            "SNT-0100", // C2
+            "SNT-0200", // BYOVD
+            "SNT-0101", // note de rançon
+            "SNT-B002", // chiffrement massif
+            "SNT-0050", // suppression shadow copies
+            "SNT-0051", // sabotage bcdedit
+        ] {
+            assert!(fired.contains(rid), "détection manquante dans la chaîne : {rid}");
+        }
+    }
+
+    #[test]
     fn office_macro_chain_fires_critical() {
         let mut eng = Engine::with_builtin_rules().unwrap();
         // explorer -> winword -> powershell

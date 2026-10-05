@@ -141,7 +141,7 @@ parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
 
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **31 tests unitaires**, verts en CI |
+| Cœur de détection (règles, arbre, score, Sigma) | ✅ **32 tests unitaires**, verts en CI |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
 | Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
@@ -173,7 +173,7 @@ Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.
 ## 🧪 Tests
 
 ```bash
-cargo test -p sentinelle-common   # 31 tests, multiplateforme, rapides
+cargo test -p sentinelle-common   # 32 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 
