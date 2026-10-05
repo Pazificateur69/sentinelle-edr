@@ -6,6 +6,7 @@
 Détection par règles façon Sigma, corrélation par arbre de processus, console SOC
 temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 
+[![CI](https://github.com/Pazificateur69/sentinelle-edr/actions/workflows/ci.yml/badge.svg)](https://github.com/Pazificateur69/sentinelle-edr/actions/workflows/ci.yml)
 ![Rust](https://img.shields.io/badge/Rust-1.95-000?logo=rust)
 ![Platform](https://img.shields.io/badge/cible-Windows-0078D6?logo=windows)
 ![License](https://img.shields.io/badge/licence-MIT-green)
