@@ -24,6 +24,31 @@ du build Windows. Détails et correctifs proposés plus bas.
 
 ---
 
+## 🔧 Mise à jour — correctifs appliqués (PR #2)
+
+Tous les problèmes listés plus bas (**A → G**) ont depuis été traités dans la PR
+`fix(windows)` et **validés en live sur cette machine** (session non-admin) :
+
+- **B** : repli automatique sur la scrutation multi-OS quand l'ETW ne démarre pas →
+  `agentd` capte désormais de vrais processus **sans admin**.
+- **B-bis** : `sensor-proc`/`cmdline_of` récupèrent enfin la **ligne de commande** sous
+  Windows (elle était vide) → les règles cmdline se déclenchent.
+- **C** : le **mode démo** de l'agent de parc fonctionne sous Windows (télémétrie live via mTLS).
+- **D** : nom de session ETW unique par PID (fin des `AlreadyExist`).
+- **E/F** : import inutilisé retiré ; port de `agentd` configurable (`SENTINELLE_HTTP`).
+- **G** : lecture du **`OriginalFilename` du PE** → la détection de **masquerading
+  `SNT-B004` se déclenche sur un vrai processus** (powershell renommé en svchost),
+  y compris sans admin via la scrutation.
+
+Reste uniquement à confirmer en **session administrateur** la capture **ETW noyau**
+(`agentd`/`agent` sans repli) — le code est en place et compile, seule l'exécution
+privilégiée manquait au moment des tests.
+
+Le reste de ce document conserve l'état **au moment de la campagne** (avant correctifs),
+comme journal de test.
+
+---
+
 ## ✅ Ce qui a été validé
 
 ### 1. Suite de tests du workspace — **57/57 vertes, 0 échec**
@@ -217,9 +242,11 @@ Ces points nécessitent une session **administrateur** et restent à confirmer :
 | 6 | Parc : PKI + handshake mTLS live | ✅ (transport) |
 | 7 | Options SQLite / Sigma / YARA | ✅ |
 | A | Faux positif Defender (doc + signature) | ⚠️ à documenter |
-| B | Pas de repli sysinfo sous Windows (non-admin) | 🔴 à corriger |
-| C | Mode démo agent absent du build Windows | 🔴 à corriger |
-| D | Nom de session ETW fixe (`AlreadyExist`) | 🟠 robustesse |
-| E | Import inutilisé `TraceTrait` | 🟢 mineur |
-| F | Port `agentd` non configurable | 🟢 mineur |
-| — | ETW live & télémétrie parc live (admin) | ⏳ à refaire en admin |
+| B | Pas de repli sysinfo sous Windows (non-admin) | ✅ corrigé (PR #2) |
+| B-bis | `command_line` vide sous Windows | ✅ corrigé (PR #2) |
+| C | Mode démo agent absent du build Windows | ✅ corrigé (PR #2) |
+| D | Nom de session ETW fixe (`AlreadyExist`) | ✅ corrigé (PR #2) |
+| E | Import inutilisé `TraceTrait` | ✅ corrigé (PR #2) |
+| F | Port `agentd` non configurable | ✅ corrigé (PR #2) |
+| G | Masquerading `SNT-B004` muet en live (PE OriginalFilename) | ✅ corrigé (PR #2) |
+| — | ETW **noyau** live (capture profonde) | ⏳ à confirmer en admin |
