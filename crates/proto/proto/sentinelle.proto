@@ -48,5 +48,5 @@ message Command {
 // L'agent ouvre un flux bidirectionnel : il pousse sa telemetrie en continu et
 // recoit en retour les ordres de reponse (ex. terminer un processus).
 service Ingest {
-  rpc Connect(stream Telemetry) returns (stream Command);
+  rpc Session(stream Telemetry) returns (stream Command);
 }

@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
     // Flux bidirectionnel : on envoie des Telemetry et on reçoit des ordres.
     let (tx_tel, rx_tel) = mpsc::channel::<Telemetry>(1024);
     let response = client
-        .connect(Request::new(ReceiverStream::new(rx_tel)))
+        .session(Request::new(ReceiverStream::new(rx_tel)))
         .await
         .context("ouverture du flux gRPC")?;
     let mut commands = response.into_inner();

@@ -20,12 +20,12 @@ type CmdStream = Pin<Box<dyn Stream<Item = Result<Command, Status>> + Send>>;
 
 #[tonic::async_trait]
 impl Ingest for IngestService {
-    type ConnectStream = CmdStream;
+    type SessionStream = CmdStream;
 
-    async fn connect(
+    async fn session(
         &self,
         request: Request<Streaming<Telemetry>>,
-    ) -> Result<Response<Self::ConnectStream>, Status> {
+    ) -> Result<Response<Self::SessionStream>, Status> {
         let peer = request.remote_addr();
         let mut inbound = request.into_inner();
         // Canal d'ordres serveur -> agent (devient le flux de retour).
