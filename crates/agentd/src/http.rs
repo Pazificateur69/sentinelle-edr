@@ -13,7 +13,7 @@ use tower_http::cors::CorsLayer;
 pub fn router(state: AppState) -> Router {
     base_routes()
         .route("/api/simulate", post(simulate))
-        .route("/api/respond/kill/{pid}", post(kill))
+        .route("/api/respond/kill/{host}/{pid}", post(kill))
         .layer(CorsLayer::permissive())
         .with_state(state)
 }
@@ -25,8 +25,9 @@ async fn simulate(State(st): State<AppState>) -> StatusCode {
 
 async fn kill(
     State(_st): State<AppState>,
-    Path(pid): Path<u32>,
+    Path((_host, pid)): Path<(String, u32)>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    // Mono-poste : l'hôte est le poste local, on tue directement par pid.
     match crate::respond::kill_process(pid) {
         Ok(()) => (StatusCode::OK, Json(json!({ "ok": true, "pid": pid }))),
         Err(e) => (

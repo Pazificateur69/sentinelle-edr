@@ -39,12 +39,14 @@ message Telemetry {
   }
 }
 
-message Ack {
-  uint64 received = 1;
+// Ordre de reponse pousse par le serveur vers un agent.
+message Command {
+  string kind = 1;   // "kill"
+  uint32 pid = 2;
 }
 
-// L'agent ouvre un flux et pousse sa telemetrie en continu ; le serveur
-// accuse reception a la fermeture du flux.
+// L'agent ouvre un flux bidirectionnel : il pousse sa telemetrie en continu et
+// recoit en retour les ordres de reponse (ex. terminer un processus).
 service Ingest {
-  rpc Stream(stream Telemetry) returns (Ack);
+  rpc Connect(stream Telemetry) returns (stream Command);
 }

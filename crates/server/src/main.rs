@@ -1,21 +1,30 @@
 //! Serveur de parc Sentinelle.
 //!
-//! - Ingestion **gRPC + mTLS** : plusieurs agents poussent leur telemetrie.
-//! - Console web **multi-hotes** : le panneau "Risque par hote" agrege tous
-//!   les postes connectes.
+//! - Ingestion **gRPC + mTLS bidirectionnelle** : les agents poussent leur
+//!   télémétrie et reçoivent en retour les ordres de réponse.
+//! - Console web **multi-hôtes** avec **réponse à distance** : depuis la console,
+//!   `POST /api/respond/kill/{host}/{pid}` pousse un ordre de kill à l'agent visé.
 //!
-//! NON COMPILE depuis macOS (deps lourdes). A valider sous Windows : API TLS de
-//! tonic 0.14 (`ServerTlsConfig`/`Identity`/`Certificate`), nom de la feature
-//! TLS ("tls-ring"), signature de `Server::builder().tls_config(...)`.
+//! NON COMPILÉ depuis macOS : validé par la CI (Ubuntu + Windows).
 
 mod ingest;
 
 use anyhow::{Context, Result};
-use ingest::IngestService;
+use axum::{
+    extract::Path,
+    http::StatusCode,
+    response::Json,
+    routing::post,
+    Extension, Router,
+};
+use ingest::{IngestService, Registry};
 use sentinelle_common::Engine;
 use sentinelle_console::{base_routes, AppState};
-use sentinelle_proto::v1::ingest_server::IngestServer;
+use sentinelle_proto::v1::{ingest_server::IngestServer, Command};
+use serde_json::json;
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 use tower_http::cors::CorsLayer;
@@ -34,11 +43,16 @@ async fn main() -> Result<()> {
     }
     state.broadcast_stats(chrono::Utc::now().timestamp());
 
-    // --- Console HTTP (multi-hotes) ---
-    let http_addr = std::env::var("SENTINELLE_HTTP").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
-    let app = base_routes()
-        .layer(CorsLayer::permissive())
-        .with_state(state.clone());
+    let registry: Registry = Arc::new(Mutex::new(HashMap::new()));
+
+    // --- Console HTTP (multi-hôtes) + réponse à distance ---
+    let http_addr =
+        std::env::var("SENTINELLE_HTTP").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
+    let app: Router = base_routes()
+        .with_state(state.clone())
+        .merge(Router::new().route("/api/respond/kill/{host}/{pid}", post(kill)))
+        .layer(Extension(registry.clone()))
+        .layer(CorsLayer::permissive());
     {
         let http_addr = http_addr.clone();
         tokio::spawn(async move {
@@ -55,14 +69,16 @@ async fn main() -> Result<()> {
     }
 
     // --- Ingestion gRPC + mTLS ---
-    let certs = PathBuf::from(std::env::var("SENTINELLE_CERTS_DIR").unwrap_or_else(|_| "certs".to_string()));
+    let certs = PathBuf::from(
+        std::env::var("SENTINELLE_CERTS_DIR").unwrap_or_else(|_| "certs".to_string()),
+    );
     let ca = std::fs::read(certs.join("ca.pem")).context("lecture certs/ca.pem")?;
     let srv_cert = std::fs::read(certs.join("server.pem")).context("lecture certs/server.pem")?;
     let srv_key = std::fs::read(certs.join("server.key")).context("lecture certs/server.key")?;
 
     let tls = ServerTlsConfig::new()
         .identity(Identity::from_pem(srv_cert, srv_key))
-        .client_ca_root(Certificate::from_pem(ca)); // mTLS : exige un cert client valide
+        .client_ca_root(Certificate::from_pem(ca));
 
     let grpc_addr = std::env::var("SENTINELLE_GRPC")
         .unwrap_or_else(|_| "0.0.0.0:50051".to_string())
@@ -72,8 +88,35 @@ async fn main() -> Result<()> {
 
     Server::builder()
         .tls_config(tls)?
-        .add_service(IngestServer::new(IngestService { state }))
+        .add_service(IngestServer::new(IngestService { state, registry }))
         .serve(grpc_addr)
         .await?;
     Ok(())
+}
+
+/// Pousse un ordre de terminaison de processus à l'agent `host`.
+async fn kill(
+    Path((host, pid)): Path<(String, u32)>,
+    Extension(reg): Extension<Registry>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    let sender = reg.lock().unwrap().get(&host).cloned();
+    match sender {
+        Some(tx) => match tx.try_send(Ok(Command {
+            kind: "kill".to_string(),
+            pid,
+        })) {
+            Ok(()) => (
+                StatusCode::OK,
+                Json(json!({ "ok": true, "host": host, "pid": pid })),
+            ),
+            Err(e) => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({ "ok": false, "error": format!("file de l'agent : {e}") })),
+            ),
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(json!({ "ok": false, "error": format!("agent '{host}' non connecté") })),
+        ),
+    }
 }

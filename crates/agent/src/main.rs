@@ -11,6 +11,8 @@
 //! SENTINELLE_RULES_DIR (regles Sigma), SENTINELLE_REPLAY_SECS (rejoue la
 //! simulation en boucle toutes les N s).
 
+mod respond;
+
 use anyhow::{Context, Result};
 use sentinelle_common::{Engine, Event};
 use sentinelle_proto::v1::ingest_client::IngestClient;
@@ -55,12 +57,22 @@ async fn main() -> Result<()> {
     let mut client = IngestClient::new(channel);
     tracing::info!("Connecte a {endpoint} en tant que '{host}'");
 
-    // Flux sortant : on envoie des Telemetry via un canal.
+    // Flux bidirectionnel : on envoie des Telemetry et on reçoit des ordres.
     let (tx_tel, rx_tel) = mpsc::channel::<Telemetry>(1024);
-    let stream_task = tokio::spawn(async move {
-        match client.stream(Request::new(ReceiverStream::new(rx_tel))).await {
-            Ok(ack) => tracing::info!("Flux ferme (ack {} messages)", ack.into_inner().received),
-            Err(e) => tracing::error!("Flux gRPC : {e}"),
+    let response = client
+        .connect(Request::new(ReceiverStream::new(rx_tel)))
+        .await
+        .context("ouverture du flux gRPC")?;
+    let mut commands = response.into_inner();
+    // Tâche de réception des ordres de réponse (ex. kill) venant du serveur.
+    let cmd_task = tokio::spawn(async move {
+        while let Ok(Some(cmd)) = commands.message().await {
+            if cmd.kind == "kill" {
+                match crate::respond::kill_process(cmd.pid) {
+                    Ok(()) => tracing::warn!("Réponse : processus {} terminé (ordre serveur)", cmd.pid),
+                    Err(e) => tracing::error!("Réponse kill {} : {e:#}", cmd.pid),
+                }
+            }
         }
     });
 
@@ -105,8 +117,8 @@ async fn main() -> Result<()> {
         }
     }
 
-    drop(tx_tel); // ferme le flux
-    let _ = stream_task.await;
+    drop(tx_tel); // ferme le flux sortant
+    let _ = cmd_task.await;
     Ok(())
 }
 

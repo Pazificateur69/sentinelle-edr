@@ -246,7 +246,7 @@ function addAlert(a){
       <span>${hhmmss(a.ts)}</span>
     </div>
     <button class="kill" data-pid="${esc(ev.pid)}">⨯ Terminer le processus (pid ${esc(ev.pid)})</button>`;
-  el.querySelector(".kill").onclick = () => killProc(ev.pid);
+  el.querySelector(".kill").onclick = () => killProc(ev.pid, a.host);
   applySearch(el);
   feed.prepend(el);
   while (feed.children.length > 150) feed.lastChild.remove();
@@ -286,10 +286,13 @@ document.querySelectorAll(".fpill").forEach(p => p.onclick = () => {
 });
 $("search").oninput = (e) => { searchTerm = e.target.value.trim().toLowerCase(); document.querySelectorAll(".alert").forEach(applySearch); };
 
-async function killProc(pid){
-  if (demoMode){ toast(`(démo) terminerait le processus ${pid}`); return; }
-  try { const r = await fetch(`/api/respond/kill/${pid}`, { method:"POST" }); const j = await r.json(); toast(j.ok ? `Processus ${pid} terminé.` : `Échec : ${j.error}`, j.ok); }
-  catch(e){ toast("Requête échouée : " + e, false); }
+async function killProc(pid, host){
+  if (demoMode){ toast(`(démo) ordre de terminaison du pid ${pid} sur ${host}`); return; }
+  try {
+    const r = await fetch(`/api/respond/kill/${encodeURIComponent(host||"local")}/${pid}`, { method:"POST" });
+    const j = await r.json();
+    toast(j.ok ? `Ordre envoyé : pid ${pid} sur ${host}.` : `Échec : ${j.error}`, j.ok);
+  } catch(e){ toast("Requête échouée : " + e, false); }
 }
 $("simBtn").onclick = async () => {
   if (demoMode){ runDemo(); return; }
