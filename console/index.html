@@ -121,6 +121,7 @@
   .atitle { font-weight: 650; margin: 6px 0 2px; }
   .adesc { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
   .cmd { font-family: var(--mono); font-size: 11.5px; color: #9fb0d0; margin-top: 7px; padding: 6px 9px; background: rgba(0,0,0,.28); border-radius: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chain { font-family: var(--mono); font-size: 11px; color: var(--accent2); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ameta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 9px; font-size: 12px; color: var(--muted); align-items: center; }
   .ameta b { color: var(--txt); font-weight: 600; }
   .proc { font-family: var(--mono); font-size: 11.5px; color: #cdd6e8; }
@@ -229,6 +230,7 @@ function addAlert(a){
   const img = base(ev.image); const parent = base(ev.parent_image) || "—";
   const ttps = (a.attack || []).map(ttpLink).join("");
   const cmd = ev.command_line ? `<div class="cmd" title="${esc(ev.command_line)}">${esc(ev.command_line)}</div>` : "";
+  const chain = (a.ancestors && a.ancestors.length) ? `<div class="chain" title="chaîne d'ascendance">🧬 ${esc([img].concat(a.ancestors).join(" ← "))}</div>` : "";
   const el = document.createElement("div");
   el.className = `alert ${sev}`;
   el.dataset.text = `${a.rule_id} ${a.title} ${img} ${ev.command_line||""}`.toLowerCase();
@@ -241,6 +243,7 @@ function addAlert(a){
     <div class="atitle">${esc(a.title)}</div>
     <div class="adesc">${esc(a.description)}</div>
     ${cmd}
+    ${chain}
     <div class="ameta">
       <span>hôte <b>${esc(a.host)}</b></span>
       <span class="proc">${esc(img)} <b style="color:#8a93a8">pid ${esc(ev.pid)}</b> ← ${esc(parent)}</span>
@@ -305,7 +308,7 @@ $("simBtn").onclick = async () => {
 // ---- Mode démo (aucun serveur) : la page s'anime seule ----
 function demoData(){
   const host = "poste-demo"; const t = Date.now();
-  const A = (rid,title,sev,attack,img,pid,parent,cmd,desc) => ({ ts:t, host, rule_id:rid, title, description:desc, severity:sev, attack, score:({critical:100,high:70,medium:40,low:15,info:5})[sev], event:{ image:img, pid, parent_image:parent, command_line:cmd } });
+  const A = (rid,title,sev,attack,img,pid,parent,cmd,desc) => ({ ts:t, host, rule_id:rid, title, description:desc, severity:sev, attack, score:({critical:100,high:70,medium:40,low:15,info:5})[sev], event:{ ts: new Date().toISOString(), image:img, pid, parent_image:parent, command_line:cmd }, ancestors: parent ? [parent.split(/[\\/]/).pop(), "winword.exe", "explorer.exe"] : [] });
   return [
     A("SNT-0001","Application Office lance un interpréteur de script","critical",["T1203","T1059"],"C:\\W\\powershell.exe",4200,"C:\\Office\\winword.exe","powershell -nop -w hidden -enc SQBFAFgA","Chaîne de macro Office → PowerShell."),
     A("SNT-0010","PowerShell avec commande encodée","high",["T1059.001","T1027"],"C:\\W\\powershell.exe",4200,"C:\\Office\\winword.exe","powershell -nop -w hidden -enc SQBFAFgA","Obfuscation base64."),

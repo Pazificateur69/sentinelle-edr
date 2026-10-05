@@ -124,6 +124,7 @@ mod tests {
             attack: vec!["T1059".into()],
             score: 70,
             event: Event::process_start("h", 1, 2, r"C:\a.exe", ""),
+            ancestors: vec![],
         }
     }
 

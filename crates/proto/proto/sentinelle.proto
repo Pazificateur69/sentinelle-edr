@@ -29,6 +29,7 @@ message Alert {
   repeated string attack = 7;
   uint32 score = 8;
   Event event = 9;
+  repeated string ancestors = 10;
 }
 
 // Un message de flux : soit un evenement, soit une alerte.

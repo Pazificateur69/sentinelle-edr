@@ -63,6 +63,7 @@ pub fn alert_to_proto(a: &Alert) -> v1::Alert {
         attack: a.attack.clone(),
         score: a.score,
         event: Some(event_to_proto(&a.event)),
+        ancestors: a.ancestors.clone(),
     }
 }
 
@@ -79,6 +80,7 @@ pub fn alert_from_proto(p: v1::Alert) -> Alert {
         event: p.event.map(event_from_proto).unwrap_or_else(|| {
             Event::process_start("", 0, 0, "", "")
         }),
+        ancestors: p.ancestors,
     }
 }
 

@@ -56,6 +56,9 @@ pub struct Alert {
     pub attack: Vec<String>,
     pub score: u32,
     pub event: Event,
+    /// Chaîne d'ascendance (noms d'images, du parent vers la racine) pour le contexte.
+    #[serde(default)]
+    pub ancestors: Vec<String>,
 }
 
 /// Moteur de detection : regles + arbre de processus + allowlist + etat
@@ -168,6 +171,7 @@ impl Engine {
                 attack: r.attack.clone(),
                 score: r.score(),
                 event: ev.clone(),
+                ancestors: Vec::new(),
             })
             .collect();
 
@@ -184,6 +188,14 @@ impl Engine {
                 }
             }
             _ => {}
+        }
+
+        // Contexte d'investigation : ascendance (noms) sur chaque alerte.
+        if !ancestors.is_empty() {
+            let names: Vec<String> = ancestors.iter().map(|a| event::base_name(a)).collect();
+            for a in &mut alerts {
+                a.ancestors = names.clone();
+            }
         }
 
         // Allowlist (faux positifs) puis deduplication.
@@ -228,6 +240,7 @@ impl Engine {
             attack: vec!["T1059".to_string()],
             score: Severity::High.weight(),
             event: ev.clone(),
+            ancestors: Vec::new(),
         })
     }
 
@@ -261,6 +274,7 @@ impl Engine {
             attack: vec!["T1486".to_string()],
             score: Severity::Critical.weight(),
             event: ev.clone(),
+            ancestors: Vec::new(),
         })
     }
 
@@ -360,6 +374,19 @@ mod tests {
             "la chaine macro Office doit se declencher, alertes={:?}",
             alerts.iter().map(|a| &a.rule_id).collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn alert_carries_ancestry() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        eng.ingest(Event::process_start("h", 1, 0, r"C:\W\explorer.exe", ""));
+        eng.ingest(Event::process_start("h", 2, 1, r"C:\Office\winword.exe", ""));
+        let alerts = eng.ingest(
+            Event::process_start("h", 3, 2, r"C:\W\powershell.exe", "").with_cmdline("powershell -enc X"),
+        );
+        let a = alerts.iter().find(|a| a.rule_id == "SNT-0001").unwrap();
+        assert!(a.ancestors.iter().any(|x| x == "winword.exe"));
+        assert!(a.ancestors.iter().any(|x| x == "explorer.exe"));
     }
 
     #[test]
