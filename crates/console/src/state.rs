@@ -98,6 +98,10 @@ impl AppState {
             s.last_stats.total_events += 1;
             push_cap(&mut s.events, ev.clone(), MAX_EVENTS);
         }
+        // ponytail: persistance synchrone par événement ; batcher si débit élevé.
+        if let Some(store) = &self.store {
+            let _ = store.insert_event(&ev);
+        }
         let _ = self.tx.send(SseMsg::Event(ev));
     }
 

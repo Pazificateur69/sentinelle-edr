@@ -56,6 +56,11 @@ async fn alerts(State(st): State<AppState>) -> Json<Vec<Alert>> {
 }
 
 async fn events(State(st): State<AppState>) -> Json<Vec<Event>> {
+    if let Some(store) = &st.store {
+        if let Ok(e) = store.recent_events(200) {
+            return Json(e);
+        }
+    }
     let s = st.inner.lock().unwrap();
     Json(s.events.iter().take(200).cloned().collect())
 }
