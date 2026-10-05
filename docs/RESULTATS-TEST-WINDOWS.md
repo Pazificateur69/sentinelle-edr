@@ -39,13 +39,19 @@ Tous les problèmes listés plus bas (**A → G**) ont depuis été traités dan
 - **G** : lecture du **`OriginalFilename` du PE** → la détection de **masquerading
   `SNT-B004` se déclenche sur un vrai processus** (powershell renommé en svchost),
   y compris sans admin via la scrutation.
+- **H** (PR #3) : l'`ImageName` ETW est un chemin NT (`\Device\HarddiskVolumeX\...`),
+  qui empêchait la lecture du PE et les règles de chemin via l'ETW. Résolu : le chemin
+  DOS (`C:\...`) et la ligne de commande sont résolus par PID via sysinfo sur le chemin ETW.
 
-Reste uniquement à confirmer en **session administrateur** la capture **ETW noyau**
-(`agentd`/`agent` sans repli) — le code est en place et compile, seule l'exécution
-privilégiée manquait au moment des tests.
+**Capture ETW noyau confirmée en session administrateur** (run du 2026-10-05, non élevé
+→ repli ; élevé → ETW actif). Validé en live, en admin :
+- l'ETW capte de **vrais processus système** (ex. `git.exe`, `conhost.exe`) ;
+- détections live : **SNT-0012** (PowerShell furtif), **SNT-B001** (rafale de processus) ;
+- après **H**, **SNT-B004** (masquerading) se déclenche aussi **via l'ETW** : event
+  `image=C:\...\svchost.exe`, `original_file_name=PowerShell.EXE`.
 
-Le reste de ce document conserve l'état **au moment de la campagne** (avant correctifs),
-comme journal de test.
+Il ne reste donc **aucun point ouvert** issu de cette campagne. Le reste du document
+conserve l'état **au moment des tests** (avant correctifs), comme journal.
 
 ---
 
@@ -249,4 +255,5 @@ Ces points nécessitent une session **administrateur** et restent à confirmer :
 | E | Import inutilisé `TraceTrait` | ✅ corrigé (PR #2) |
 | F | Port `agentd` non configurable | ✅ corrigé (PR #2) |
 | G | Masquerading `SNT-B004` muet en live (PE OriginalFilename) | ✅ corrigé (PR #2) |
-| — | ETW **noyau** live (capture profonde) | ⏳ à confirmer en admin |
+| H | Chemin NT ETW (masquerading/chemin muets via ETW) | ✅ corrigé (PR #3) |
+| — | ETW **noyau** live (capture profonde, admin) | ✅ confirmé en admin (SNT-0012/B001/B004) |
