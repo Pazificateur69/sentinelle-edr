@@ -33,11 +33,11 @@ pub fn tactic_of(technique: &str) -> &'static str {
         "T1059" | "T1203" | "T1047" | "T1569" | "T1106" => "Execution",
         "T1547" | "T1053" | "T1543" | "T1136" | "T1546" | "T1197" => "Persistence",
         "T1548" | "T1068" => "Privilege Escalation",
-        "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" => "Defense Evasion",
+        "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" | "T1055" => "Defense Evasion",
         "T1003" | "T1552" | "T1555" => "Credential Access",
         "T1087" | "T1082" | "T1016" | "T1049" | "T1018" | "T1482" | "T1033" | "T1007" => "Discovery",
         "T1021" => "Lateral Movement",
-        "T1105" | "T1071" | "T1571" | "T1095" | "T1090" => "Command and Control",
+        "T1105" | "T1071" | "T1571" | "T1095" | "T1090" | "T1572" => "Command and Control",
         "T1048" | "T1567" => "Exfiltration",
         "T1486" | "T1490" => "Impact",
         _ => "Autre",
@@ -350,6 +350,9 @@ mod tests {
             "SNT-0020", // mimikatz
             "SNT-0100", // C2
             "SNT-0200", // BYOVD
+            "SNT-0300", // accès LSASS par handle
+            "SNT-0310", // injection par thread distant
+            "SNT-0320", // tube nommé C2
             "SNT-0101", // note de rançon
             "SNT-B002", // chiffrement massif
             "SNT-0050", // suppression shadow copies
@@ -456,6 +459,35 @@ mod tests {
             r"C:\temp\RTCore64.sys",
         ));
         assert!(alerts.iter().any(|a| a.rule_id == "SNT-0200"));
+    }
+
+    #[test]
+    fn lsass_handle_access_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts = eng.ingest(Event::process_access(
+            "h",
+            50,
+            r"C:\t\m.exe",
+            r"C:\Windows\System32\lsass.exe",
+            "0x1410",
+        ));
+        assert!(alerts.iter().any(|a| a.rule_id == "SNT-0300"));
+    }
+
+    #[test]
+    fn remote_thread_injection_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts =
+            eng.ingest(Event::remote_thread("h", 50, r"C:\W\powershell.exe", r"C:\W\explorer.exe"));
+        assert!(alerts.iter().any(|a| a.rule_id == "SNT-0310"));
+    }
+
+    #[test]
+    fn c2_named_pipe_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts =
+            eng.ingest(Event::named_pipe("h", 50, r"C:\W\powershell.exe", r"\\.\pipe\msagent_7f"));
+        assert!(alerts.iter().any(|a| a.rule_id == "SNT-0320"));
     }
 
     #[test]

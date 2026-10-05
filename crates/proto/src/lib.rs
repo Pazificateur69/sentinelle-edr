@@ -29,6 +29,9 @@ pub fn event_to_proto(e: &Event) -> v1::Event {
         dst_ip: e.dst_ip.clone(),
         dst_port: e.dst_port as u32,
         file_path: e.file_path.clone(),
+        target_image: e.target_image.clone(),
+        granted_access: e.granted_access.clone(),
+        pipe_name: e.pipe_name.clone(),
     }
 }
 
@@ -47,6 +50,9 @@ pub fn event_from_proto(p: v1::Event) -> Event {
         dst_ip: p.dst_ip,
         dst_port: p.dst_port as u16,
         file_path: p.file_path,
+        target_image: p.target_image,
+        granted_access: p.granted_access,
+        pipe_name: p.pipe_name,
     }
 }
 
@@ -107,6 +113,9 @@ fn kind_str(k: EventKind) -> &'static str {
         EventKind::Network => "network",
         EventKind::FileWrite => "file_write",
         EventKind::ImageLoad => "image_load",
+        EventKind::ProcessAccess => "process_access",
+        EventKind::RemoteThread => "remote_thread",
+        EventKind::NamedPipe => "named_pipe",
     }
 }
 
@@ -116,6 +125,9 @@ fn kind_from_str(s: &str) -> EventKind {
         "network" => EventKind::Network,
         "file_write" => EventKind::FileWrite,
         "image_load" => EventKind::ImageLoad,
+        "process_access" => EventKind::ProcessAccess,
+        "remote_thread" => EventKind::RemoteThread,
+        "named_pipe" => EventKind::NamedPipe,
         _ => EventKind::ProcessStart,
     }
 }

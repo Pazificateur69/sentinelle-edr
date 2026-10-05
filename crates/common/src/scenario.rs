@@ -50,6 +50,26 @@ pub fn attack_chain(host: &str) -> Vec<Event> {
     // BYOVD : chargement d'un driver vulnerable pour neutraliser les defenses.
     events.push(Event::image_load(host, 4500, r"C:\temp\m.exe", r"C:\temp\RTCore64.sys"));
 
+    // Acces memoire a LSASS (vol d'identifiants par handle).
+    events.push(Event::process_access(
+        host,
+        4500,
+        r"C:\temp\m.exe",
+        r"C:\Windows\System32\lsass.exe",
+        "0x1410",
+    ));
+
+    // Injection : thread distant dans explorer.
+    events.push(Event::remote_thread(
+        host,
+        4300,
+        r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+        r"C:\Windows\explorer.exe",
+    ));
+
+    // Tube nomme de C2 (Cobalt Strike).
+    events.push(Event::named_pipe(host, 4300, r"C:\W\powershell.exe", r"\\.\pipe\msagent_7f"));
+
     // Rançongiciel : note de rançon puis chiffrement massif de fichiers.
     let locker = r"C:\temp\locker.exe";
     events.push(Event::file_write(

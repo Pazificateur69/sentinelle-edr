@@ -428,5 +428,37 @@
       { "field": "CommandLine", "op": "contains", "values": ["image file execution options"] },
       { "field": "CommandLine", "op": "contains", "values": ["debugger"] }
     ]
+  },
+  {
+    "id": "SNT-0300",
+    "title": "Accès mémoire à LSASS (vol d'identifiants par handle)",
+    "description": "Ouverture d'un handle sur lsass.exe avec des droits de lecture mémoire : extraction d'identifiants (T1003.001). Un accès est un signal, pas une preuve de lecture.",
+    "severity": "critical",
+    "attack": ["T1003.001"],
+    "kind": "process_access",
+    "all": [
+      { "field": "TargetImageName", "op": "equals", "values": ["lsass.exe"] },
+      { "field": "GrantedAccess", "op": "contains", "values": ["0x1010", "0x1410", "0x1438", "0x143a", "0x1fffff", "0x0010"] }
+    ]
+  },
+  {
+    "id": "SNT-0310",
+    "title": "Injection par thread distant",
+    "description": "Création d'un thread dans un autre processus : injection de code (T1055.003). Confiance modérée (certains cas légitimes).",
+    "severity": "high",
+    "attack": ["T1055.003"],
+    "confidence": 0.7,
+    "kind": "remote_thread"
+  },
+  {
+    "id": "SNT-0320",
+    "title": "Tube nommé de C2 connu",
+    "description": "Tube nommé correspondant à des motifs d'outils offensifs (Cobalt Strike, etc.) (T1572, T1055).",
+    "severity": "high",
+    "attack": ["T1572", "T1055"],
+    "kind": "named_pipe",
+    "all": [
+      { "field": "PipeName", "op": "contains", "values": ["\\msagent_", "\\cobaltstrike", "\\postex_", "\\status_", "\\msse-", "\\psexesvc", "\\paexec", "\\remcom"] }
+    ]
   }
 ]

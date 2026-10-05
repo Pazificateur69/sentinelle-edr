@@ -16,6 +16,9 @@ message Event {
   string dst_ip = 11;
   uint32 dst_port = 12;
   string file_path = 13;
+  string target_image = 14;
+  string granted_access = 15;
+  string pipe_name = 16;
 }
 
 // Detection produite par un agent.

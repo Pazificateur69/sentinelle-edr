@@ -10,6 +10,12 @@ pub enum EventKind {
     Network,
     FileWrite,
     ImageLoad,
+    /// Ouverture d'un handle sur un autre processus (ex. accès LSASS).
+    ProcessAccess,
+    /// Création d'un thread distant (injection).
+    RemoteThread,
+    /// Connexion à un tube nommé (C2 / latéral).
+    NamedPipe,
 }
 
 /// Evenement a plat facon ECS/OCSF : un seul type pour toutes les sources, avec
@@ -46,6 +52,14 @@ pub struct Event {
     // Fichier / image chargee
     #[serde(default)]
     pub file_path: String,
+
+    // Accès interprocessus / injection / tube nommé
+    #[serde(default)]
+    pub target_image: String,
+    #[serde(default)]
+    pub granted_access: String,
+    #[serde(default)]
+    pub pipe_name: String,
 }
 
 impl Event {
@@ -65,7 +79,35 @@ impl Event {
             dst_ip: String::new(),
             dst_port: 0,
             file_path: String::new(),
+            target_image: String::new(),
+            granted_access: String::new(),
+            pipe_name: String::new(),
         }
+    }
+
+    /// Accès à un autre processus (handle), ex. lecture de LSASS.
+    pub fn process_access(host: &str, pid: u32, image: &str, target_image: &str, granted_access: &str) -> Self {
+        let mut e = Self::process_start(host, pid, 0, image, "");
+        e.kind = EventKind::ProcessAccess;
+        e.target_image = target_image.to_string();
+        e.granted_access = granted_access.to_string();
+        e
+    }
+
+    /// Création d'un thread distant (injection) dans `target_image`.
+    pub fn remote_thread(host: &str, pid: u32, image: &str, target_image: &str) -> Self {
+        let mut e = Self::process_start(host, pid, 0, image, "");
+        e.kind = EventKind::RemoteThread;
+        e.target_image = target_image.to_string();
+        e
+    }
+
+    /// Connexion à un tube nommé.
+    pub fn named_pipe(host: &str, pid: u32, image: &str, pipe_name: &str) -> Self {
+        let mut e = Self::process_start(host, pid, 0, image, "");
+        e.kind = EventKind::NamedPipe;
+        e.pipe_name = pipe_name.to_string();
+        e
     }
 
     /// Connexion reseau sortante.
@@ -118,6 +160,10 @@ impl Event {
             "DestinationPort" => self.dst_port.to_string(),
             "TargetFilename" => self.file_path.clone(),
             "ImageLoaded" => self.file_path.clone(),
+            "TargetImage" => self.target_image.clone(),
+            "TargetImageName" => base_name(&self.target_image),
+            "GrantedAccess" => self.granted_access.clone(),
+            "PipeName" => self.pipe_name.clone(),
             _ => return None,
         };
         if v.is_empty() {
