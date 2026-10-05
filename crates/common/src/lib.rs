@@ -33,7 +33,7 @@ pub fn tactic_of(technique: &str) -> &'static str {
         "T1059" | "T1203" | "T1047" | "T1569" | "T1106" => "Execution",
         "T1547" | "T1053" | "T1543" | "T1136" | "T1546" | "T1197" => "Persistence",
         "T1548" | "T1068" | "T1134" => "Privilege Escalation",
-        "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" | "T1055" => "Defense Evasion",
+        "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" | "T1055" | "T1036" => "Defense Evasion",
         "T1003" | "T1552" | "T1555" => "Credential Access",
         "T1087" | "T1082" | "T1016" | "T1049" | "T1018" | "T1482" | "T1033" | "T1007" => "Discovery",
         "T1021" => "Lateral Movement",
@@ -41,6 +41,33 @@ pub fn tactic_of(technique: &str) -> &'static str {
         "T1048" | "T1567" => "Exfiltration",
         "T1486" | "T1490" => "Impact",
         _ => "Autre",
+    }
+}
+
+/// Détecte un outil sensible renommé : le nom sur disque diffère du nom
+/// d'origine (ressource de version du PE) et ce nom d'origine est celui d'un
+/// binaire couramment abusé. Renvoie le nom d'origine en cas de masquerading.
+///
+/// On restreint volontairement aux binaires dont le renommage est quasi
+/// toujours malveillant : renommer un `chrome.exe` est banal, renommer un
+/// `powershell.exe` ou un `mimikatz.exe` ne l'est pas.
+fn masqueraded_tool(ev: &Event) -> Option<String> {
+    const SENSITIVE: &[&str] = &[
+        "cmd", "powershell", "pwsh", "rundll32", "regsvr32", "mshta", "wscript",
+        "cscript", "certutil", "bitsadmin", "wmic", "mimikatz", "psexec",
+        "psexesvc", "net", "nltest", "ntdsutil", "vssadmin",
+    ];
+    if ev.original_file_name.is_empty() || ev.image.is_empty() {
+        return None;
+    }
+    // base_name met déjà en minuscules ; on retire le `.exe` final pour comparer.
+    let strip = |s: String| s.strip_suffix(".exe").map(str::to_string).unwrap_or(s);
+    let on_disk = strip(event::base_name(&ev.image));
+    let origin = strip(event::base_name(&ev.original_file_name));
+    if on_disk != origin && SENSITIVE.contains(&origin.as_str()) {
+        Some(ev.original_file_name.clone())
+    } else {
+        None
     }
 }
 
@@ -194,6 +221,27 @@ impl Engine {
                         ),
                         severity: Severity::High,
                         attack: vec!["T1134.004".to_string()],
+                        score: Severity::High.weight(),
+                        event: ev.clone(),
+                        ancestors: Vec::new(),
+                    });
+                }
+                // Masquerading : outil sensible renommé (le nom sur disque diffère
+                // du nom d'origine inscrit dans la ressource de version du PE). T1036.003.
+                if let Some(orig) = masqueraded_tool(&ev) {
+                    alerts.push(Alert {
+                        ts: ev.ts,
+                        host: ev.host.clone(),
+                        rule_id: "SNT-B004".to_string(),
+                        title: "Outil système renommé (masquerading)".to_string(),
+                        description: format!(
+                            "'{}' tourne sous le nom '{}' mais embarque le nom d'origine '{}' — binaire renommé pour se dissimuler",
+                            ev.image,
+                            event::base_name(&ev.image),
+                            orig
+                        ),
+                        severity: Severity::High,
+                        attack: vec!["T1036.003".to_string()],
                         score: Severity::High.weight(),
                         event: ev.clone(),
                         ancestors: Vec::new(),
@@ -379,6 +427,39 @@ mod tests {
         ] {
             assert!(fired.contains(rid), "détection manquante dans la chaîne : {rid}");
         }
+    }
+
+    #[test]
+    fn masquerade_renamed_tool_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        // powershell.exe renommé en svchost.exe pour se fondre dans la masse,
+        // mais la ressource de version du PE trahit l'origine.
+        let alerts = eng.ingest(
+            Event::process_start("h", 10, 1, r"C:\Users\pub\svchost.exe", "")
+                .with_original_file_name("PowerShell.EXE"),
+        );
+        assert!(
+            alerts.iter().any(|a| a.rule_id == "SNT-B004"),
+            "un binaire sensible renommé doit lever SNT-B004, alertes={:?}",
+            alerts.iter().map(|a| &a.rule_id).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn masquerade_no_false_positive() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        // Vrai powershell.exe : nom disque == nom d'origine (casse ignorée) -> rien.
+        let a1 = eng.ingest(
+            Event::process_start("h", 11, 1, r"C:\Windows\System32\powershell.exe", "")
+                .with_original_file_name("PowerShell.EXE"),
+        );
+        assert!(!a1.iter().any(|a| a.rule_id == "SNT-B004"));
+        // Binaire non sensible renommé (updater) -> pas de bruit.
+        let a2 = eng.ingest(
+            Event::process_start("h", 12, 1, r"C:\App\launcher.exe", "")
+                .with_original_file_name("MyApp.exe"),
+        );
+        assert!(!a2.iter().any(|a| a.rule_id == "SNT-B004"));
     }
 
     #[test]

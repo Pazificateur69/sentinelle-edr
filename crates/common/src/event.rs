@@ -168,6 +168,13 @@ impl Event {
         self
     }
 
+    /// Nom d'origine du binaire (ressource de version du PE), pour la détection
+    /// de masquerading quand le fichier a été renommé.
+    pub fn with_original_file_name(mut self, name: &str) -> Self {
+        self.original_file_name = name.to_string();
+        self
+    }
+
     /// Valeur d'un champ nomme (nommage facon Sigma), pour le moteur de regles.
     /// Renvoie None si le champ est vide/absent.
     pub fn field(&self, name: &str) -> Option<String> {

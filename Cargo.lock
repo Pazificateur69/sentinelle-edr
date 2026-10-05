@@ -2558,6 +2558,7 @@ dependencies = [
  "chrono",
  "sentinelle-common",
  "sentinelle-proto",
+ "sentinelle-scan",
  "sentinelle-sensor-windows",
  "tokio",
  "tokio-stream",
@@ -2643,6 +2644,7 @@ name = "sentinelle-scan"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "sentinelle-common",
  "tracing",
  "yara-x",
 ]
