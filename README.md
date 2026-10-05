@@ -31,6 +31,9 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 |---|---|---|
 | 🔬 | **Moteur de détection** | opérateurs façon Sigma (`equals`/`contains`/`startswith`/`endswith`/`regex`), arbre booléen `and`/`or`/`not` |
 | 🧬 | **Corrélation par ascendance** | détecte « PowerShell dont un *ancêtre* est Office », pas seulement le parent direct |
+| 🧠 | **Détection comportementale** | rafale de créations de processus (seuil + fenêtre glissante), au-delà des règles unitaires |
+| 🙈 | **Allowlist / suppression** | règles d'exception ciblées pour écraser les faux positifs (le défaut n°1 des EDR maison) |
+| 🔁 | **Déduplication d'alertes** | une même (règle, hôte, pid) n'alerte qu'une fois par fenêtre — anti-bruit |
 | 📜 | **Import de règles Sigma** | dépose un `.yml` Sigma `process_creation`, il est appliqué ; champs non mappés rejetés explicitement |
 | 📊 | **Scoring de risque par hôte** | accumulation + décroissance temporelle (un incident ancien ne garde pas un hôte « rouge » à vie) |
 | 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE ATT&CK cliquables, risque par hôte, 100 % embarquée dans le binaire |
@@ -111,14 +114,20 @@ chaîne de macro Office (T1203/T1059), PowerShell encodé/furtif/download-cradle
 & sabotage `bcdedit` (ransomware, T1490), persistance (Run key, tâches, services),
 LOLBins (certutil, bitsadmin, rundll32), désactivation de Defender, etc.
 
+S'y ajoutent une **détection comportementale** (`SNT-B001` : rafale de créations de
+processus par un même parent) et une couche **allowlist + déduplication** pour
+contenir les faux positifs et le bruit.
+
 **Ajouter une détection** = ajouter une entrée JSON, ou déposer une règle Sigma dans
 [`rules.d/`](rules.d/). Exemple fourni : [`rules.d/recon_discovery.yml`](rules.d/recon_discovery.yml).
+**Réduire un faux positif** = une entrée dans [`crates/common/allowlist.json`](crates/common/allowlist.json)
+ou un fichier pointé par `SENTINELLE_ALLOWLIST`.
 
 ## ✅ Statut de vérification
 
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **14 tests unitaires**, `cargo test` |
+| Cœur de détection (règles, arbre, score, Sigma) | ✅ **19 tests unitaires**, `cargo test` |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ⚠️ écrit, **à valider sur Windows** (dev sur macOS) |
 | Réponse `kill` (Win32) | ⚠️ compile sous Windows uniquement |
@@ -149,7 +158,7 @@ Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.
 ## 🧪 Tests
 
 ```bash
-cargo test -p sentinelle-common   # 14 tests, multiplateforme, rapides
+cargo test -p sentinelle-common   # 19 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 

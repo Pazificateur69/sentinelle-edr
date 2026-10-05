@@ -1,0 +1,9 @@
+[
+  {
+    "id": "ALLOW-0001",
+    "rule_id": "SNT-0031",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["\\sentinelle\\maintenance"] }
+    ]
+  }
+]

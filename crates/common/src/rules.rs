@@ -45,7 +45,7 @@ pub struct Cond {
 }
 
 impl Cond {
-    fn matches(&self, ev: &Event) -> bool {
+    pub fn matches(&self, ev: &Event) -> bool {
         let Some(raw) = ev.field(&self.field) else {
             return false;
         };

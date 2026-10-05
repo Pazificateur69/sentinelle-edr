@@ -23,6 +23,17 @@ pub async fn ingest_loop(mut rx: mpsc::UnboundedReceiver<Event>, state: AppState
         tracing::info!("Sigma : {n} regle(s) importee(s) ({} ignoree(s))", errs.len());
     }
 
+    // Allowlist externe optionnelle (SENTINELLE_ALLOWLIST = fichier JSON).
+    if let Ok(file) = std::env::var("SENTINELLE_ALLOWLIST") {
+        match sentinelle_common::suppress::load_file(std::path::Path::new(&file)) {
+            Ok(s) => {
+                tracing::info!("Allowlist : {} entree(s) chargee(s)", s.len());
+                engine.add_suppressions(s);
+            }
+            Err(e) => tracing::warn!("Allowlist {file} ignoree : {e:#}"),
+        }
+    }
+
     let rule_count = engine.rule_count();
     state.set_runtime(rule_count, 0);
     state.broadcast_stats(chrono::Utc::now().timestamp());
