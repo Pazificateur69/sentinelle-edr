@@ -20,11 +20,20 @@ const KNOWN_FIELDS: &[&str] = &[
     "ParentImage",
     "ParentImageName",
     "CommandLine",
+    "ParentCommandLine",
+    "OriginalFileName",
+    "IntegrityLevel",
     "User",
     "Sha256",
+    "Hashes",
     "DestinationIp",
     "DestinationPort",
     "TargetFilename",
+    "ImageLoaded",
+    "TargetImage",
+    "TargetImageName",
+    "GrantedAccess",
+    "PipeName",
 ];
 
 /// Charge toutes les regles Sigma (*.yml / *.yaml) d'un dossier.
@@ -485,12 +494,36 @@ detection:
     }
 
     #[test]
+    fn imports_extended_fields() {
+        let yaml = r#"
+title: Interpréteur renommé en intégrité haute
+level: high
+logsource:
+  category: process_creation
+detection:
+  selection:
+    IntegrityLevel: 'High'
+    OriginalFileName|endswith: 'cmd.exe'
+  condition: selection
+"#;
+        let rule = parse_sigma(yaml).unwrap();
+        let mut ev = Event::process_start("h", 1, 2, r"C:\W\renamed.exe", "");
+        ev.integrity_level = "High".into();
+        ev.original_file_name = "Cmd.Exe".into();
+        assert!(rule.matches(&ev, &[]));
+
+        let mut low = ev.clone();
+        low.integrity_level = "Medium".into();
+        assert!(!rule.matches(&low, &[])); // mauvais niveau -> pas de match
+    }
+
+    #[test]
     fn rejects_unknown_field() {
         let bad = r#"
 title: x
 detection:
   selection:
-    IntegrityLevel: High
+    CurrentDirectory: 'C:\Temp'
   condition: selection
 "#;
         assert!(parse_sigma(bad).is_err());

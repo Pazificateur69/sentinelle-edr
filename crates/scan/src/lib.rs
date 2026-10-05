@@ -5,8 +5,12 @@
 //! NON COMPILÉ depuis macOS (dépendance lourde) : validé par la CI.
 
 use anyhow::Result;
+use sentinelle_common::{Alert, Event, EventKind, Severity};
 use std::path::Path;
 use yara_x::{Compiler, Rules, Scanner};
+
+/// Taille maximale d'image scannée par défaut (32 Mio).
+pub const DEFAULT_MAX_BYTES: usize = 32 * 1024 * 1024;
 
 pub struct YaraScanner {
     rules: Rules,
@@ -75,6 +79,31 @@ impl YaraScanner {
             _ => Vec::new(),
         }
     }
+}
+
+/// Scanne l'image d'un nouvel événement processus et produit une alerte par
+/// règle YARA correspondante. Opération bloquante (lecture disque + scan) :
+/// à appeler dans `spawn_blocking`.
+pub fn scan_image_alerts(scanner: &YaraScanner, ev: &Event, max_bytes: usize) -> Vec<Alert> {
+    if ev.kind != EventKind::ProcessStart || ev.image.is_empty() {
+        return Vec::new();
+    }
+    scanner
+        .scan_file(Path::new(&ev.image), max_bytes)
+        .into_iter()
+        .map(|name| Alert {
+            ts: ev.ts,
+            host: ev.host.clone(),
+            rule_id: format!("YARA:{name}"),
+            title: format!("Signature YARA : {name}"),
+            description: format!("L'image {} correspond à la règle YARA « {name} ».", ev.image),
+            severity: Severity::High,
+            attack: vec!["T1204".to_string()],
+            score: Severity::High.weight(),
+            event: ev.clone(),
+            ancestors: Vec::new(),
+        })
+        .collect()
 }
 
 #[cfg(test)]

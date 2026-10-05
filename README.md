@@ -36,7 +36,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 🙈 | **Allowlist / suppression** | règles d'exception ciblées pour écraser les faux positifs (le défaut n°1 des EDR maison) |
 | 🔁 | **Déduplication d'alertes** | une même (règle, hôte, pid) n'alerte qu'une fois par fenêtre — anti-bruit |
 | 🎛️ | **Seuils réglables** | fenêtres de dédup & détecteurs comportementaux configurables par fichier TOML (`SENTINELLE_CONFIG`, voir `sentinelle.example.toml`) |
-| 📜 | **Import de règles Sigma** | `.yml` Sigma appliqué directement ; modificateurs `contains`/`startswith`/`endswith`/`re`/`base64`/`windash`/`cidr`/`all`, condition `and`/`or`/`not` + quantificateurs ; champs non mappés rejetés explicitement |
+| 📜 | **Import de règles Sigma** | `.yml` Sigma appliqué directement ; modificateurs `contains`/`startswith`/`endswith`/`re`/`base64`/`windash`/`cidr`/`all`, condition `and`/`or`/`not` + quantificateurs ; champs étendus (`IntegrityLevel`, `OriginalFileName`, `ParentCommandLine`, `ImageLoaded`, `GrantedAccess`, `PipeName`…) ; champs non mappés rejetés explicitement |
 | 📊 | **Scoring** | risque par hôte (accumulation + décroissance temporelle) ; pondération par **confiance** par règle (abaisser une règle bruyante sans changer sa sévérité) |
 | 💾 | **Persistance (SQLite)** | historique d'alertes qui survit aux redémarrages + base interrogeable pour l'investigation (`SENTINELLE_DB`, optionnel) |
 | 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE cliquables, **filtres par sévérité + recherche**, **répartition des sévérités**, ligne de commande & score, **couverture ATT&CK par tactique**, **mode démo** autonome ; 100 % embarquée |
@@ -157,7 +157,7 @@ parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
 
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **36 tests unitaires**, verts en CI |
+| Cœur de détection (règles, arbre, score, Sigma) | ✅ **39 tests unitaires**, verts en CI |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
 | Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
@@ -191,7 +191,7 @@ Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.
 ## 🧪 Tests
 
 ```bash
-cargo test -p sentinelle-common   # 36 tests, multiplateforme, rapides
+cargo test -p sentinelle-common   # 39 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 

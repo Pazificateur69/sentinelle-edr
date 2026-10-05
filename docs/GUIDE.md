@@ -85,7 +85,7 @@ Variables côté agent : `SENTINELLE_SERVER` (défaut `https://localhost:50051`)
 
 Opérateurs : `equals`, `contains`, `starts_with`, `ends_with`, `regex`, `cidr`.
 Champs : `Image`, `ImageName`, `ParentImage`, `CommandLine`, `User`, `Sha256`,
-`DestinationIp`, `DestinationPort`, `TargetFilename`, `ImageLoaded`.
+`DestinationIp`, `DestinationPort`, `TargetFilename`, `ImageLoaded`, `ParentCommandLine`, `OriginalFileName`, `IntegrityLevel`, `TargetImage`, `GrantedAccess`, `PipeName`.
 
 **Règle Sigma** : déposer un `.yml` dans un dossier pointé par
 `SENTINELLE_RULES_DIR`. Modificateurs gérés : `contains`, `startswith`,

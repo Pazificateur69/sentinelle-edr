@@ -1,11 +1,8 @@
-use sentinelle_common::{Alert, Engine, Event, EventKind, Severity};
+use sentinelle_common::{Alert, Engine, Event};
 use sentinelle_console::AppState;
 use sentinelle_scan::YaraScanner;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-
-/// Taille maximale d'image scannée par YARA (évite de lire des fichiers énormes).
-const YARA_MAX_BYTES: usize = 32 * 1024 * 1024;
 
 /// Boucle de detection mono-poste : un evenement entre, les regles sortent.
 pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
@@ -90,29 +87,10 @@ pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
 /// Scanne l'image d'un nouveau processus avec YARA, hors du thread async
 /// (lecture disque + scan sont bloquants). Une alerte par règle correspondante.
 async fn yara_scan_image(scanner: Arc<YaraScanner>, ev: &Event) -> Vec<Alert> {
-    if ev.kind != EventKind::ProcessStart || ev.image.is_empty() {
-        return Vec::new();
-    }
-    let image = ev.image.clone();
-    let matches = tokio::task::spawn_blocking(move || {
-        scanner.scan_file(std::path::Path::new(&image), YARA_MAX_BYTES)
+    let ev2 = ev.clone();
+    tokio::task::spawn_blocking(move || {
+        sentinelle_scan::scan_image_alerts(&scanner, &ev2, sentinelle_scan::DEFAULT_MAX_BYTES)
     })
     .await
-    .unwrap_or_default();
-
-    matches
-        .into_iter()
-        .map(|name| Alert {
-            ts: ev.ts,
-            host: ev.host.clone(),
-            rule_id: format!("YARA:{name}"),
-            title: format!("Signature YARA : {name}"),
-            description: format!("L'image {} correspond à la règle YARA « {name} ».", ev.image),
-            severity: Severity::High,
-            attack: vec!["T1204".to_string()],
-            score: Severity::High.weight(),
-            event: ev.clone(),
-            ancestors: Vec::new(),
-        })
-        .collect()
+    .unwrap_or_default()
 }

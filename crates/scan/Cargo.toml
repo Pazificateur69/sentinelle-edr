@@ -6,6 +6,7 @@ license.workspace = true
 description = "Moteur de scan YARA (YARA-X) : signatures sur fichiers/images"
 
 [dependencies]
+sentinelle-common = { path = "../common" }
 yara-x = "1"
 anyhow.workspace = true
 tracing.workspace = true

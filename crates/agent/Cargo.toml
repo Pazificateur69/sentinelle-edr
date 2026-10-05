@@ -8,6 +8,7 @@ description = "Agent de parc Sentinelle : collecte + detection locale -> flux gR
 [dependencies]
 sentinelle-common = { path = "../common" }
 sentinelle-proto = { path = "../proto" }
+sentinelle-scan = { path = "../scan" }
 tonic = { version = "0.14", features = ["tls-ring"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "signal", "net"] }
 tokio-stream = "0.1"

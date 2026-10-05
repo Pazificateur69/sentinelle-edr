@@ -44,6 +44,14 @@ pub struct Event {
     #[serde(default)]
     pub command_line: String,
     #[serde(default)]
+    pub parent_command_line: String,
+    /// Nom d'origine du binaire (champ PE OriginalFilename), résistant au renommage.
+    #[serde(default)]
+    pub original_file_name: String,
+    /// Niveau d'intégrité du processus (Low/Medium/High/System).
+    #[serde(default)]
+    pub integrity_level: String,
+    #[serde(default)]
     pub user: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sha256: Option<String>,
@@ -80,6 +88,9 @@ impl Event {
             image: image.to_string(),
             parent_image: parent_image.to_string(),
             command_line: String::new(),
+            parent_command_line: String::new(),
+            original_file_name: String::new(),
+            integrity_level: String::new(),
             user: String::new(),
             sha256: None,
             dst_ip: String::new(),
@@ -166,8 +177,11 @@ impl Event {
             "ParentImage" => self.parent_image.clone(),
             "ParentImageName" => base_name(&self.parent_image),
             "CommandLine" => self.command_line.clone(),
+            "ParentCommandLine" => self.parent_command_line.clone(),
+            "OriginalFileName" => self.original_file_name.clone(),
+            "IntegrityLevel" => self.integrity_level.clone(),
             "User" => self.user.clone(),
-            "Sha256" => self.sha256.clone().unwrap_or_default(),
+            "Sha256" | "Hashes" => self.sha256.clone().unwrap_or_default(),
             "DestinationIp" => self.dst_ip.clone(),
             "DestinationPort" => self.dst_port.to_string(),
             "TargetFilename" => self.file_path.clone(),

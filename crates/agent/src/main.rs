@@ -19,6 +19,7 @@ use sentinelle_proto::v1::ingest_client::IngestClient;
 use sentinelle_proto::v1::Telemetry;
 use sentinelle_proto::{tel_alert, tel_event};
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -107,6 +108,14 @@ async fn main() -> Result<()> {
             engine.set_config(cfg);
         }
     }
+    // Scan YARA optionnel (SENTINELLE_YARA_DIR).
+    let yara: Option<Arc<sentinelle_scan::YaraScanner>> = std::env::var("SENTINELLE_YARA_DIR")
+        .ok()
+        .and_then(|d| sentinelle_scan::YaraScanner::from_dir(std::path::Path::new(&d)).ok().flatten())
+        .map(Arc::new);
+    if yara.is_some() {
+        tracing::info!("YARA actif sur l'agent.");
+    }
 
     #[cfg(windows)]
     {
@@ -121,7 +130,7 @@ async fn main() -> Result<()> {
             }
         });
         while let Some(ev) = ev_rx.recv().await {
-            process(&mut engine, ev, &tx_tel).await;
+            process(&mut engine, ev, &tx_tel, &yara).await;
         }
     }
 
@@ -133,7 +142,7 @@ async fn main() -> Result<()> {
             .and_then(|s| s.parse::<u64>().ok());
         loop {
             for ev in sentinelle_common::scenario::attack_chain(&host) {
-                process(&mut engine, ev, &tx_tel).await;
+                process(&mut engine, ev, &tx_tel, &yara).await;
                 tokio::time::sleep(Duration::from_millis(500)).await;
             }
             match repeat {
@@ -149,8 +158,23 @@ async fn main() -> Result<()> {
 }
 
 /// Detecte localement puis pousse l'evenement et ses alertes au serveur.
-async fn process(engine: &mut Engine, ev: Event, tx: &mpsc::Sender<Telemetry>) {
-    let alerts = engine.ingest(ev.clone());
+async fn process(
+    engine: &mut Engine,
+    ev: Event,
+    tx: &mpsc::Sender<Telemetry>,
+    yara: &Option<Arc<sentinelle_scan::YaraScanner>>,
+) {
+    let mut alerts = engine.ingest(ev.clone());
+    if let Some(sc) = yara {
+        let sc = sc.clone();
+        let ev2 = ev.clone();
+        let hits = tokio::task::spawn_blocking(move || {
+            sentinelle_scan::scan_image_alerts(&sc, &ev2, sentinelle_scan::DEFAULT_MAX_BYTES)
+        })
+        .await
+        .unwrap_or_default();
+        alerts.extend(hits);
+    }
     let _ = tx.send(tel_event(&ev)).await;
     for a in alerts {
         let _ = tx.send(tel_alert(&a)).await;

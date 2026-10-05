@@ -20,6 +20,9 @@ message Event {
   string granted_access = 15;
   string pipe_name = 16;
   uint32 real_ppid = 17;
+  string parent_command_line = 18;
+  string original_file_name = 19;
+  string integrity_level = 20;
 }
 
 // Detection produite par un agent.
