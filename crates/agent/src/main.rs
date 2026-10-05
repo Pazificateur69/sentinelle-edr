@@ -136,18 +136,33 @@ async fn main() -> Result<()> {
 
     #[cfg(not(windows))]
     {
-        tracing::warn!("Hors Windows : rejoue la chaine d'attaque simulee.");
-        let repeat = std::env::var("SENTINELLE_REPLAY_SECS")
+        // Avec SENTINELLE_REPLAY_SECS : mode démo (rejoue la chaîne simulée en
+        // boucle). Sinon : vrai capteur multi-OS (scrutation des processus).
+        if let Some(secs) = std::env::var("SENTINELLE_REPLAY_SECS")
             .ok()
-            .and_then(|s| s.parse::<u64>().ok());
-        loop {
-            for ev in sentinelle_common::scenario::attack_chain(&host) {
-                process(&mut engine, ev, &tx_tel, &yara).await;
-                tokio::time::sleep(Duration::from_millis(500)).await;
+            .and_then(|s| s.parse::<u64>().ok())
+        {
+            tracing::warn!("Mode démo : rejeu de la chaîne d'attaque simulée toutes les {secs}s.");
+            loop {
+                for ev in sentinelle_common::scenario::attack_chain(&host) {
+                    process(&mut engine, ev, &tx_tel, &yara).await;
+                    tokio::time::sleep(Duration::from_millis(500)).await;
+                }
+                tokio::time::sleep(Duration::from_secs(secs)).await;
             }
-            match repeat {
-                Some(s) => tokio::time::sleep(Duration::from_secs(s)).await,
-                None => break,
+        } else {
+            tracing::info!("Capteur multi-OS actif (scrutation des processus).");
+            let (ev_tx, mut ev_rx) = mpsc::channel::<Event>(8192);
+            let h = host.clone();
+            std::thread::spawn(move || {
+                if let Err(e) = sentinelle_sensor_proc::run(h, move |ev| {
+                    let _ = ev_tx.try_send(ev);
+                }) {
+                    tracing::error!("capteur multi-OS : {e:#}");
+                }
+            });
+            while let Some(ev) = ev_rx.recv().await {
+                process(&mut engine, ev, &tx_tel, &yara).await;
             }
         }
     }
