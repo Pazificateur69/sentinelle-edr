@@ -7,8 +7,6 @@
 //!
 //! NON COMPILÉ depuis macOS : validé par la CI (Ubuntu + Windows).
 
-mod ingest;
-
 use anyhow::{Context, Result};
 use axum::{
     extract::Path,
@@ -17,7 +15,7 @@ use axum::{
     routing::post,
     Extension, Router,
 };
-use ingest::{IngestService, Registry};
+use sentinelle_server::ingest::{IngestService, Registry};
 use sentinelle_common::Engine;
 use sentinelle_console::{base_routes, AppState};
 use sentinelle_proto::v1::{ingest_server::IngestServer, Command};

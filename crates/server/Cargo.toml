@@ -11,7 +11,7 @@ sentinelle-console = { path = "../console" }
 sentinelle-proto = { path = "../proto" }
 tonic = { version = "0.14", features = ["tls-ring"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "signal", "net"] }
-tokio-stream = "0.1"
+tokio-stream = { version = "0.1", features = ["net"] }
 axum = "0.8"
 tower-http = { version = "0.6", features = ["cors"] }
 serde_json.workspace = true
@@ -19,3 +19,7 @@ anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 chrono.workspace = true
+
+[dev-dependencies]
+sentinelle-certgen = { path = "../certgen" }
+tempfile = "3"

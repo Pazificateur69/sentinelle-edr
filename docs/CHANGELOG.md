@@ -30,3 +30,4 @@ Toutes les évolutions notables de Sentinelle. Format libre, ordre antéchronolo
 ### Qualité
 - **CI GitHub Actions** : build + tests sur **Ubuntu et Windows**.
 - Suite de tests unitaires du cœur de détection.
+- **Test d'intégration du parc** : handshake mTLS + flux bidirectionnel + ingestion + ordre de kill routé, validés au runtime en CI (Ubuntu + Windows).
