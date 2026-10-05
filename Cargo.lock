@@ -2659,6 +2659,7 @@ dependencies = [
  "sentinelle-common",
  "sysinfo",
  "tracing",
+ "windows 0.58.0",
 ]
 
 [[package]]
@@ -2669,6 +2670,7 @@ dependencies = [
  "chrono",
  "ferrisetw",
  "sentinelle-common",
+ "sentinelle-sensor-proc",
  "sysinfo",
  "tracing",
 ]

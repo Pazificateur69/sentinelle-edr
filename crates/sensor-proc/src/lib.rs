@@ -10,6 +10,9 @@
 //! fichier, ni accès mémoire. C'est la couverture multi-OS honnête ; l'ETW
 //! Windows reste supérieur pour la profondeur de télémétrie.
 
+mod peinfo;
+pub use peinfo::original_file_name_of;
+
 use sentinelle_common::Event;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -86,7 +89,12 @@ fn build_event(host: &str, pid: u32, proc_: &Process, sys: &System) -> Event {
         .map(|s| s.to_string_lossy())
         .collect::<Vec<_>>()
         .join(" ");
-    Event::process_start(host, pid, ppid, &image, &parent_image).with_cmdline(&cmd)
+    // Nom d'origine du PE (résistant au renommage) pour la détection de masquerading.
+    // Vide hors Windows et pour les binaires sans ressource de version.
+    let original = original_file_name_of(&image);
+    Event::process_start(host, pid, ppid, &image, &parent_image)
+        .with_cmdline(&cmd)
+        .with_original_file_name(&original)
 }
 
 #[cfg(all(test, unix))]

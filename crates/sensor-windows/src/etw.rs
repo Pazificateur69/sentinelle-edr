@@ -100,8 +100,11 @@ where
                 map.get(&ppid).cloned().unwrap_or_default()
             };
 
+            // Nom d'origine du PE (résistant au renommage) pour le masquerading.
+            let original = sentinelle_sensor_proc::original_file_name_of(&image);
             let ev = Event::process_start(host, pid, ppid, &image, &parent_image)
-                .with_cmdline(&cmdline_of(pid));
+                .with_cmdline(&cmdline_of(pid))
+                .with_original_file_name(&original);
             handler(ev);
         }
         EVENT_PROCESS_STOP => {
