@@ -1,0 +1,21 @@
+title: PowerShell avec chaîne encodée en base64
+id: snt-sigma-ps-b64
+description: >
+  Détecte, dans la ligne de commande PowerShell, des chaînes de download-cradle
+  encodées en base64 (obfuscation courante). Utilise le modificateur Sigma
+  |base64, résolu à l'import par Sentinelle.
+level: high
+tags:
+  - attack.t1059.001
+  - attack.t1027
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\powershell.exe'
+    CommandLine|base64|contains:
+      - 'Net.WebClient'
+      - 'DownloadString'
+      - 'IEX'
+  condition: selection

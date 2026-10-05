@@ -16,7 +16,11 @@
 //! validation sur VM Windows.
 
 use crate::cmdline::cmdline_of;
-use ferrisetw::prelude::*;
+use ferrisetw::parser::Parser;
+use ferrisetw::provider::Provider;
+use ferrisetw::schema_locator::SchemaLocator;
+use ferrisetw::trace::{TraceTrait, UserTrace};
+use ferrisetw::EventRecord;
 use sentinelle_common::Event;
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
@@ -45,13 +49,17 @@ where
         })
         .build();
 
-    let (_trace, trace_handle) = UserTrace::new()
+    // start_and_process() demarre le traitement sur un thread dedie de ferrisetw
+    // et renvoie la trace. On garde la trace vivante en bloquant ce thread.
+    let _trace = UserTrace::new()
         .named("sentinelle-kproc".to_string())
         .enable(provider)
-        .start()?;
+        .start_and_process()?;
 
-    UserTrace::process_from_handle(trace_handle)?;
-    Ok(())
+    // ponytail: park en boucle = garder la trace vivante sans busy-wait.
+    loop {
+        std::thread::park();
+    }
 }
 
 fn handle<F>(

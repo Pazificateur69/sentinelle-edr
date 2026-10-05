@@ -1,0 +1,19 @@
+title: Connexion vers une plage d'adresses suspecte (CIDR)
+id: snt-sigma-c2-cidr
+description: >
+  Connexion réseau sortante vers un bloc d'adresses connu pour héberger du
+  command & control. Utilise le modificateur Sigma |cidr (appartenance IPv4),
+  résolu à l'import par Sentinelle.
+level: high
+tags:
+  - attack.t1071
+  - attack.t1571
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection:
+    DestinationIp|cidr:
+      - '185.12.0.0/16'
+      - '45.137.0.0/16'
+  condition: selection
