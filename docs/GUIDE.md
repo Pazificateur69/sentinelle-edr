@@ -29,6 +29,7 @@ Variables utiles :
 | `SENTINELLE_CONFIG` | fichier TOML de seuils (voir `sentinelle.example.toml`) |
 | `SENTINELLE_DB` | fichier SQLite : l'historique d'alertes survit aux redémarrages |
 | `SENTINELLE_YARA_DIR` | dossier de règles **YARA** (`.yar`) : scan de l'image de chaque nouveau processus |
+| `SENTINELLE_REPLAY_FILE` | rejoue une capture d'événements (JSONL, un `Event` par ligne) à travers le pipeline |
 
 Exemple complet :
 
@@ -38,6 +39,17 @@ SENTINELLE_CONFIG=./sentinelle.toml \
 SENTINELLE_DB=./sentinelle.db \
 cargo run --release -p sentinelle-agentd
 ```
+
+### Rejeu d'une capture (test / forensic)
+
+Rejoue de la télémétrie enregistrée à travers tout le pipeline de détection :
+
+```bash
+SENTINELLE_REPLAY_FILE=./captures/demo.jsonl cargo run --release -p sentinelle-agentd
+```
+
+Format : un objet `Event` JSON par ligne (voir `captures/demo.jsonl`). Idéal pour
+rejouer un incident ou valider une nouvelle règle sur des données réelles.
 
 ## 3. Mode parc (plusieurs postes)
 

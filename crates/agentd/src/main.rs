@@ -56,6 +56,33 @@ async fn main() -> Result<()> {
     #[cfg(not(windows))]
     tracing::warn!("Hors Windows : pas de capteur ETW. Bouton 'Simuler une attaque' ou POST /api/simulate.");
 
+    // Rejeu d'une capture d'événements (JSONL, un Event par ligne) à travers tout
+    // le pipeline — utile pour tester/affiner les détections sur de la télémétrie réelle.
+    if let Ok(file) = std::env::var("SENTINELLE_REPLAY_FILE") {
+        let tx = inject_tx.clone();
+        tokio::spawn(async move {
+            match std::fs::read_to_string(&file) {
+                Ok(content) => {
+                    let mut n = 0u64;
+                    for line in content.lines().filter(|l| !l.trim().is_empty()) {
+                        match serde_json::from_str::<sentinelle_common::Event>(line) {
+                            Ok(ev) => {
+                                if tx.send(ev).await.is_err() {
+                                    break;
+                                }
+                                n += 1;
+                                tokio::time::sleep(std::time::Duration::from_millis(30)).await;
+                            }
+                            Err(e) => tracing::warn!("replay : ligne ignorée ({e})"),
+                        }
+                    }
+                    tracing::info!("Rejeu terminé : {n} événements depuis {file}");
+                }
+                Err(e) => tracing::error!("rejeu {file} : {e}"),
+            }
+        });
+    }
+
     let app = http::router(state);
     let addr: SocketAddr = "127.0.0.1:8787".parse()?;
     let listener = tokio::net::TcpListener::bind(addr).await?;
