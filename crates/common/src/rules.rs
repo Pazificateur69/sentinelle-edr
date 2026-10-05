@@ -153,6 +153,21 @@ pub struct Rule {
     /// Raccourci de filiation optionnel.
     #[serde(default)]
     pub lineage: Option<Lineage>,
+    /// Confiance (0.0..=1.0) : module le score sans changer la severite.
+    /// Permet d'abaisser le poids d'une regle bruyante. Defaut 1.0.
+    #[serde(default = "default_confidence")]
+    pub confidence: f32,
+}
+
+fn default_confidence() -> f32 {
+    1.0
+}
+
+impl Rule {
+    /// Score effectif = poids de severite x confiance (borne 0..=1000).
+    pub fn score(&self) -> u32 {
+        (self.severity.weight() as f32 * self.confidence).round().clamp(0.0, 1000.0) as u32
+    }
 }
 
 impl Rule {

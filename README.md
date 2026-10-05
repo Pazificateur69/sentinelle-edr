@@ -35,7 +35,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 🙈 | **Allowlist / suppression** | règles d'exception ciblées pour écraser les faux positifs (le défaut n°1 des EDR maison) |
 | 🔁 | **Déduplication d'alertes** | une même (règle, hôte, pid) n'alerte qu'une fois par fenêtre — anti-bruit |
 | 📜 | **Import de règles Sigma** | `.yml` Sigma appliqué directement ; modificateurs `contains`/`startswith`/`endswith`/`re`/`base64`/`windash`/`cidr`/`all`, condition `and`/`or`/`not` + quantificateurs ; champs non mappés rejetés explicitement |
-| 📊 | **Scoring de risque par hôte** | accumulation + décroissance temporelle (un incident ancien ne garde pas un hôte « rouge » à vie) |
+| 📊 | **Scoring** | risque par hôte (accumulation + décroissance temporelle) ; pondération par **confiance** par règle (abaisser une règle bruyante sans changer sa sévérité) |
 | 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE ATT&CK cliquables, risque par hôte, 100 % embarquée dans le binaire |
 | 🌐 | **Parc multi-postes** | agents → serveur central en **gRPC + mTLS**, console multi-hôtes |
 | ⚔️ | **Réponse** | terminaison de processus (Windows) ; quarantaine & isolation réseau WFP au backlog |
@@ -129,7 +129,7 @@ ou un fichier pointé par `SENTINELLE_ALLOWLIST`.
 
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **26 tests unitaires**, `cargo test` |
+| Cœur de détection (règles, arbre, score, Sigma) | ✅ **27 tests unitaires**, `cargo test` |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ⚠️ écrit, **à valider sur Windows** (dev sur macOS) |
 | Réponse `kill` (Win32) | ⚠️ compile sous Windows uniquement |
@@ -160,7 +160,7 @@ Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.
 ## 🧪 Tests
 
 ```bash
-cargo test -p sentinelle-common   # 26 tests, multiplateforme, rapides
+cargo test -p sentinelle-common   # 27 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 

@@ -112,6 +112,7 @@ pub fn parse_sigma(yaml: &str) -> Result<Rule> {
         all: vec![],
         expr: Some(expr),
         lineage: None,
+        confidence: 1.0,
     })
 }
 

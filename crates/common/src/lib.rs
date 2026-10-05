@@ -132,7 +132,7 @@ impl Engine {
                 description: r.description.clone(),
                 severity: r.severity,
                 attack: r.attack.clone(),
-                score: r.severity.weight(),
+                score: r.score(),
                 event: ev.clone(),
             })
             .collect();
@@ -284,6 +284,31 @@ mod tests {
                 .with_cmdline("powershell.exe -EncodedCommand MABtAGEA"),
         );
         assert!(alerts.iter().any(|a| a.rule_id == "SNT-0010"));
+    }
+
+    #[test]
+    fn confidence_scales_the_score() {
+        use crate::rules::{Cond, Op, Rule};
+        let rule = Rule {
+            id: "C1".into(),
+            title: "test".into(),
+            description: String::new(),
+            severity: Severity::High, // poids 70
+            attack: vec![],
+            kind: None,
+            all: vec![Cond {
+                field: "ImageName".into(),
+                op: Op::Equals,
+                values: vec!["evil.exe".into()],
+            }],
+            expr: None,
+            lineage: None,
+            confidence: 0.5,
+        };
+        let mut eng = Engine::from_rules(vec![rule]);
+        let alerts = eng.ingest(Event::process_start("h", 1, 2, r"C:\x\evil.exe", ""));
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].score, 35); // 70 * 0.5
     }
 
     #[test]
