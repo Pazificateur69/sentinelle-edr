@@ -201,6 +201,88 @@
     ]
   },
   {
+    "id": "SNT-0110",
+    "title": "Mouvement latéral via PsExec",
+    "description": "Execution de PsExec / service PSEXESVC : exécution à distance typique de déplacement latéral (T1021.002, T1569.002).",
+    "severity": "high",
+    "attack": ["T1021.002", "T1569.002"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["psexec.exe", "psexec64.exe", "psexesvc.exe"] }
+    ]
+  },
+  {
+    "id": "SNT-0111",
+    "title": "Exécution à distance via WMIC /node",
+    "description": "wmic /node:<cible> process call create : exécution sur une machine distante (T1021).",
+    "severity": "high",
+    "attack": ["T1021", "T1047"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["wmic.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/node:"] },
+      { "field": "CommandLine", "op": "contains", "values": ["process call create"] }
+    ]
+  },
+  {
+    "id": "SNT-0120",
+    "title": "Effacement des journaux d'événements",
+    "description": "wevtutil cl / Clear-EventLog : suppression des traces pour entraver l'investigation (T1070.001).",
+    "severity": "high",
+    "attack": ["T1070.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["wevtutil cl", "wevtutil clear-log", "clear-eventlog", "limit-eventlog"] }
+    ]
+  },
+  {
+    "id": "SNT-0121",
+    "title": "Suppression du journal USN",
+    "description": "fsutil usn deletejournal : efface l'historique des modifications de fichiers (anti-forensic, T1070).",
+    "severity": "medium",
+    "attack": ["T1070"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["fsutil.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["usn deletejournal", "deletejournal"] }
+    ]
+  },
+  {
+    "id": "SNT-0130",
+    "title": "Contournement d'UAC (fodhelper / eventvwr)",
+    "description": "Un binaire d'auto-élévation connu lance un interpréteur : contournement du contrôle de compte (T1548.002).",
+    "severity": "high",
+    "attack": ["T1548.002"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["fodhelper.exe", "eventvwr.exe", "computerdefaults.exe", "sdclt.exe"],
+      "children": ["cmd.exe", "powershell.exe", "pwsh.exe"],
+      "ancestor": false
+    }
+  },
+  {
+    "id": "SNT-0140",
+    "title": "Tentative de contournement d'AMSI",
+    "description": "Référence à AmsiUtils / amsiInitFailed : neutralisation de l'inspection antimalware en mémoire (T1562.001).",
+    "severity": "high",
+    "attack": ["T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["amsiutils", "amsiinitfailed", "amsicontext"] }
+    ]
+  },
+  {
+    "id": "SNT-0160",
+    "title": "Désactivation du pare-feu Windows",
+    "description": "netsh advfirewall set allprofiles state off : ouverture du poste avant une action malveillante (T1562.004).",
+    "severity": "medium",
+    "attack": ["T1562.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["advfirewall set allprofiles state off", "netsh firewall set opmode disable"] }
+    ]
+  },
+  {
     "id": "SNT-0080",
     "title": "Téléchargement via certutil (LOLBin)",
     "description": "certutil detourne en telechargeur : urlcache/verifyctl recupere une charge distante (T1105, T1218).",

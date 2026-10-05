@@ -99,6 +99,17 @@ impl Engine {
         self.rules.len()
     }
 
+    /// Techniques MITRE ATT&CK couvertes par le jeu de règles (triées, uniques).
+    /// Donne la "surface de détection" du moteur.
+    pub fn attack_coverage(&self) -> Vec<String> {
+        self.rules
+            .iter()
+            .flat_map(|r| r.attack.iter().cloned())
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect()
+    }
+
     pub fn tracked_processes(&self) -> usize {
         self.tree.len()
     }
@@ -235,6 +246,17 @@ mod tests {
     fn builtin_rules_parse() {
         let eng = Engine::with_builtin_rules().expect("rules.json doit parser");
         assert!(eng.rule_count() >= 10, "au moins 10 regles de depart");
+    }
+
+    #[test]
+    fn attack_coverage_is_broad() {
+        let eng = Engine::with_builtin_rules().unwrap();
+        let cov = eng.attack_coverage();
+        // couverture large et triée/unique
+        assert!(cov.len() >= 20, "couverture ATT&CK trop faible: {}", cov.len());
+        assert!(cov.contains(&"T1003".to_string())); // credential dumping
+        assert!(cov.contains(&"T1486".to_string())); // ransomware
+        assert!(cov.windows(2).all(|w| w[0] < w[1])); // trié, sans doublon
     }
 
     #[test]
