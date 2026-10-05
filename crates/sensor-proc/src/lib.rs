@@ -13,7 +13,7 @@
 use sentinelle_common::Event;
 use std::collections::HashSet;
 use std::time::Duration;
-use sysinfo::{Process, ProcessesToUpdate, System};
+use sysinfo::{Process, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
 /// Intervalle de scrutation par défaut.
 pub const DEFAULT_POLL_MS: u64 = 1000;
@@ -42,9 +42,16 @@ where
         known.len()
     );
 
+    // On demande explicitement l'image (exe) ET la ligne de commande (cmd) : sous
+    // Windows, le rafraîchissement par défaut ne récupère PAS la ligne de commande
+    // (elle restait vide, rendant muettes toutes les règles basées sur la cmdline).
+    let refresh = ProcessRefreshKind::nothing()
+        .with_cmd(UpdateKind::Always)
+        .with_exe(UpdateKind::Always);
+
     loop {
         std::thread::sleep(Duration::from_millis(poll_ms));
-        sys.refresh_processes(ProcessesToUpdate::All, true);
+        sys.refresh_processes_specifics(ProcessesToUpdate::All, true, refresh);
 
         let current: HashSet<u32> = sys.processes().keys().map(|p| p.as_u32()).collect();
         for (pid, proc_) in sys.processes() {

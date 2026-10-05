@@ -2559,6 +2559,7 @@ dependencies = [
  "sentinelle-common",
  "sentinelle-proto",
  "sentinelle-scan",
+ "sentinelle-sensor-proc",
  "sentinelle-sensor-windows",
  "tokio",
  "tokio-stream",
