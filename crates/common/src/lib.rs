@@ -5,6 +5,7 @@
 pub mod config;
 pub mod event;
 pub mod incident;
+pub mod navigator;
 pub mod proctree;
 pub mod report;
 pub mod risk;
@@ -192,6 +193,24 @@ impl Engine {
             }
         }
         map.into_iter().map(|(k, v)| (k.to_string(), v)).collect()
+    }
+
+    /// Couche MITRE ATT&CK Navigator (JSON) : score d'une technique = nombre de
+    /// règles qui la couvrent. Inclut les détecteurs comportementaux (hors
+    /// `self.rules`) pour une couverture complète.
+    pub fn navigator_layer(&self, name: &str) -> String {
+        let mut counts: std::collections::BTreeMap<String, u32> = Default::default();
+        for r in &self.rules {
+            for t in &r.attack {
+                *counts.entry(t.clone()).or_insert(0) += 1;
+            }
+        }
+        // Détecteurs comportementaux codés en dur (burst de spawn/fichiers, PPID
+        // spoofing, masquerading) : pas dans self.rules mais bien actifs.
+        for t in ["T1134.004", "T1036.003"] {
+            *counts.entry(t.to_string()).or_insert(0) += 1;
+        }
+        crate::navigator::layer(name, &counts)
     }
 
     pub fn tracked_processes(&self) -> usize {

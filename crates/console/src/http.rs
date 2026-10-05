@@ -28,8 +28,31 @@ pub fn base_routes() -> Router<AppState> {
         .route("/api/history", get(history))
         .route("/api/coverage", get(coverage))
         .route("/api/incidents", get(incidents))
+        .route("/api/navigator", get(navigator))
         .route("/api/report", get(report))
         .route("/healthz", get(healthz))
+}
+
+/// Couche MITRE ATT&CK Navigator (JSON) à déposer sur attack-navigator pour
+/// visualiser la couverture de détection.
+async fn navigator() -> impl axum::response::IntoResponse {
+    let json = match sentinelle_common::Engine::with_builtin_rules() {
+        Ok(e) => e.navigator_layer("Sentinelle EDR"),
+        Err(_) => "{}".to_string(),
+    };
+    (
+        [
+            (
+                axum::http::header::CONTENT_TYPE,
+                "application/json; charset=utf-8".to_string(),
+            ),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                "attachment; filename=\"sentinelle-attack-navigator.json\"".to_string(),
+            ),
+        ],
+        json,
+    )
 }
 
 /// Rapport d'incident Markdown téléchargeable, construit à partir des alertes
