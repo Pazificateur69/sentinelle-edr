@@ -209,6 +209,7 @@ cargo build -p sentinelle-agentd  # mode mono-poste
 
 ## 📚 Documentation
 
+- [Guide de test](docs/TEST-CE-SOIR.md) — valider le produit pas-à-pas (Windows/Linux/macOS), déclencheurs bénins, exports.
 - [Guide d'utilisation](docs/GUIDE.md) — installer, lancer (mono-poste & parc), écrire des règles, régler les seuils.
 - [Revue d'architecture](docs/ARCHITECTURE-REVIEW.md) — fait / à-faire, par composant.
 - [Changelog](docs/CHANGELOG.md).
