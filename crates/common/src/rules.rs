@@ -33,6 +33,8 @@ pub enum Op {
     StartsWith,
     EndsWith,
     Regex,
+    /// Le champ (une IP) est-il dans le CIDR donne (IPv4).
+    Cidr,
 }
 
 /// Une condition : un champ, un operateur, une liste de valeurs (OR entre elles).
@@ -59,9 +61,41 @@ impl Cond {
                 Op::EndsWith => hay.ends_with(&needle),
                 // Regex : on compile a la volee ; une regex invalide ne matche pas.
                 Op::Regex => regex::Regex::new(v).map(|re| re.is_match(&raw)).unwrap_or(false),
+                // CIDR : le champ (IP) est-il dans le reseau `v` (IPv4).
+                Op::Cidr => cidr_match(&raw, v),
             }
         })
     }
+}
+
+/// Une IPv4 `ip` appartient-elle au CIDR `cidr` (ex. "10.0.0.0/8") ?
+pub fn cidr_match(ip: &str, cidr: &str) -> bool {
+    let (net, bits) = match cidr.split_once('/') {
+        Some((n, b)) => (n, b.trim().parse::<u32>().ok()),
+        None => (cidr, Some(32)),
+    };
+    let (Some(bits), Some(ip4), Some(net4)) =
+        (bits, ipv4_to_u32(ip.trim()), ipv4_to_u32(net.trim()))
+    else {
+        return false;
+    };
+    if bits > 32 {
+        return false;
+    }
+    let mask: u32 = if bits == 0 { 0 } else { u32::MAX << (32 - bits) };
+    (ip4 & mask) == (net4 & mask)
+}
+
+fn ipv4_to_u32(s: &str) -> Option<u32> {
+    let mut octets = [0u32; 4];
+    let mut parts = s.split('.');
+    for o in octets.iter_mut() {
+        *o = parts.next()?.parse::<u8>().ok()? as u32;
+    }
+    if parts.next().is_some() {
+        return None; // trop de segments
+    }
+    Some((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3])
 }
 
 /// Arbre booleen de conditions. Permet d'exprimer and/or/not (requis pour Sigma),

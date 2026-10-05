@@ -190,6 +190,9 @@ fn parse_field(key: &str, val: &Value) -> Result<Expr> {
 
     let mut all_mode = false;
     let mut op = Op::Equals;
+    let mut b64 = false;
+    let mut windash = false;
+    let mut cidr = false;
     for m in &mods {
         match *m {
             "contains" => op = Op::Contains,
@@ -197,13 +200,30 @@ fn parse_field(key: &str, val: &Value) -> Result<Expr> {
             "endswith" => op = Op::EndsWith,
             "re" => op = Op::Regex,
             "all" => all_mode = true,
+            "base64" => b64 = true,
+            "windash" => windash = true,
+            "cidr" => cidr = true,
             other => bail!("modificateur non supporte : '{other}' sur '{field}'"),
         }
     }
 
-    let values = value_to_strings(val);
+    let mut values = value_to_strings(val);
     if values.is_empty() {
         bail!("valeur vide pour '{field}'");
+    }
+
+    // Transformations de valeurs selon les modificateurs.
+    if b64 {
+        values = values.iter().map(|v| base64_encode(v.as_bytes())).collect();
+        if op == Op::Equals {
+            op = Op::Contains; // un blob base64 se cherche par inclusion
+        }
+    }
+    if windash {
+        values = values.iter().flat_map(|v| windash_variants(v)).collect();
+    }
+    if cidr {
+        op = Op::Cidr;
     }
 
     if all_mode {
@@ -223,6 +243,33 @@ fn parse_field(key: &str, val: &Value) -> Result<Expr> {
     } else {
         // OU entre les valeurs (comportement par defaut d'une Cond)
         Ok(Expr::Cond(Cond { field, op, values }))
+    }
+}
+
+/// Encodage base64 standard (avec padding), sans dependance externe.
+fn base64_encode(data: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
+    for chunk in data.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = *chunk.get(1).unwrap_or(&0) as u32;
+        let b2 = *chunk.get(2).unwrap_or(&0) as u32;
+        let n = (b0 << 16) | (b1 << 8) | b2;
+        out.push(T[((n >> 18) & 63) as usize] as char);
+        out.push(T[((n >> 12) & 63) as usize] as char);
+        out.push(if chunk.len() > 1 { T[((n >> 6) & 63) as usize] as char } else { '=' });
+        out.push(if chunk.len() > 2 { T[(n & 63) as usize] as char } else { '=' });
+    }
+    out
+}
+
+/// windash : rend equivalents '-' et '/' (variantes courantes d'arguments CLI).
+fn windash_variants(v: &str) -> Vec<String> {
+    let slash = v.replace('-', "/");
+    if slash == v {
+        vec![v.to_string()]
+    } else {
+        vec![v.to_string(), slash]
     }
 }
 
@@ -446,6 +493,53 @@ detection:
   condition: selection
 "#;
         assert!(parse_sigma(bad).is_err());
+    }
+
+    #[test]
+    fn base64_modifier_matches_encoded() {
+        let yaml = r#"
+title: b64
+detection:
+  sel:
+    CommandLine|base64|contains: 'whoami'
+  condition: sel
+"#;
+        let rule = parse_sigma(yaml).unwrap();
+        // base64("whoami") == "d2hvYW1p"
+        let ev = Event::process_start("h", 1, 2, r"C:\x.exe", "")
+            .with_cmdline("powershell -enc BBBd2hvYW1pCCC");
+        assert!(rule.matches(&ev, &[]));
+    }
+
+    #[test]
+    fn windash_modifier_matches_slash() {
+        let yaml = r#"
+title: wd
+detection:
+  sel:
+    CommandLine|windash|contains: '-EncodedCommand'
+  condition: sel
+"#;
+        let rule = parse_sigma(yaml).unwrap();
+        let ev = Event::process_start("h", 1, 2, r"C:\x.exe", "")
+            .with_cmdline("powershell /EncodedCommand ZZZ");
+        assert!(rule.matches(&ev, &[]));
+    }
+
+    #[test]
+    fn cidr_modifier_matches_range() {
+        let yaml = r#"
+title: cd
+logsource:
+  category: network_connection
+detection:
+  sel:
+    DestinationIp|cidr: '10.0.0.0/8'
+  condition: sel
+"#;
+        let rule = parse_sigma(yaml).unwrap();
+        assert!(rule.matches(&Event::network("h", 1, "x", "10.9.9.9", 443), &[]));
+        assert!(!rule.matches(&Event::network("h", 1, "x", "11.0.0.1", 443), &[]));
     }
 
     #[test]
