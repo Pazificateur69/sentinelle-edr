@@ -1,6 +1,11 @@
-use sentinelle_common::{Engine, Event};
+use sentinelle_common::{Alert, Engine, Event, EventKind, Severity};
 use sentinelle_console::AppState;
+use sentinelle_scan::YaraScanner;
+use std::sync::Arc;
 use tokio::sync::mpsc;
+
+/// Taille maximale d'image scannée par YARA (évite de lire des fichiers énormes).
+const YARA_MAX_BYTES: usize = 32 * 1024 * 1024;
 
 /// Boucle de detection mono-poste : un evenement entre, les regles sortent.
 pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
@@ -45,13 +50,34 @@ pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
         }
     }
 
+    // Scan YARA optionnel des images de processus (SENTINELLE_YARA_DIR).
+    let yara: Option<Arc<YaraScanner>> = std::env::var("SENTINELLE_YARA_DIR")
+        .ok()
+        .and_then(|d| match YaraScanner::from_dir(std::path::Path::new(&d)) {
+            Ok(Some(s)) => {
+                tracing::info!("YARA actif : règles chargées depuis {d}");
+                Some(Arc::new(s))
+            }
+            Ok(None) => {
+                tracing::warn!("YARA : aucune règle valide dans {d}");
+                None
+            }
+            Err(e) => {
+                tracing::warn!("YARA {d} ignoré : {e:#}");
+                None
+            }
+        });
+
     let rule_count = engine.rule_count();
     state.set_runtime(rule_count, 0);
     state.broadcast_stats(chrono::Utc::now().timestamp());
 
     while let Some(ev) = rx.recv().await {
         let now = ev.ts.timestamp();
-        let alerts = engine.ingest(ev.clone());
+        let mut alerts = engine.ingest(ev.clone());
+        if let Some(scanner) = &yara {
+            alerts.extend(yara_scan_image(scanner.clone(), &ev).await);
+        }
         state.ingest_event(ev);
         for a in alerts {
             state.ingest_alert(a);
@@ -59,4 +85,34 @@ pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
         state.set_runtime(rule_count, engine.tracked_processes());
         state.broadcast_stats(now);
     }
+}
+
+/// Scanne l'image d'un nouveau processus avec YARA, hors du thread async
+/// (lecture disque + scan sont bloquants). Une alerte par règle correspondante.
+async fn yara_scan_image(scanner: Arc<YaraScanner>, ev: &Event) -> Vec<Alert> {
+    if ev.kind != EventKind::ProcessStart || ev.image.is_empty() {
+        return Vec::new();
+    }
+    let image = ev.image.clone();
+    let matches = tokio::task::spawn_blocking(move || {
+        scanner.scan_file(std::path::Path::new(&image), YARA_MAX_BYTES)
+    })
+    .await
+    .unwrap_or_default();
+
+    matches
+        .into_iter()
+        .map(|name| Alert {
+            ts: ev.ts,
+            host: ev.host.clone(),
+            rule_id: format!("YARA:{name}"),
+            title: format!("Signature YARA : {name}"),
+            description: format!("L'image {} correspond à la règle YARA « {name} ».", ev.image),
+            severity: Severity::High,
+            attack: vec!["T1204".to_string()],
+            score: Severity::High.weight(),
+            event: ev.clone(),
+            ancestors: Vec::new(),
+        })
+        .collect()
 }

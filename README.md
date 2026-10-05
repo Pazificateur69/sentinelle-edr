@@ -42,6 +42,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE cliquables, **filtres par sévérité + recherche**, **répartition des sévérités**, ligne de commande & score, **couverture ATT&CK par tactique**, **mode démo** autonome ; 100 % embarquée |
 | 🌐 | **Parc multi-postes** | agents → serveur central en **gRPC + mTLS bidirectionnel**, console multi-hôtes |
 | ⚔️ | **Réponse** | terminaison de processus (Windows), en mono-poste **et à distance dans le parc** (ordre poussé à l'agent depuis la console) ; quarantaine & isolation WFP au backlog |
+| 🔎 | **Scan YARA (YARA-X)** | signatures sur l'image de chaque nouveau processus (`SENTINELLE_YARA_DIR`, exemples dans `yara.d/`) — scan hors du thread async, taille bornée |
 | 🧪 | **Simulation d'attaque** | rejoue une kill chain réaliste (Office → PowerShell → vol de secrets → ransomware) |
 
 ## 🚀 Démarrage rapide

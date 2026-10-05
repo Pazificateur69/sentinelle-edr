@@ -14,6 +14,7 @@ Toutes les évolutions notables de Sentinelle. Format libre, ordre antéchronolo
 - **Seuils réglables** par fichier TOML (`SENTINELLE_CONFIG`).
 
 ### Collecte & plateforme
+- **Scan YARA (YARA-X)** de l'image des nouveaux processus (`SENTINELLE_YARA_DIR`), hors thread async, taille bornée.
 - Capteur **ETW** Windows (processus) + enrichissement ligne de commande.
 - Files d'ingestion **bornées** (backpressure, pertes mesurées).
 

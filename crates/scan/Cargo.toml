@@ -1,0 +1,11 @@
+[package]
+name = "sentinelle-scan"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Moteur de scan YARA (YARA-X) : signatures sur fichiers/images"
+
+[dependencies]
+yara-x = "1"
+anyhow.workspace = true
+tracing.workspace = true

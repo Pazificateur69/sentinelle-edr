@@ -28,6 +28,7 @@ Variables utiles :
 | `SENTINELLE_ALLOWLIST` | fichier JSON d'exceptions (réduction de faux positifs) |
 | `SENTINELLE_CONFIG` | fichier TOML de seuils (voir `sentinelle.example.toml`) |
 | `SENTINELLE_DB` | fichier SQLite : l'historique d'alertes survit aux redémarrages |
+| `SENTINELLE_YARA_DIR` | dossier de règles **YARA** (`.yar`) : scan de l'image de chaque nouveau processus |
 
 Exemple complet :
 

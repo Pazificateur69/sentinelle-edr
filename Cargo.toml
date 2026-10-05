@@ -9,6 +9,7 @@ members = [
   "crates/server",
   "crates/agent",
   "crates/certgen",
+  "crates/scan",
 ]
 
 [workspace.package]

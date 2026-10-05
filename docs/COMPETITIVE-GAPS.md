@@ -35,6 +35,7 @@ Le **PPID spoofing** peut tromper le moteur actuel (qui fait confiance au parent
 
 ## 4. Inspection mémoire ciblée — impact très fort, effort élevé
 Deuxième preuve pour injection/hollowing.
+- 🟡 **Moteur YARA-X livré** (`crates/scan`) et branché sur les images de processus (fichiers) ; reste à l'appliquer aux **buffers mémoire**.
 - ⬜ Sur signal suspect : `VirtualQueryEx` / `ReadProcessMemory` / `QueryWorkingSetEx`
   (crate `windows`) sur les régions exécutables privées et pages image modifiées,
   puis **`yara-x`** sur les buffers. Borner durée/octets/concurrence ; filtrer les JIT.

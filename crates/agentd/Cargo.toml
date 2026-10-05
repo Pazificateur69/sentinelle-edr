@@ -9,6 +9,7 @@ default-run = "sentinelle-agentd"
 [dependencies]
 sentinelle-common = { path = "../common" }
 sentinelle-console = { path = "../console" }
+sentinelle-scan = { path = "../scan" }
 serde_json.workspace = true
 chrono.workspace = true
 anyhow.workspace = true
