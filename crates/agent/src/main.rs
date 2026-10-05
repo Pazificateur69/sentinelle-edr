@@ -117,54 +117,54 @@ async fn main() -> Result<()> {
         tracing::info!("YARA actif sur l'agent.");
     }
 
-    #[cfg(windows)]
+    // Mode démo (TOUTES plateformes, Windows compris) : rejoue la chaîne d'attaque
+    // simulée en boucle. Permet une démonstration du parc sans privilèges ni vrai
+    // capteur — utile sous Windows où l'ETW exige l'administrateur.
+    if let Some(secs) = std::env::var("SENTINELLE_REPLAY_SECS")
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
     {
-        let (ev_tx, mut ev_rx) = mpsc::channel::<Event>(8192);
-        let h = host.clone();
-        std::thread::spawn(move || {
-            if let Err(e) = sentinelle_sensor_windows::run(h, move |ev| {
-                // try_send : file bornée, abandon silencieux si saturée.
-                let _ = ev_tx.try_send(ev);
-            }) {
-                tracing::error!("capteur ETW : {e:#}");
+        tracing::warn!("Mode démo : rejeu de la chaîne d'attaque simulée toutes les {secs}s.");
+        loop {
+            for ev in sentinelle_common::scenario::attack_chain(&host) {
+                process(&mut engine, ev, &tx_tel, &yara).await;
+                tokio::time::sleep(Duration::from_millis(500)).await;
             }
-        });
-        while let Some(ev) = ev_rx.recv().await {
-            process(&mut engine, ev, &tx_tel, &yara).await;
+            tokio::time::sleep(Duration::from_secs(secs)).await;
         }
     }
 
-    #[cfg(not(windows))]
-    {
-        // Avec SENTINELLE_REPLAY_SECS : mode démo (rejoue la chaîne simulée en
-        // boucle). Sinon : vrai capteur multi-OS (scrutation des processus).
-        if let Some(secs) = std::env::var("SENTINELLE_REPLAY_SECS")
-            .ok()
-            .and_then(|s| s.parse::<u64>().ok())
+    // Sinon : vrai capteur. Sous Windows, ETW (nécessite l'admin) avec repli
+    // automatique sur la scrutation multi-OS si l'ETW ne démarre pas. Ailleurs,
+    // scrutation multi-OS.
+    let (ev_tx, mut ev_rx) = mpsc::channel::<Event>(8192);
+    let h = host.clone();
+    std::thread::spawn(move || {
+        // try_send : file bornée, abandon silencieux si saturée.
+        let emit = move |ev| {
+            let _ = ev_tx.try_send(ev);
+        };
+        #[cfg(windows)]
         {
-            tracing::warn!("Mode démo : rejeu de la chaîne d'attaque simulée toutes les {secs}s.");
-            loop {
-                for ev in sentinelle_common::scenario::attack_chain(&host) {
-                    process(&mut engine, ev, &tx_tel, &yara).await;
-                    tokio::time::sleep(Duration::from_millis(500)).await;
-                }
-                tokio::time::sleep(Duration::from_secs(secs)).await;
-            }
-        } else {
-            tracing::info!("Capteur multi-OS actif (scrutation des processus).");
-            let (ev_tx, mut ev_rx) = mpsc::channel::<Event>(8192);
-            let h = host.clone();
-            std::thread::spawn(move || {
-                if let Err(e) = sentinelle_sensor_proc::run(h, move |ev| {
-                    let _ = ev_tx.try_send(ev);
-                }) {
+            if let Err(e) = sentinelle_sensor_windows::run(h.clone(), emit.clone()) {
+                tracing::warn!(
+                    "capteur ETW indisponible ({e:#}) — repli sur la scrutation multi-OS."
+                );
+                if let Err(e) = sentinelle_sensor_proc::run(h, emit) {
                     tracing::error!("capteur multi-OS : {e:#}");
                 }
-            });
-            while let Some(ev) = ev_rx.recv().await {
-                process(&mut engine, ev, &tx_tel, &yara).await;
             }
         }
+        #[cfg(not(windows))]
+        {
+            tracing::info!("Capteur multi-OS actif (scrutation des processus).");
+            if let Err(e) = sentinelle_sensor_proc::run(h, emit) {
+                tracing::error!("capteur multi-OS : {e:#}");
+            }
+        }
+    });
+    while let Some(ev) = ev_rx.recv().await {
+        process(&mut engine, ev, &tx_tel, &yara).await;
     }
 
     drop(tx_tel); // ferme le flux sortant

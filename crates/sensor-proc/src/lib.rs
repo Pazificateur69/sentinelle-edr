@@ -10,10 +10,13 @@
 //! fichier, ni accès mémoire. C'est la couverture multi-OS honnête ; l'ETW
 //! Windows reste supérieur pour la profondeur de télémétrie.
 
+mod peinfo;
+pub use peinfo::original_file_name_of;
+
 use sentinelle_common::Event;
 use std::collections::HashSet;
 use std::time::Duration;
-use sysinfo::{Process, ProcessesToUpdate, System};
+use sysinfo::{Process, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
 /// Intervalle de scrutation par défaut.
 pub const DEFAULT_POLL_MS: u64 = 1000;
@@ -42,9 +45,16 @@ where
         known.len()
     );
 
+    // On demande explicitement l'image (exe) ET la ligne de commande (cmd) : sous
+    // Windows, le rafraîchissement par défaut ne récupère PAS la ligne de commande
+    // (elle restait vide, rendant muettes toutes les règles basées sur la cmdline).
+    let refresh = ProcessRefreshKind::nothing()
+        .with_cmd(UpdateKind::Always)
+        .with_exe(UpdateKind::Always);
+
     loop {
         std::thread::sleep(Duration::from_millis(poll_ms));
-        sys.refresh_processes(ProcessesToUpdate::All, true);
+        sys.refresh_processes_specifics(ProcessesToUpdate::All, true, refresh);
 
         let current: HashSet<u32> = sys.processes().keys().map(|p| p.as_u32()).collect();
         for (pid, proc_) in sys.processes() {
@@ -79,7 +89,12 @@ fn build_event(host: &str, pid: u32, proc_: &Process, sys: &System) -> Event {
         .map(|s| s.to_string_lossy())
         .collect::<Vec<_>>()
         .join(" ");
-    Event::process_start(host, pid, ppid, &image, &parent_image).with_cmdline(&cmd)
+    // Nom d'origine du PE (résistant au renommage) pour la détection de masquerading.
+    // Vide hors Windows et pour les binaires sans ressource de version.
+    let original = original_file_name_of(&image);
+    Event::process_start(host, pid, ppid, &image, &parent_image)
+        .with_cmdline(&cmd)
+        .with_original_file_name(&original)
 }
 
 #[cfg(all(test, unix))]

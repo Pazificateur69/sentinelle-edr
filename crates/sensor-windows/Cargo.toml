@@ -7,6 +7,8 @@ description = "Capteur ETW Windows : processus/reseau/fichier -> Event (user-mod
 
 [dependencies]
 sentinelle-common = { path = "../common" }
+# Réutilise le lecteur PE OriginalFilename (détection de masquerading).
+sentinelle-sensor-proc = { path = "../sensor-proc" }
 chrono.workspace = true
 anyhow.workspace = true
 tracing.workspace = true

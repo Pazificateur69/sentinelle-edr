@@ -10,3 +10,7 @@ sentinelle-common = { path = "../common" }
 sysinfo = "0.39"
 anyhow.workspace = true
 tracing.workspace = true
+
+# Lecture du champ PE OriginalFilename (détection de masquerading) via version.dll.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = ["Win32_Storage_FileSystem", "Win32_Foundation"] }

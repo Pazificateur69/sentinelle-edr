@@ -19,7 +19,7 @@ use crate::cmdline::cmdline_of;
 use ferrisetw::parser::Parser;
 use ferrisetw::provider::Provider;
 use ferrisetw::schema_locator::SchemaLocator;
-use ferrisetw::trace::{TraceTrait, UserTrace};
+use ferrisetw::trace::UserTrace;
 use ferrisetw::EventRecord;
 use sentinelle_common::Event;
 use std::collections::HashMap;
@@ -49,10 +49,16 @@ where
         })
         .build();
 
+    // Nom de session UNIQUE par processus : les sessions ETW survivent à la mort du
+    // process (une instance tuée laisse sa session enregistrée dans le noyau). Un nom
+    // fixe provoquait alors `AlreadyExist` au lancement suivant. Le suffixe PID évite
+    // la collision entre instances concurrentes ou après un arrêt brutal.
+    let session = format!("sentinelle-kproc-{}", std::process::id());
+
     // start_and_process() demarre le traitement sur un thread dedie de ferrisetw
     // et renvoie la trace. On garde la trace vivante en bloquant ce thread.
     let _trace = UserTrace::new()
-        .named("sentinelle-kproc".to_string())
+        .named(session)
         .enable(provider)
         .start_and_process()
         .map_err(|e| anyhow::anyhow!("démarrage de la trace ETW : {e:?}"))?;
@@ -94,8 +100,11 @@ where
                 map.get(&ppid).cloned().unwrap_or_default()
             };
 
+            // Nom d'origine du PE (résistant au renommage) pour le masquerading.
+            let original = sentinelle_sensor_proc::original_file_name_of(&image);
             let ev = Event::process_start(host, pid, ppid, &image, &parent_image)
-                .with_cmdline(&cmdline_of(pid));
+                .with_cmdline(&cmdline_of(pid))
+                .with_original_file_name(&original);
             handler(ev);
         }
         EVENT_PROCESS_STOP => {
