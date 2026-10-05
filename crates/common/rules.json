@@ -179,6 +179,28 @@
     ]
   },
   {
+    "id": "SNT-0100",
+    "title": "Connexion vers un port de C2 courant",
+    "description": "Connexion sortante vers un port frequemment utilise par des cadres de commande & controle (Metasploit, etc.) (T1571).",
+    "severity": "high",
+    "attack": ["T1571", "T1095"],
+    "kind": "network",
+    "all": [
+      { "field": "DestinationPort", "op": "equals", "values": ["4444", "1337", "5555", "6666", "8081"] }
+    ]
+  },
+  {
+    "id": "SNT-0101",
+    "title": "Note de rançon déposée",
+    "description": "Ecriture d'un fichier dont le nom correspond a une note de rançon : chiffrement en cours (T1486).",
+    "severity": "critical",
+    "attack": ["T1486"],
+    "kind": "file_write",
+    "all": [
+      { "field": "TargetFilename", "op": "contains", "values": ["read_me_to_decrypt", "how_to_decrypt", "_restore_files", "decrypt_instructions", "recover_your_files", ".locked", ".crypted"] }
+    ]
+  },
+  {
     "id": "SNT-0080",
     "title": "Téléchargement via certutil (LOLBin)",
     "description": "certutil detourne en telechargeur : urlcache/verifyctl recupere une charge distante (T1105, T1218).",

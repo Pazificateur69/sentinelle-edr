@@ -31,10 +31,38 @@ pub fn attack_chain(host: &str) -> Vec<Event> {
         ),
     ];
 
-    STEPS
+    let mut events: Vec<Event> = STEPS
         .iter()
         .map(|(pid, ppid, image, cmd)| {
             Event::process_start(host, *pid, *ppid, image, "").with_cmdline(cmd)
         })
-        .collect()
+        .collect();
+
+    // Exfiltration / C2 : connexion vers un port de commande & controle.
+    events.push(Event::network(
+        host,
+        4300,
+        r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+        "185.12.0.9",
+        4444,
+    ));
+
+    // Rançongiciel : note de rançon puis chiffrement massif de fichiers.
+    let locker = r"C:\temp\locker.exe";
+    events.push(Event::file_write(
+        host,
+        4900,
+        locker,
+        r"C:\Users\admin\Documents\READ_ME_TO_DECRYPT.txt",
+    ));
+    for i in 0..22 {
+        events.push(Event::file_write(
+            host,
+            4900,
+            locker,
+            &format!(r"C:\Users\admin\Documents\rapport_{i}.crypted"),
+        ));
+    }
+
+    events
 }

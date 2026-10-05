@@ -68,6 +68,23 @@ impl Event {
         }
     }
 
+    /// Connexion reseau sortante.
+    pub fn network(host: &str, pid: u32, image: &str, dst_ip: &str, dst_port: u16) -> Self {
+        let mut e = Self::process_start(host, pid, 0, image, "");
+        e.kind = EventKind::Network;
+        e.dst_ip = dst_ip.to_string();
+        e.dst_port = dst_port;
+        e
+    }
+
+    /// Ecriture de fichier.
+    pub fn file_write(host: &str, pid: u32, image: &str, file_path: &str) -> Self {
+        let mut e = Self::process_start(host, pid, 0, image, "");
+        e.kind = EventKind::FileWrite;
+        e.file_path = file_path.to_string();
+        e
+    }
+
     pub fn with_cmdline(mut self, cmd: &str) -> Self {
         self.command_line = cmd.to_string();
         self

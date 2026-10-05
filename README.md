@@ -108,15 +108,17 @@ rapides. Le capteur ETW et le transport gRPC/mTLS sont isolés dans leurs crates
 
 ## 🎯 Détection
 
-18 règles embarquées ([`crates/common/rules.json`](crates/common/rules.json)), mappées MITRE ATT&CK :
+20 règles embarquées ([`crates/common/rules.json`](crates/common/rules.json)), mappées MITRE ATT&CK :
 chaîne de macro Office (T1203/T1059), PowerShell encodé/furtif/download-cradle
 (T1059.001, T1027), dump LSASS & mimikatz (T1003), suppression des *shadow copies*
 & sabotage `bcdedit` (ransomware, T1490), persistance (Run key, tâches, services),
 LOLBins (certutil, bitsadmin, rundll32), désactivation de Defender, etc.
 
-S'y ajoutent une **détection comportementale** (`SNT-B001` : rafale de créations de
-processus par un même parent) et une couche **allowlist + déduplication** pour
-contenir les faux positifs et le bruit.
+La couverture dépasse les processus : **événements réseau** (connexion vers un
+port de C2 courant) et **fichier** (note de rançon). Deux **détections
+comportementales** à états complètent les règles unitaires : `SNT-B001` (rafale de
+créations de processus) et `SNT-B002` (chiffrement massif de fichiers = rançongiciel).
+Enfin, une couche **allowlist + déduplication** contient les faux positifs et le bruit.
 
 **Ajouter une détection** = ajouter une entrée JSON, ou déposer une règle Sigma dans
 [`rules.d/`](rules.d/). Exemple fourni : [`rules.d/recon_discovery.yml`](rules.d/recon_discovery.yml).
@@ -127,7 +129,7 @@ ou un fichier pointé par `SENTINELLE_ALLOWLIST`.
 
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **19 tests unitaires**, `cargo test` |
+| Cœur de détection (règles, arbre, score, Sigma) | ✅ **22 tests unitaires**, `cargo test` |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ⚠️ écrit, **à valider sur Windows** (dev sur macOS) |
 | Réponse `kill` (Win32) | ⚠️ compile sous Windows uniquement |
@@ -158,7 +160,7 @@ Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.
 ## 🧪 Tests
 
 ```bash
-cargo test -p sentinelle-common   # 19 tests, multiplateforme, rapides
+cargo test -p sentinelle-common   # 22 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 

@@ -29,6 +29,10 @@ const DEDUP_WINDOW_SECS: i64 = 60;
 const BURST_THRESHOLD: usize = 8;
 /// ...dans cette fenetre glissante.
 const BURST_WINDOW_SECS: i64 = 10;
+/// Chiffrement massif (rancongiciel) : seuil d'ecritures par un meme processus...
+const FILE_BURST_THRESHOLD: usize = 20;
+/// ...dans cette fenetre glissante.
+const FILE_BURST_WINDOW_SECS: i64 = 5;
 
 /// Une detection.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +58,8 @@ pub struct Engine {
     recent: HashMap<(String, String, u32), i64>,
     /// ppid -> horodatages des creations recentes (detection de rafale).
     spawns: HashMap<u32, VecDeque<i64>>,
+    /// pid -> horodatages des ecritures recentes (chiffrement massif).
+    file_writes: HashMap<u32, VecDeque<i64>>,
 }
 
 impl Engine {
@@ -75,6 +81,7 @@ impl Engine {
             allowlist,
             recent: HashMap::new(),
             spawns: HashMap::new(),
+            file_writes: HashMap::new(),
         }
     }
 
@@ -119,11 +126,19 @@ impl Engine {
             })
             .collect();
 
-        // Detection comportementale : rafale de creations de processus.
-        if ev.kind == EventKind::ProcessStart {
-            if let Some(a) = self.detect_spawn_burst(&ev, now) {
-                alerts.push(a);
+        // Detections comportementales (a etats).
+        match ev.kind {
+            EventKind::ProcessStart => {
+                if let Some(a) = self.detect_spawn_burst(&ev, now) {
+                    alerts.push(a);
+                }
             }
+            EventKind::FileWrite => {
+                if let Some(a) = self.detect_file_burst(&ev, now) {
+                    alerts.push(a);
+                }
+            }
+            _ => {}
         }
 
         // Allowlist (faux positifs) puis deduplication.
@@ -165,6 +180,37 @@ impl Engine {
             severity: Severity::High,
             attack: vec!["T1059".to_string()],
             score: Severity::High.weight(),
+            event: ev.clone(),
+        })
+    }
+
+    fn detect_file_burst(&mut self, ev: &Event, now: i64) -> Option<Alert> {
+        if ev.pid == 0 {
+            return None;
+        }
+        let dq = self.file_writes.entry(ev.pid).or_default();
+        dq.push_back(now);
+        while let Some(&front) = dq.front() {
+            if now - front > FILE_BURST_WINDOW_SECS {
+                dq.pop_front();
+            } else {
+                break;
+            }
+        }
+        (dq.len() >= FILE_BURST_THRESHOLD).then(|| Alert {
+            ts: ev.ts,
+            host: ev.host.clone(),
+            rule_id: "SNT-B002".to_string(),
+            title: "Chiffrement massif de fichiers (rançongiciel)".to_string(),
+            description: format!(
+                "{} fichiers écrits par le processus pid {} en moins de {}s — comportement de rançongiciel",
+                dq.len(),
+                ev.pid,
+                FILE_BURST_WINDOW_SECS
+            ),
+            severity: Severity::Critical,
+            attack: vec!["T1486".to_string()],
+            score: Severity::Critical.weight(),
             event: ev.clone(),
         })
     }
@@ -238,6 +284,49 @@ mod tests {
         let second = eng.ingest(ev);
         assert!(first.iter().any(|a| a.rule_id == "SNT-0010"));
         assert!(!second.iter().any(|a| a.rule_id == "SNT-0010")); // meme (regle,hote,pid)
+    }
+
+    #[test]
+    fn network_c2_port_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts = eng.ingest(Event::network(
+            "h",
+            4300,
+            r"C:\W\powershell.exe",
+            "185.12.0.9",
+            4444,
+        ));
+        assert!(alerts.iter().any(|a| a.rule_id == "SNT-0100"));
+    }
+
+    #[test]
+    fn ransom_note_file_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts = eng.ingest(Event::file_write(
+            "h",
+            4900,
+            r"C:\temp\locker.exe",
+            r"C:\Users\x\READ_ME_TO_DECRYPT.txt",
+        ));
+        assert!(alerts.iter().any(|a| a.rule_id == "SNT-0101"));
+    }
+
+    #[test]
+    fn mass_file_write_burst_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let mut got = false;
+        for i in 0..20u32 {
+            let alerts = eng.ingest(Event::file_write(
+                "h",
+                4900,
+                r"C:\temp\locker.exe",
+                &format!(r"C:\d\f{i}.dat"), // sans extension de rançon : teste le seul comportement
+            ));
+            if alerts.iter().any(|a| a.rule_id == "SNT-B002") {
+                got = true;
+            }
+        }
+        assert!(got, "20 écritures du même pid doivent lever SNT-B002");
     }
 
     #[test]
