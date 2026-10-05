@@ -15,7 +15,7 @@
 //! KernelTrace de ferrisetw supprimerait la course sysinfo. A faire lors de la
 //! validation sur VM Windows.
 
-use crate::cmdline::cmdline_of;
+use crate::cmdline::image_and_cmdline_of;
 use ferrisetw::parser::Parser;
 use ferrisetw::provider::Provider;
 use ferrisetw::schema_locator::SchemaLocator;
@@ -92,7 +92,14 @@ where
             let ppid: u32 = parser
                 .try_parse("ParentProcessID")
                 .map_err(|e| anyhow::anyhow!("ParentProcessID : {e:?}"))?;
-            let image: String = parser.try_parse("ImageName").unwrap_or_default();
+            // L'ImageName ETW est un chemin NT (\Device\HarddiskVolumeX\...). On
+            // resout le chemin DOS (C:\...) et la ligne de commande via sysinfo ; le
+            // chemin DOS est indispensable pour lire la ressource de version du PE
+            // (masquerading) et pour les regles basees sur le chemin. Si sysinfo
+            // echoue (process trop bref), on retombe sur l'ImageName ETW.
+            let nt_image: String = parser.try_parse("ImageName").unwrap_or_default();
+            let (dos_image, cmdline) = image_and_cmdline_of(pid);
+            let image = if dos_image.is_empty() { nt_image } else { dos_image };
 
             let parent_image = {
                 let mut map = PID_IMAGE.lock().unwrap();
@@ -103,7 +110,7 @@ where
             // Nom d'origine du PE (résistant au renommage) pour le masquerading.
             let original = sentinelle_sensor_proc::original_file_name_of(&image);
             let ev = Event::process_start(host, pid, ppid, &image, &parent_image)
-                .with_cmdline(&cmdline_of(pid))
+                .with_cmdline(&cmdline)
                 .with_original_file_name(&original);
             handler(ev);
         }
