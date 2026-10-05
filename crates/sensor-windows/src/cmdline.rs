@@ -1,33 +1,47 @@
-//! Enrichissement best-effort de la ligne de commande d'un processus par PID.
+//! Enrichissement best-effort d'un processus par PID (via `sysinfo`).
 //!
-//! Le provider ETW Kernel-Process ne fournit PAS la ligne de commande. On la
-//! recupere via `sysinfo` (multiplateforme, pas d'unsafe). C'est intrinsequement
-//! racy : un processus tres bref peut disparaitre avant qu'on l'interroge ; dans
-//! ce cas on renvoie une chaine vide et les regles basees sur CommandLine ne se
-//! declenchent pas pour cet evenement. Compromis assume en phase 1.
+//! Le provider ETW Kernel-Process ne fournit NI la ligne de commande, NI un chemin
+//! d'image exploitable : l'`ImageName` ETW est un chemin NT (`\Device\HarddiskVolumeX\...`),
+//! pas un chemin DOS (`C:\...`). On enrichit donc via `sysinfo` (multiplateforme, pas
+//! d'unsafe) :
+//!   - la ligne de commande (sinon les regles CommandLine ne se declenchent pas) ;
+//!   - le chemin DOS de l'image (necessaire pour lire la ressource de version du PE
+//!     — detection de masquerading — et pour les regles basees sur le chemin).
+//!
+//! Intrinsequement racy : un processus tres bref peut disparaitre avant qu'on
+//! l'interroge ; on renvoie alors des chaines vides et l'appelant retombe sur ce
+//! que l'ETW a fourni. Compromis assume en phase 1.
 
 use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
-/// Ligne de commande du PID, ou chaine vide si indisponible.
-pub fn cmdline_of(pid: u32) -> String {
+/// Chemin DOS de l'image ET ligne de commande du PID (via sysinfo), ou chaines
+/// vides si indisponible.
+pub fn image_and_cmdline_of(pid: u32) -> (String, String) {
     let mut sys = System::new();
     let p = Pid::from_u32(pid);
-    // Rafraichit uniquement ce PID (pas tout le systeme) pour limiter le cout, en
-    // demandant EXPLICITEMENT la ligne de commande : le rafraichissement par defaut
-    // ne la recupere pas sous Windows (elle restait vide).
+    // Rafraichit uniquement ce PID, en demandant EXPLICITEMENT l'image et la ligne
+    // de commande (le rafraichissement par defaut ne les recupere pas sous Windows).
     sys.refresh_processes_specifics(
         ProcessesToUpdate::Some(&[p]),
         true,
-        ProcessRefreshKind::nothing().with_cmd(UpdateKind::Always),
+        ProcessRefreshKind::nothing()
+            .with_cmd(UpdateKind::Always)
+            .with_exe(UpdateKind::Always),
     );
-    sys.process(p)
-        .map(|proc_| {
-            proc_
+    match sys.process(p) {
+        Some(proc_) => {
+            let image = proc_
+                .exe()
+                .map(|e| e.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            let cmd = proc_
                 .cmd()
                 .iter()
                 .map(|s| s.to_string_lossy())
                 .collect::<Vec<_>>()
-                .join(" ")
-        })
-        .unwrap_or_default()
+                .join(" ");
+            (image, cmd)
+        }
+        None => (String::new(), String::new()),
+    }
 }
