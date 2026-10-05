@@ -25,7 +25,9 @@ async fn main() -> Result<()> {
     let (sse_tx, _) = broadcast::channel(1024);
     let (inject_tx, inject_rx) = mpsc::unbounded_channel();
 
-    let state = AppState::new(sse_tx, host.clone(), Some(inject_tx.clone()));
+    let store = open_store();
+    let state = AppState::new(sse_tx, host.clone(), Some(inject_tx.clone()), store);
+    state.load_history();
 
     tokio::spawn(ingest::ingest_loop(inject_rx, state.clone()));
 
@@ -62,4 +64,19 @@ fn hostname() -> String {
     std::env::var("COMPUTERNAME")
         .or_else(|_| std::env::var("HOSTNAME"))
         .unwrap_or_else(|_| "localhost".into())
+}
+
+/// Ouvre la persistance SQLite si `SENTINELLE_DB` est défini.
+fn open_store() -> Option<std::sync::Arc<sentinelle_console::Store>> {
+    let path = std::env::var("SENTINELLE_DB").ok()?;
+    match sentinelle_console::Store::open(&path) {
+        Ok(s) => {
+            tracing::info!("Persistance SQLite : {path}");
+            Some(std::sync::Arc::new(s))
+        }
+        Err(e) => {
+            tracing::error!("ouverture base {path} : {e:#}");
+            None
+        }
+    }
 }

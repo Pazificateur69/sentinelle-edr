@@ -3,6 +3,8 @@
 
 pub mod http;
 pub mod state;
+pub mod store;
 
 pub use http::base_routes;
 pub use state::{AppState, HostRisk, SseMsg, Stats};
+pub use store::Store;

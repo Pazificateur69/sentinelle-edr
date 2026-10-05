@@ -37,7 +37,20 @@ async fn main() -> Result<()> {
         .init();
 
     let (sse_tx, _) = broadcast::channel(2048);
-    let state = AppState::new(sse_tx, "serveur-central".to_string(), None);
+    let store = std::env::var("SENTINELLE_DB").ok().and_then(|path| {
+        match sentinelle_console::Store::open(&path) {
+            Ok(s) => {
+                tracing::info!("Persistance SQLite : {path}");
+                Some(Arc::new(s))
+            }
+            Err(e) => {
+                tracing::error!("ouverture base {path} : {e:#}");
+                None
+            }
+        }
+    });
+    let state = AppState::new(sse_tx, "serveur-central".to_string(), None, store);
+    state.load_history();
     if let Ok(e) = Engine::with_builtin_rules() {
         state.set_runtime(e.rule_count(), 0);
     }

@@ -57,6 +57,8 @@ pub struct AppState {
     /// Canal d'injection d'evenement (mode mono-poste, pour la simulation).
     /// `None` cote serveur de parc (les evenements arrivent par gRPC).
     pub inject: Option<mpsc::UnboundedSender<Event>>,
+    /// Persistance SQLite optionnelle des alertes.
+    pub store: Option<Arc<crate::store::Store>>,
     pub inner: Arc<Mutex<Shared>>,
 }
 
@@ -72,11 +74,13 @@ impl AppState {
         tx: broadcast::Sender<SseMsg>,
         host: String,
         inject: Option<mpsc::UnboundedSender<Event>>,
+        store: Option<Arc<crate::store::Store>>,
     ) -> Self {
         AppState {
             tx,
             host,
             inject,
+            store,
             inner: Arc::new(Mutex::new(Shared {
                 alerts: VecDeque::new(),
                 events: VecDeque::new(),
@@ -106,7 +110,30 @@ impl AppState {
             s.risk.add(&a.host, a.score, now);
             push_cap(&mut s.alerts, a.clone(), MAX_ALERTS);
         }
+        // Persistance best-effort (ne bloque jamais le flux).
+        if let Some(store) = &self.store {
+            if let Err(e) = store.insert_alert(&a) {
+                tracing::warn!("persistance alerte échouée : {e:#}");
+            }
+        }
         let _ = self.tx.send(SseMsg::Alert(a));
+    }
+
+    /// Recharge l'historique d'alertes depuis la base (au démarrage).
+    pub fn load_history(&self) {
+        let Some(store) = &self.store else {
+            return;
+        };
+        if let Ok(total) = store.count() {
+            self.inner.lock().unwrap().last_stats.total_alerts = total;
+        }
+        if let Ok(alerts) = store.recent(MAX_ALERTS) {
+            let mut s = self.inner.lock().unwrap();
+            for a in alerts.into_iter().rev() {
+                s.alerts.push_front(a); // la plus récente finit en tête
+            }
+            tracing::info!("historique rechargé : {} alertes", s.alerts.len());
+        }
     }
 
     /// Met a jour les compteurs runtime (nombre de regles, process suivis).

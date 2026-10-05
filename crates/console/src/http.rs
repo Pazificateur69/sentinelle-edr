@@ -25,6 +25,7 @@ pub fn base_routes() -> Router<AppState> {
         .route("/api/alerts", get(alerts))
         .route("/api/events", get(events))
         .route("/api/stats", get(stats))
+        .route("/api/history", get(history))
 }
 
 async fn index() -> Html<&'static str> {
@@ -55,4 +56,15 @@ async fn events(State(st): State<AppState>) -> Json<Vec<Event>> {
 async fn stats(State(st): State<AppState>) -> Json<Stats> {
     let s = st.inner.lock().unwrap();
     Json(s.last_stats.clone())
+}
+
+/// Historique persistant (depuis SQLite si activé, sinon le tampon en mémoire).
+async fn history(State(st): State<AppState>) -> Json<Vec<Alert>> {
+    if let Some(store) = &st.store {
+        if let Ok(a) = store.recent(300) {
+            return Json(a);
+        }
+    }
+    let s = st.inner.lock().unwrap();
+    Json(s.alerts.iter().cloned().collect())
 }
