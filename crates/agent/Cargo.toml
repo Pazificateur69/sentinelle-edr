@@ -1,0 +1,20 @@
+[package]
+name = "sentinelle-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Agent de parc Sentinelle : collecte + detection locale -> flux gRPC (mTLS) vers le serveur"
+
+[dependencies]
+sentinelle-common = { path = "../common" }
+sentinelle-proto = { path = "../proto" }
+tonic = { version = "0.14", features = ["tls-ring"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "signal", "net"] }
+tokio-stream = "0.1"
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+chrono.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+sentinelle-sensor-windows = { path = "../sensor-windows" }

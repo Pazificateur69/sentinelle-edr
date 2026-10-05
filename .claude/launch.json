@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "console",
+      "runtimeExecutable": "cargo",
+      "runtimeArgs": ["run", "--release", "-p", "sentinelle-agentd"],
+      "port": 8787,
+      "url": "http://localhost:8787"
+    }
+  ]
+}

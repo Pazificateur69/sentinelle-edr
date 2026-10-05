@@ -1,0 +1,10 @@
+[package]
+name = "sentinelle-certgen"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Genere une mini-PKI (CA + cert serveur + cert client) pour le mTLS du parc"
+
+[dependencies]
+rcgen = "0.13"
+anyhow.workspace = true

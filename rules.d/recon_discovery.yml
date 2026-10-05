@@ -1,0 +1,22 @@
+title: Reconnaissance de domaine (nltest / whoami)
+id: snt-sigma-recon
+description: >
+  Commandes de reconnaissance d'annuaire couramment lancees juste apres une
+  compromission pour cartographier le domaine et les privileges.
+level: low
+tags:
+  - attack.t1087
+  - attack.t1482
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  nltest:
+    Image|endswith: '\nltest.exe'
+    CommandLine|contains:
+      - '/domain_trusts'
+      - '/dclist'
+  whoami:
+    Image|endswith: '\whoami.exe'
+    CommandLine|contains: '/all'
+  condition: 1 of them

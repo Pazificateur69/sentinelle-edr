@@ -1,0 +1,218 @@
+[
+  {
+    "id": "SNT-0001",
+    "title": "Application Office lance un interpreteur de script",
+    "description": "Un processus Office a pour descendant un interpreteur de commandes/scripts. Signature classique d'une macro malveillante (T1203 -> T1059).",
+    "severity": "critical",
+    "attack": ["T1203", "T1059"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe", "mspub.exe", "visio.exe"],
+      "children": ["cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe", "mshta.exe"],
+      "ancestor": true
+    }
+  },
+  {
+    "id": "SNT-0002",
+    "title": "Navigateur web lance un interpreteur de script",
+    "description": "Un navigateur engendre directement un interpreteur de script : telechargement + execution probable.",
+    "severity": "high",
+    "attack": ["T1059"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["chrome.exe", "msedge.exe", "firefox.exe", "iexplore.exe", "brave.exe"],
+      "children": ["powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe", "mshta.exe", "cmd.exe"],
+      "ancestor": false
+    }
+  },
+  {
+    "id": "SNT-0003",
+    "title": "Chaine de LOLBins vers un interpreteur",
+    "description": "Un binaire detourne (mshta, wscript, regsvr32, rundll32) lance un interpreteur : technique d'execution indirecte (T1218).",
+    "severity": "high",
+    "attack": ["T1059", "T1218"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["mshta.exe", "wscript.exe", "cscript.exe", "regsvr32.exe", "rundll32.exe"],
+      "children": ["powershell.exe", "pwsh.exe", "cmd.exe"],
+      "ancestor": false
+    }
+  },
+  {
+    "id": "SNT-0010",
+    "title": "PowerShell avec commande encodee",
+    "description": "PowerShell lance avec -EncodedCommand : obfuscation frequente de charges malveillantes (T1027).",
+    "severity": "high",
+    "attack": ["T1059.001", "T1027"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-encodedcommand", "-enc ", " -e "] }
+    ]
+  },
+  {
+    "id": "SNT-0011",
+    "title": "PowerShell download cradle",
+    "description": "PowerShell telecharge et execute du code en memoire (DownloadString / IEX / WebClient).",
+    "severity": "high",
+    "attack": ["T1059.001", "T1105"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["downloadstring", "downloadfile", "net.webclient", "invoke-webrequest", "iwr ", "iex(", "invoke-expression"] }
+    ]
+  },
+  {
+    "id": "SNT-0012",
+    "title": "PowerShell furtif (hidden / bypass)",
+    "description": "Combinaison de drapeaux d'evasion : fenetre cachee, politique d'execution contournee, pas de profil (T1562).",
+    "severity": "medium",
+    "attack": ["T1059.001", "T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-w hidden", "-windowstyle hidden", "-ep bypass", "-executionpolicy bypass"] }
+    ]
+  },
+  {
+    "id": "SNT-0020",
+    "title": "Outil de vol d'identifiants",
+    "description": "Signature d'outils de credential dumping (mimikatz, sekurlsa) (T1003).",
+    "severity": "critical",
+    "attack": ["T1003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["sekurlsa", "mimikatz", "lsadump", "::logonpasswords"] }
+    ]
+  },
+  {
+    "id": "SNT-0021",
+    "title": "Dump de LSASS via comsvcs MiniDump",
+    "description": "rundll32 comsvcs.dll MiniDump cible la memoire de LSASS pour en extraire des secrets (T1003.001).",
+    "severity": "critical",
+    "attack": ["T1003.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["comsvcs.dll", "minidump"] }
+    ]
+  },
+  {
+    "id": "SNT-0030",
+    "title": "Persistance par cle Run du registre",
+    "description": "Ecriture d'une cle Run (demarrage automatique) via reg.exe (T1547.001).",
+    "severity": "medium",
+    "attack": ["T1547.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["reg.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["\\currentversion\\run", "\\currentversion\\runonce"] }
+    ]
+  },
+  {
+    "id": "SNT-0031",
+    "title": "Creation de tache planifiee",
+    "description": "schtasks /create : mecanisme de persistance ou d'execution differee (T1053.005).",
+    "severity": "low",
+    "attack": ["T1053.005"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["schtasks.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/create", "/sc "] }
+    ]
+  },
+  {
+    "id": "SNT-0040",
+    "title": "Creation/modification de service Windows",
+    "description": "sc.exe create/config : persistance au niveau service (T1543.003).",
+    "severity": "medium",
+    "attack": ["T1543.003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["sc.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": [" create ", " config "] }
+    ]
+  },
+  {
+    "id": "SNT-0050",
+    "title": "Suppression des clichés instantanés (ransomware)",
+    "description": "Destruction des Volume Shadow Copies pour empecher la restauration : etape typique de ransomware (T1490).",
+    "severity": "critical",
+    "attack": ["T1490"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["delete shadows", "shadowcopy delete", "win32_shadowcopy"] }
+    ]
+  },
+  {
+    "id": "SNT-0051",
+    "title": "Sabotage de la recuperation Windows",
+    "description": "bcdedit desactive la reparation automatique / ignore les echecs : pre-chiffrement ransomware (T1490).",
+    "severity": "high",
+    "attack": ["T1490"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bcdedit.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["recoveryenabled no", "bootstatuspolicy ignoreallfailures"] }
+    ]
+  },
+  {
+    "id": "SNT-0060",
+    "title": "Execution a distance via WMI",
+    "description": "wmic process call create : execution laterale/locale via WMI (T1047).",
+    "severity": "medium",
+    "attack": ["T1047"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["wmic.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["process call create"] }
+    ]
+  },
+  {
+    "id": "SNT-0070",
+    "title": "Desactivation de Microsoft Defender",
+    "description": "Tentative de desactivation de la protection temps reel de Defender (T1562.001).",
+    "severity": "high",
+    "attack": ["T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["set-mppreference", "disablerealtimemonitoring", "add-mppreference -exclusionpath"] }
+    ]
+  },
+  {
+    "id": "SNT-0080",
+    "title": "Téléchargement via certutil (LOLBin)",
+    "description": "certutil detourne en telechargeur : urlcache/verifyctl recupere une charge distante (T1105, T1218).",
+    "severity": "high",
+    "attack": ["T1105", "T1218"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["certutil.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["urlcache", "verifyctl", "-split"] }
+    ]
+  },
+  {
+    "id": "SNT-0081",
+    "title": "Téléchargement via bitsadmin (LOLBin)",
+    "description": "bitsadmin /transfer : telechargement furtif en tache de fond (T1105, T1197).",
+    "severity": "medium",
+    "attack": ["T1105", "T1197"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bitsadmin.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/transfer", "/addfile"] }
+    ]
+  },
+  {
+    "id": "SNT-0090",
+    "title": "Création de compte local",
+    "description": "net user /add : creation d'un compte, potentielle persistance ou escalade (T1136.001).",
+    "severity": "medium",
+    "attack": ["T1136.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["net.exe", "net1.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["user ", "localgroup administrators"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/add"] }
+    ]
+  }
+]

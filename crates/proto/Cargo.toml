@@ -1,0 +1,17 @@
+[package]
+name = "sentinelle-proto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Contrat gRPC (protobuf) agent <-> serveur + conversions vers les types internes"
+
+[dependencies]
+sentinelle-common = { path = "../common" }
+tonic = "0.14"
+tonic-prost = "0.14"
+prost = "0.14"
+chrono.workspace = true
+
+[build-dependencies]
+tonic-prost-build = "0.14"
+protoc-bin-vendored = "3"

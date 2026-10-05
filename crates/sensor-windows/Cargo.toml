@@ -1,0 +1,16 @@
+[package]
+name = "sentinelle-sensor-windows"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Capteur ETW Windows : processus/reseau/fichier -> Event (user-mode, sans driver)"
+
+[dependencies]
+sentinelle-common = { path = "../common" }
+chrono.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+sysinfo = "0.39"
+
+[target.'cfg(windows)'.dependencies]
+ferrisetw = "1.1"

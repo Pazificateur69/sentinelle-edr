@@ -1,0 +1,50 @@
+syntax = "proto3";
+package sentinelle.v1;
+
+// Evenement de telemetrie d'un poste.
+message Event {
+  string ts = 1;            // RFC3339
+  string host = 2;
+  string kind = 3;          // process_start | process_stop | network | file_write | image_load
+  uint32 pid = 4;
+  uint32 ppid = 5;
+  string image = 6;
+  string parent_image = 7;
+  string command_line = 8;
+  string user = 9;
+  string sha256 = 10;
+  string dst_ip = 11;
+  uint32 dst_port = 12;
+  string file_path = 13;
+}
+
+// Detection produite par un agent.
+message Alert {
+  string ts = 1;
+  string host = 2;
+  string rule_id = 3;
+  string title = 4;
+  string description = 5;
+  string severity = 6;      // info | low | medium | high | critical
+  repeated string attack = 7;
+  uint32 score = 8;
+  Event event = 9;
+}
+
+// Un message de flux : soit un evenement, soit une alerte.
+message Telemetry {
+  oneof payload {
+    Event event = 1;
+    Alert alert = 2;
+  }
+}
+
+message Ack {
+  uint64 received = 1;
+}
+
+// L'agent ouvre un flux et pousse sa telemetrie en continu ; le serveur
+// accuse reception a la fermeture du flux.
+service Ingest {
+  rpc Stream(stream Telemetry) returns (Ack);
+}

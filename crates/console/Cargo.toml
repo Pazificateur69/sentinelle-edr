@@ -1,0 +1,18 @@
+[package]
+name = "sentinelle-console"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Etat partage + console web temps reel (SSE) reutilisee par l'agent mono-poste et le serveur de parc"
+
+[dependencies]
+sentinelle-common = { path = "../common" }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+tokio = { version = "1", features = ["sync"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+axum = "0.8"
+tower-http = { version = "0.6", features = ["cors"] }
+futures = "0.3"
