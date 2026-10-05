@@ -37,7 +37,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 🔁 | **Déduplication d'alertes** | une même (règle, hôte, pid) n'alerte qu'une fois par fenêtre — anti-bruit |
 | 📜 | **Import de règles Sigma** | `.yml` Sigma appliqué directement ; modificateurs `contains`/`startswith`/`endswith`/`re`/`base64`/`windash`/`cidr`/`all`, condition `and`/`or`/`not` + quantificateurs ; champs non mappés rejetés explicitement |
 | 📊 | **Scoring** | risque par hôte (accumulation + décroissance temporelle) ; pondération par **confiance** par règle (abaisser une règle bruyante sans changer sa sévérité) |
-| 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE ATT&CK cliquables, risque par hôte, 100 % embarquée dans le binaire |
+| 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE cliquables, **filtres par sévérité + recherche**, **répartition des sévérités**, ligne de commande & score par alerte, **mode démo** autonome ; 100 % embarquée dans le binaire |
 | 🌐 | **Parc multi-postes** | agents → serveur central en **gRPC + mTLS**, console multi-hôtes |
 | ⚔️ | **Réponse** | terminaison de processus (Windows) ; quarantaine & isolation réseau WFP au backlog |
 | 🧪 | **Simulation d'attaque** | rejoue une kill chain réaliste (Office → PowerShell → vol de secrets → ransomware) |
