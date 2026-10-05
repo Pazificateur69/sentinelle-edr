@@ -26,6 +26,7 @@ pub fn base_routes() -> Router<AppState> {
         .route("/api/events", get(events))
         .route("/api/stats", get(stats))
         .route("/api/history", get(history))
+        .route("/api/coverage", get(coverage))
 }
 
 async fn index() -> Html<&'static str> {
@@ -56,6 +57,14 @@ async fn events(State(st): State<AppState>) -> Json<Vec<Event>> {
 async fn stats(State(st): State<AppState>) -> Json<Stats> {
     let s = st.inner.lock().unwrap();
     Json(s.last_stats.clone())
+}
+
+/// Couverture MITRE ATT&CK par tactique (nombre de règles), pour la console.
+async fn coverage() -> Json<Vec<(String, usize)>> {
+    match sentinelle_common::Engine::with_builtin_rules() {
+        Ok(e) => Json(e.tactic_coverage()),
+        Err(_) => Json(vec![]),
+    }
 }
 
 /// Historique persistant (depuis SQLite si activé, sinon le tampon en mémoire).

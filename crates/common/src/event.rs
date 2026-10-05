@@ -85,6 +85,14 @@ impl Event {
         e
     }
 
+    /// Chargement d'une image/DLL/driver (`loaded` = chemin du module chargé).
+    pub fn image_load(host: &str, pid: u32, image: &str, loaded: &str) -> Self {
+        let mut e = Self::process_start(host, pid, 0, image, "");
+        e.kind = EventKind::ImageLoad;
+        e.file_path = loaded.to_string();
+        e
+    }
+
     pub fn with_cmdline(mut self, cmd: &str) -> Self {
         self.command_line = cmd.to_string();
         self
@@ -109,6 +117,7 @@ impl Event {
             "DestinationIp" => self.dst_ip.clone(),
             "DestinationPort" => self.dst_port.to_string(),
             "TargetFilename" => self.file_path.clone(),
+            "ImageLoaded" => self.file_path.clone(),
             _ => return None,
         };
         if v.is_empty() {

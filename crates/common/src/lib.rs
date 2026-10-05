@@ -34,6 +34,25 @@ const FILE_BURST_THRESHOLD: usize = 20;
 /// ...dans cette fenetre glissante.
 const FILE_BURST_WINDOW_SECS: i64 = 5;
 
+/// Tactique MITRE ATT&CK d'une technique (sous-technique ignorée).
+pub fn tactic_of(technique: &str) -> &'static str {
+    let base = technique.split('.').next().unwrap_or(technique);
+    match base {
+        "T1189" | "T1566" => "Initial Access",
+        "T1059" | "T1203" | "T1047" | "T1569" | "T1106" => "Execution",
+        "T1547" | "T1053" | "T1543" | "T1136" | "T1546" | "T1197" => "Persistence",
+        "T1548" | "T1068" => "Privilege Escalation",
+        "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" => "Defense Evasion",
+        "T1003" | "T1552" | "T1555" => "Credential Access",
+        "T1087" | "T1082" | "T1016" | "T1049" | "T1018" | "T1482" | "T1033" | "T1007" => "Discovery",
+        "T1021" => "Lateral Movement",
+        "T1105" | "T1071" | "T1571" | "T1095" | "T1090" => "Command and Control",
+        "T1048" | "T1567" => "Exfiltration",
+        "T1486" | "T1490" => "Impact",
+        _ => "Autre",
+    }
+}
+
 /// Une detection.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
@@ -108,6 +127,23 @@ impl Engine {
             .collect::<std::collections::BTreeSet<_>>()
             .into_iter()
             .collect()
+    }
+
+    /// Nombre de règles par tactique ATT&CK (triée par tactique). Vue "kill chain"
+    /// de la couverture, à la manière des évaluations MITRE ATT&CK.
+    pub fn tactic_coverage(&self) -> Vec<(String, usize)> {
+        let mut map: std::collections::BTreeMap<&'static str, usize> =
+            std::collections::BTreeMap::new();
+        for r in &self.rules {
+            let mut seen: std::collections::BTreeSet<&'static str> = Default::default();
+            for t in &r.attack {
+                seen.insert(tactic_of(t));
+            }
+            for tac in seen {
+                *map.entry(tac).or_insert(0) += 1;
+            }
+        }
+        map.into_iter().map(|(k, v)| (k.to_string(), v)).collect()
     }
 
     pub fn tracked_processes(&self) -> usize {
@@ -260,6 +296,27 @@ mod tests {
     }
 
     #[test]
+    fn tactic_coverage_spans_kill_chain() {
+        let eng = Engine::with_builtin_rules().unwrap();
+        let cov: std::collections::HashMap<String, usize> =
+            eng.tactic_coverage().into_iter().collect();
+        for tac in [
+            "Execution",
+            "Persistence",
+            "Defense Evasion",
+            "Credential Access",
+            "Discovery",
+            "Lateral Movement",
+            "Command and Control",
+            "Exfiltration",
+            "Impact",
+            "Privilege Escalation",
+        ] {
+            assert!(cov.contains_key(tac), "tactique non couverte : {tac}");
+        }
+    }
+
+    #[test]
     fn office_macro_chain_fires_critical() {
         let mut eng = Engine::with_builtin_rules().unwrap();
         // explorer -> winword -> powershell
@@ -331,6 +388,18 @@ mod tests {
         let second = eng.ingest(ev);
         assert!(first.iter().any(|a| a.rule_id == "SNT-0010"));
         assert!(!second.iter().any(|a| a.rule_id == "SNT-0010")); // meme (regle,hote,pid)
+    }
+
+    #[test]
+    fn byovd_driver_load_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts = eng.ingest(Event::image_load(
+            "h",
+            4500,
+            r"C:\temp\m.exe",
+            r"C:\temp\RTCore64.sys",
+        ));
+        assert!(alerts.iter().any(|a| a.rule_id == "SNT-0200"));
     }
 
     #[test]

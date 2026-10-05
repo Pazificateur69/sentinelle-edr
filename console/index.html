@@ -169,6 +169,8 @@
 
   <div class="dist" id="dist"><span class="lbl">Répartition</span><span class="dchip" style="color:var(--muted)">en attente…</span></div>
 
+  <div class="dist" id="coverage"><span class="lbl">Couverture ATT&amp;CK</span><span class="dchip" style="color:var(--muted)">chargement…</span></div>
+
   <div class="panel" style="margin-bottom:20px">
     <h2>Risque par hôte</h2>
     <div class="hosts" id="hosts"><div class="empty">Aucun hôte à risque. Système calme.</div></div>
@@ -355,7 +357,18 @@ function connect(){
   };
 }
 
-seed(); connect();
+function renderCoverage(list){
+  if (!list || !list.length) return;
+  $("coverage").innerHTML = `<span class="lbl">Couverture ATT&CK</span>` + list.map(([tac,n]) =>
+    `<span class="dchip"><span class="dswatch" style="background:var(--accent2)"></span>${esc(tac)} <b>${n}</b></span>`).join("");
+}
+async function loadCoverage(){
+  try { const c = await fetch("/api/coverage").then(r=>r.json()); if (c && c.length){ renderCoverage(c); return; } } catch(e){}
+  // Repli (page ouverte sans serveur) : couverture indicative du jeu de règles.
+  renderCoverage([["Command and Control",4],["Credential Access",3],["Defense Evasion",8],["Discovery",5],["Execution",7],["Exfiltration",1],["Impact",2],["Lateral Movement",2],["Persistence",6],["Privilege Escalation",2]]);
+}
+
+seed(); connect(); loadCoverage();
 // Si rien n'arrive (page ouverte sans serveur), basculer en démo.
 setTimeout(() => { if (!gotData && alertTotal === 0) runDemo(); }, 2500);
 </script>

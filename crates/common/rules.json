@@ -318,5 +318,115 @@
       { "field": "CommandLine", "op": "contains", "values": ["user ", "localgroup administrators"] },
       { "field": "CommandLine", "op": "contains", "values": ["/add"] }
     ]
+  },
+  {
+    "id": "SNT-0200",
+    "title": "Chargement d'un driver vulnérable connu (BYOVD)",
+    "description": "Chargement d'un driver signé mais vulnérable, abusé pour désactiver les protections (Bring Your Own Vulnerable Driver / EDR killer) (T1068, T1211).",
+    "severity": "critical",
+    "attack": ["T1068", "T1211"],
+    "kind": "image_load",
+    "all": [
+      { "field": "ImageLoaded", "op": "ends_with", "values": ["\\rtcore64.sys", "\\dbutil_2_3.sys", "\\gdrv.sys", "\\aswarpot.sys", "\\procexp152.sys", "\\winring0x64.sys", "\\kprocesshacker.sys"] }
+    ]
+  },
+  {
+    "id": "SNT-0210",
+    "title": "Reconnaissance réseau",
+    "description": "Commandes de découverte de la configuration et des connexions réseau (T1016, T1049). Fréquentes aussi en administration : confiance volontairement basse.",
+    "severity": "info",
+    "attack": ["T1016", "T1049"],
+    "confidence": 0.3,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["ipconfig.exe", "arp.exe", "route.exe", "netstat.exe", "nbtstat.exe"] }
+    ]
+  },
+  {
+    "id": "SNT-0211",
+    "title": "Reconnaissance système",
+    "description": "Collecte d'informations sur l'hôte (T1082).",
+    "severity": "info",
+    "attack": ["T1082"],
+    "confidence": 0.3,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["systeminfo.exe", "hostname.exe"] }
+    ]
+  },
+  {
+    "id": "SNT-0212",
+    "title": "Reconnaissance comptes / domaine",
+    "description": "Énumération d'utilisateurs, groupes ou partages (T1087, T1018).",
+    "severity": "low",
+    "attack": ["T1087", "T1018"],
+    "confidence": 0.5,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["net.exe", "net1.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": [" view", " group ", " accounts", "localgroup", " user"] }
+    ]
+  },
+  {
+    "id": "SNT-0220",
+    "title": "Recherche d'identifiants en clair",
+    "description": "Recherche de mots de passe dans les fichiers ou le registre (T1552.001).",
+    "severity": "medium",
+    "attack": ["T1552.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["findstr", "select-string", "reg query"] },
+      { "field": "CommandLine", "op": "contains", "values": ["password", "passwd", "credential"] }
+    ]
+  },
+  {
+    "id": "SNT-0230",
+    "title": "Téléchargement via curl / wget",
+    "description": "Récupération d'un fichier distant avec les binaires natifs curl/wget (T1105).",
+    "severity": "medium",
+    "attack": ["T1105"],
+    "confidence": 0.6,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["curl.exe", "wget.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["http://", "https://"] }
+    ]
+  },
+  {
+    "id": "SNT-0231",
+    "title": "Décodage via certutil",
+    "description": "certutil -decode : désobfuscation d'une charge encodée (T1140).",
+    "severity": "medium",
+    "attack": ["T1140"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["certutil.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-decode", "decodehex"] }
+    ]
+  },
+  {
+    "id": "SNT-0240",
+    "title": "Exfiltration HTTP (PowerShell)",
+    "description": "Envoi de données vers un hôte distant via une requête HTTP POST (T1048, T1567).",
+    "severity": "medium",
+    "attack": ["T1048", "T1567"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["invoke-restmethod", "invoke-webrequest"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-method post", "-infile", "-body "] }
+    ]
+  },
+  {
+    "id": "SNT-0250",
+    "title": "Persistance par Image File Execution Options (debugger)",
+    "description": "Détournement d'un exécutable via la clé IFEO Debugger : persistance et contournement (T1546.012).",
+    "severity": "high",
+    "attack": ["T1546.012"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["image file execution options"] },
+      { "field": "CommandLine", "op": "contains", "values": ["debugger"] }
+    ]
   }
 ]

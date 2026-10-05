@@ -47,6 +47,9 @@ pub fn attack_chain(host: &str) -> Vec<Event> {
         4444,
     ));
 
+    // BYOVD : chargement d'un driver vulnerable pour neutraliser les defenses.
+    events.push(Event::image_load(host, 4500, r"C:\temp\m.exe", r"C:\temp\RTCore64.sys"));
+
     // Rançongiciel : note de rançon puis chiffrement massif de fichiers.
     let locker = r"C:\temp\locker.exe";
     events.push(Event::file_write(

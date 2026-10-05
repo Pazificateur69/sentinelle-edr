@@ -38,7 +38,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 📜 | **Import de règles Sigma** | `.yml` Sigma appliqué directement ; modificateurs `contains`/`startswith`/`endswith`/`re`/`base64`/`windash`/`cidr`/`all`, condition `and`/`or`/`not` + quantificateurs ; champs non mappés rejetés explicitement |
 | 📊 | **Scoring** | risque par hôte (accumulation + décroissance temporelle) ; pondération par **confiance** par règle (abaisser une règle bruyante sans changer sa sévérité) |
 | 💾 | **Persistance (SQLite)** | historique d'alertes qui survit aux redémarrages + base interrogeable pour l'investigation (`SENTINELLE_DB`, optionnel) |
-| 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE cliquables, **filtres par sévérité + recherche**, **répartition des sévérités**, ligne de commande & score par alerte, **mode démo** autonome ; 100 % embarquée dans le binaire |
+| 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE cliquables, **filtres par sévérité + recherche**, **répartition des sévérités**, ligne de commande & score, **couverture ATT&CK par tactique**, **mode démo** autonome ; 100 % embarquée |
 | 🌐 | **Parc multi-postes** | agents → serveur central en **gRPC + mTLS bidirectionnel**, console multi-hôtes |
 | ⚔️ | **Réponse** | terminaison de processus (Windows), en mono-poste **et à distance dans le parc** (ordre poussé à l'agent depuis la console) ; quarantaine & isolation WFP au backlog |
 | 🧪 | **Simulation d'attaque** | rejoue une kill chain réaliste (Office → PowerShell → vol de secrets → ransomware) |
@@ -113,14 +113,16 @@ rapides. Le capteur ETW et le transport gRPC/mTLS sont isolés dans leurs crates
 
 ## 🎯 Détection
 
-27 règles embarquées ([`crates/common/rules.json`](crates/common/rules.json)), mappées MITRE ATT&CK :
+36 règles embarquées ([`crates/common/rules.json`](crates/common/rules.json)), mappées MITRE ATT&CK :
 chaîne de macro Office (T1203/T1059), PowerShell encodé/furtif/download-cradle
 (T1059.001, T1027), dump LSASS & mimikatz (T1003), suppression des *shadow copies*
 & sabotage `bcdedit` (ransomware, T1490), persistance (Run key, tâches, services),
 LOLBins (certutil, bitsadmin, rundll32), désactivation de Defender, **mouvement latéral** (PsExec, WMIC /node), **anti-forensic** (effacement des journaux, USN), **contournement UAC/AMSI**, désactivation du pare-feu, etc.
 
-La couverture dépasse les processus : **événements réseau** (connexion vers un
-port de C2 courant) et **fichier** (note de rançon). Deux **détections
+La couverture dépasse les processus : **réseau** (C2), **fichier** (note de rançon)
+et **chargement d'image/driver** (détection **BYOVD** / « EDR killers »). S'ajoutent
+découverte, vol d'identifiants, exfiltration, IFEO — couvrant les **10 tactiques**
+ATT&CK du kill chain (vue par tactique dans la console). Deux **détections
 comportementales** à états complètent les règles unitaires : `SNT-B001` (rafale de
 créations de processus) et `SNT-B002` (chiffrement massif de fichiers = rançongiciel).
 Enfin, une couche **allowlist + déduplication** contient les faux positifs et le bruit.
@@ -138,7 +140,7 @@ parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
 
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **27 tests unitaires**, verts en CI |
+| Cœur de détection (règles, arbre, score, Sigma) | ✅ **29 tests unitaires**, verts en CI |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
 | Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
@@ -170,7 +172,7 @@ Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.
 ## 🧪 Tests
 
 ```bash
-cargo test -p sentinelle-common   # 27 tests, multiplateforme, rapides
+cargo test -p sentinelle-common   # 29 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 
