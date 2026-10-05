@@ -40,7 +40,7 @@ static PID_IMAGE: LazyLock<Mutex<HashMap<u32, String>>> =
 /// evenement. Bloquant jusqu'a l'arret de la trace.
 pub fn run<F>(host: String, handler: F) -> anyhow::Result<()>
 where
-    F: Fn(Event) + Send + 'static,
+    F: Fn(Event) + Send + Sync + 'static,
 {
     let provider = Provider::by_guid(KERNEL_PROCESS_GUID)
         .any(KEYWORD_PROCESS)
