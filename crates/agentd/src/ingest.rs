@@ -23,6 +23,17 @@ pub async fn ingest_loop(mut rx: mpsc::UnboundedReceiver<Event>, state: AppState
         tracing::info!("Sigma : {n} regle(s) importee(s) ({} ignoree(s))", errs.len());
     }
 
+    // Seuils réglables optionnels (SENTINELLE_CONFIG = fichier TOML).
+    if let Ok(path) = std::env::var("SENTINELLE_CONFIG") {
+        match sentinelle_common::Config::from_file(&path) {
+            Ok(cfg) => {
+                tracing::info!("Configuration chargée : {path}");
+                engine.set_config(cfg);
+            }
+            Err(e) => tracing::warn!("Config {path} ignorée : {e:#}"),
+        }
+    }
+
     // Allowlist externe optionnelle (SENTINELLE_ALLOWLIST = fichier JSON).
     if let Ok(file) = std::env::var("SENTINELLE_ALLOWLIST") {
         match sentinelle_common::suppress::load_file(std::path::Path::new(&file)) {

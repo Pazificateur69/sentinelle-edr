@@ -82,6 +82,11 @@ async fn main() -> Result<()> {
         let (extra, _errs) = sentinelle_common::sigma::load_dir(std::path::Path::new(&dir));
         engine.add_rules(extra);
     }
+    if let Ok(path) = std::env::var("SENTINELLE_CONFIG") {
+        if let Ok(cfg) = sentinelle_common::Config::from_file(&path) {
+            engine.set_config(cfg);
+        }
+    }
 
     #[cfg(windows)]
     {

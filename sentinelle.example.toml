@@ -1,0 +1,14 @@
+# Configuration des seuils du moteur Sentinelle.
+# Copier en sentinelle.toml et lancer avec SENTINELLE_CONFIG=./sentinelle.toml
+# Tous les champs sont optionnels : les absents gardent la valeur par défaut.
+
+# Déduplication : une même (règle, hôte, pid) n'alerte qu'une fois dans cette fenêtre.
+dedup_window_secs = 60
+
+# Rafale de créations de processus (SNT-B001) : seuil + fenêtre glissante.
+spawn_burst_threshold = 8
+spawn_burst_window_secs = 10
+
+# Chiffrement massif de fichiers / rançongiciel (SNT-B002) : seuil + fenêtre.
+file_burst_threshold = 20
+file_burst_window_secs = 5

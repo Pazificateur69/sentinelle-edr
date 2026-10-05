@@ -2,6 +2,7 @@
 //! arbre de processus pour la correlation, et scoring de risque. Tout est pur
 //! et multiplateforme : testable partout, y compris sur macOS.
 
+pub mod config;
 pub mod event;
 pub mod proctree;
 pub mod risk;
@@ -10,6 +11,7 @@ pub mod scenario;
 pub mod sigma;
 pub mod suppress;
 
+pub use config::Config;
 pub use event::{Event, EventKind};
 pub use rules::{Rule, Severity};
 pub use suppress::Suppression;
@@ -22,17 +24,6 @@ use std::collections::{HashMap, VecDeque};
 const BUILTIN_RULES_JSON: &str = include_str!("../rules.json");
 /// Allowlist embarquee (reduction des faux positifs).
 const BUILTIN_ALLOWLIST_JSON: &str = include_str!("../allowlist.json");
-
-/// Fenetre de deduplication : une meme (regle, hote, pid) n'alerte qu'une fois.
-const DEDUP_WINDOW_SECS: i64 = 60;
-/// Detection de rafale : seuil de processus crees par un meme parent...
-const BURST_THRESHOLD: usize = 8;
-/// ...dans cette fenetre glissante.
-const BURST_WINDOW_SECS: i64 = 10;
-/// Chiffrement massif (rancongiciel) : seuil d'ecritures par un meme processus...
-const FILE_BURST_THRESHOLD: usize = 20;
-/// ...dans cette fenetre glissante.
-const FILE_BURST_WINDOW_SECS: i64 = 5;
 
 /// Tactique MITRE ATT&CK d'une technique (sous-technique ignorée).
 pub fn tactic_of(technique: &str) -> &'static str {
@@ -79,6 +70,7 @@ pub struct Engine {
     spawns: HashMap<u32, VecDeque<i64>>,
     /// pid -> horodatages des ecritures recentes (chiffrement massif).
     file_writes: HashMap<u32, VecDeque<i64>>,
+    config: Config,
 }
 
 impl Engine {
@@ -101,12 +93,18 @@ impl Engine {
             recent: HashMap::new(),
             spawns: HashMap::new(),
             file_writes: HashMap::new(),
+            config: Config::default(),
         }
     }
 
     /// Ajoute des regles (ex. importees de Sigma) au moteur.
     pub fn add_rules(&mut self, extra: Vec<Rule>) {
         self.rules.extend(extra);
+    }
+
+    /// Remplace les seuils du moteur (comportemental + deduplication).
+    pub fn set_config(&mut self, config: Config) {
+        self.config = config;
     }
 
     /// Ajoute des entrees d'allowlist (ex. chargees d'un fichier).
@@ -204,16 +202,18 @@ impl Engine {
         if ev.ppid == 0 {
             return None;
         }
+        let window = self.config.spawn_burst_window_secs;
+        let threshold = self.config.spawn_burst_threshold;
         let dq = self.spawns.entry(ev.ppid).or_default();
         dq.push_back(now);
         while let Some(&front) = dq.front() {
-            if now - front > BURST_WINDOW_SECS {
+            if now - front > window {
                 dq.pop_front();
             } else {
                 break;
             }
         }
-        (dq.len() >= BURST_THRESHOLD).then(|| Alert {
+        (dq.len() >= threshold).then(|| Alert {
             ts: ev.ts,
             host: ev.host.clone(),
             rule_id: "SNT-B001".to_string(),
@@ -222,7 +222,7 @@ impl Engine {
                 "{} processus créés par le même parent (pid {}) en moins de {}s — comportement anormal",
                 dq.len(),
                 ev.ppid,
-                BURST_WINDOW_SECS
+                window
             ),
             severity: Severity::High,
             attack: vec!["T1059".to_string()],
@@ -235,16 +235,18 @@ impl Engine {
         if ev.pid == 0 {
             return None;
         }
+        let window = self.config.file_burst_window_secs;
+        let threshold = self.config.file_burst_threshold;
         let dq = self.file_writes.entry(ev.pid).or_default();
         dq.push_back(now);
         while let Some(&front) = dq.front() {
-            if now - front > FILE_BURST_WINDOW_SECS {
+            if now - front > window {
                 dq.pop_front();
             } else {
                 break;
             }
         }
-        (dq.len() >= FILE_BURST_THRESHOLD).then(|| Alert {
+        (dq.len() >= threshold).then(|| Alert {
             ts: ev.ts,
             host: ev.host.clone(),
             rule_id: "SNT-B002".to_string(),
@@ -253,7 +255,7 @@ impl Engine {
                 "{} fichiers écrits par le processus pid {} en moins de {}s — comportement de rançongiciel",
                 dq.len(),
                 ev.pid,
-                FILE_BURST_WINDOW_SECS
+                window
             ),
             severity: Severity::Critical,
             attack: vec!["T1486".to_string()],
@@ -265,7 +267,7 @@ impl Engine {
     fn is_duplicate(&mut self, a: &Alert, now: i64) -> bool {
         let key = (a.rule_id.clone(), a.host.clone(), a.event.pid);
         if let Some(&last) = self.recent.get(&key) {
-            if now - last < DEDUP_WINDOW_SECS {
+            if now - last < self.config.dedup_window_secs {
                 return true;
             }
         }
@@ -443,6 +445,24 @@ mod tests {
             }
         }
         assert!(got, "20 écritures du même pid doivent lever SNT-B002");
+    }
+
+    #[test]
+    fn config_lowers_spawn_burst_threshold() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        eng.set_config(Config {
+            spawn_burst_threshold: 3,
+            ..Config::default()
+        });
+        let mut fired = false;
+        for i in 0..3u32 {
+            let alerts =
+                eng.ingest(Event::process_start("h", 200 + i, 9, r"C:\t\x.exe", r"C:\t\p.exe"));
+            if alerts.iter().any(|a| a.rule_id == "SNT-B001") {
+                fired = true;
+            }
+        }
+        assert!(fired, "seuil abaissé à 3 → rafale après 3 créations");
     }
 
     #[test]
