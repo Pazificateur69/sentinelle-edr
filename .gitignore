@@ -1,4 +1,6 @@
 /target
 certs/
+# Captures d'événements runtime (bruit) — mais on garde la capture de démo versionnée
 *.jsonl
+!captures/demo.jsonl
 .DS_Store
