@@ -5,14 +5,26 @@
 
 use rusqlite::Connection;
 use sentinelle_common::Alert;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
+
+/// Rétention par défaut : nombre maximal d'alertes conservées.
+const DEFAULT_RETENTION: usize = 100_000;
+/// Purge appliquée tous les N inserts.
+const PRUNE_EVERY: u64 = 1000;
 
 pub struct Store {
     conn: Mutex<Connection>,
+    retention: usize,
+    inserts: AtomicU64,
 }
 
 impl Store {
     pub fn open(path: &str) -> anyhow::Result<Self> {
+        Self::open_with_retention(path, DEFAULT_RETENTION)
+    }
+
+    pub fn open_with_retention(path: &str, retention: usize) -> anyhow::Result<Self> {
         let conn = Connection::open(path)?;
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS alerts (
@@ -31,6 +43,8 @@ impl Store {
         )?;
         Ok(Self {
             conn: Mutex::new(conn),
+            retention,
+            inserts: AtomicU64::new(0),
         })
     }
 
@@ -54,7 +68,22 @@ impl Store {
                 json,
             ],
         )?;
+        // Purge périodique (évite une croissance illimitée de la base).
+        if (self.inserts.fetch_add(1, Ordering::Relaxed) + 1) % PRUNE_EVERY == 0 {
+            let _ = self.prune();
+        }
         Ok(())
+    }
+
+    /// Ne conserve que les `retention` alertes les plus récentes. Renvoie le
+    /// nombre de lignes supprimées.
+    pub fn prune(&self) -> anyhow::Result<usize> {
+        let conn = self.conn.lock().unwrap();
+        let n = conn.execute(
+            "DELETE FROM alerts WHERE id <= (SELECT MAX(id) FROM alerts) - ?1",
+            [self.retention as i64],
+        )?;
+        Ok(n)
     }
 
     /// Les `limit` alertes les plus récentes (plus récente d'abord).
@@ -107,5 +136,17 @@ mod tests {
         let recent = store.recent(10).unwrap();
         assert_eq!(recent.len(), 2);
         assert_eq!(recent[0].rule_id, "R2"); // plus récente d'abord
+    }
+
+    #[test]
+    fn retention_prunes_old_alerts() {
+        let store = Store::open_with_retention(":memory:", 5).unwrap();
+        for i in 0..8 {
+            store.insert_alert(&alert(&format!("R{i}"))).unwrap();
+        }
+        assert_eq!(store.count().unwrap(), 8);
+        store.prune().unwrap();
+        assert_eq!(store.count().unwrap(), 5); // ne garde que les 5 plus récentes
+        assert_eq!(store.recent(10).unwrap()[0].rule_id, "R7");
     }
 }

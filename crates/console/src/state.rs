@@ -135,6 +135,8 @@ impl AppState {
             }
             tracing::info!("historique rechargé : {} alertes", s.alerts.len());
         }
+        // Purge au démarrage (borne la taille de la base).
+        let _ = store.prune();
     }
 
     /// Met a jour les compteurs runtime (nombre de regles, process suivis).

@@ -24,7 +24,7 @@ Toutes les évolutions notables de Sentinelle. Format libre, ordre antéchronolo
 
 ### Console & persistance
 - Console SOC temps réel (SSE) : filtres par sévérité, recherche, répartition, couverture ATT&CK, mode démo autonome.
-- **Persistance SQLite** optionnelle de l'historique d'alertes (`SENTINELLE_DB`).
+- **Persistance SQLite** optionnelle de l'historique d'alertes (`SENTINELLE_DB`) avec **rétention/purge automatique** (bornée).
 - Endpoints `/healthz`, `/api/coverage`, `/api/history`.
 
 ### Qualité
