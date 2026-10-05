@@ -160,11 +160,13 @@ parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
 | Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
-| Parc gRPC + mTLS **bidirectionnel** + réponse à distance | ✅ **compile + tests en CI (Ubuntu + Windows)** ; handshake mTLS & kill distant à valider en live |
+| Parc gRPC + mTLS **bidirectionnel** + réponse à distance | ✅ **runtime validé en CI (Ubuntu + Windows)** : handshake mTLS mutuel, flux bidi, ingestion, ordre de kill routé au client (test d'intégration `tests/fleet.rs`) |
 
-Ce qui reste à valider n'est donc plus la compilation (CI verte partout) mais le
-**comportement à l'exécution** sous Windows : ETW capturant réellement les
-processus, terminaison effective, agents se connectant au serveur en mTLS.
+Le **runtime du parc** (handshake mTLS, streaming bidi, ingestion, routage d'un
+ordre de kill) est désormais **validé en CI** par un test d'intégration qui monte
+un vrai serveur et un vrai client. Ce qui reste à valider sur une **machine réelle**
+se réduit à : ETW capturant réellement les processus (admin requis) et la
+terminaison effective d'un processus cible.
 
 ## 🗺️ Feuille de route
 
