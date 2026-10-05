@@ -32,7 +32,11 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 |---|---|---|
 | 🔬 | **Moteur de détection** | opérateurs façon Sigma (`equals`/`contains`/`startswith`/`endswith`/`regex`), arbre booléen `and`/`or`/`not` |
 | 🧬 | **Corrélation par ascendance** | détecte « PowerShell dont un *ancêtre* est Office », pas seulement le parent direct |
-| 🧠 | **Détection comportementale** | rafale de créations de processus (seuil + fenêtre glissante), au-delà des règles unitaires |
+| 🧠 | **Détection comportementale** | rafale de créations de processus, chiffrement massif, **PPID spoofing**, **masquerading** (binaire renommé via le nom d'origine du PE, `SNT-B004`) |
+| 📚 | **51 règles prêtes** | Windows **+ Linux/macOS** (`curl\|bash`, reverse shell `/dev/tcp`, `/tmp`, clés SSH, cron, LaunchAgent, SIP/Gatekeeper, `osascript`…), 11 tactiques ATT&CK |
+| 🌍 | **Capteur multi-OS** | ETW (Windows) **+ scrutation de la table des processus** via `sysinfo` (Linux/macOS/Windows) |
+| 🧯 | **Corrélation en incidents** | les alertes d'une même séquence (hôte + proximité temporelle) regroupées en un incident (progression kill chain, score cumulé) |
+| 📤 | **Exports** | rapport d'incident **Markdown**, couche **MITRE ATT&CK Navigator** JSON, incidents JSON — boutons dédiés dans la console |
 | 🙈 | **Allowlist / suppression** | règles d'exception ciblées pour écraser les faux positifs (le défaut n°1 des EDR maison) |
 | 🔁 | **Déduplication d'alertes** | une même (règle, hôte, pid) n'alerte qu'une fois par fenêtre — anti-bruit |
 | 🎛️ | **Seuils réglables** | fenêtres de dédup & détecteurs comportementaux configurables par fichier TOML (`SENTINELLE_CONFIG`, voir `sentinelle.example.toml`) |
@@ -53,9 +57,17 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 cargo run --release -p sentinelle-agentd
 # puis ouvrir http://localhost:8787 et cliquer « Simuler une attaque »
 #
+# Sous Windows : capteur ETW (lancer en Administrateur).
+# Sous Linux/macOS : capteur multi-OS (scrutation des processus) — vraie télémétrie.
+#
 # avec historique persistant (SQLite) :
 # SENTINELLE_DB=sentinelle.db cargo run --release -p sentinelle-agentd
+#
+# rejouer une capture d'événements (JSONL) à travers tout le pipeline :
+# SENTINELLE_REPLAY_FILE=./captures/demo.jsonl cargo run --release -p sentinelle-agentd
 ```
+
+Dans la console : **⬇ Rapport d'incident** (Markdown) et **⬇ Couche ATT&CK** (fichier à déposer sur [attack-navigator](https://mitre-attack.github.io/attack-navigator/)).
 
 Avec des règles Sigma en plus :
 
