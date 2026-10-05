@@ -5,6 +5,7 @@
 pub mod config;
 pub mod event;
 pub mod proctree;
+pub mod report;
 pub mod risk;
 pub mod rules;
 pub mod scenario;
