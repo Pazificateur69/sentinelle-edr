@@ -19,6 +19,7 @@ message Event {
   string target_image = 14;
   string granted_access = 15;
   string pipe_name = 16;
+  uint32 real_ppid = 17;
 }
 
 // Detection produite par un agent.

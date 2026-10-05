@@ -125,7 +125,7 @@ et **chargement d'image/driver** (détection **BYOVD** / « EDR killers »). S'a
 découverte, vol d'identifiants, exfiltration, IFEO — couvrant les **10 tactiques**
 ATT&CK du kill chain (vue par tactique dans la console). Deux **détections
 comportementales** à états complètent les règles unitaires : `SNT-B001` (rafale de
-créations de processus) et `SNT-B002` (chiffrement massif de fichiers = rançongiciel).
+créations de processus) et `SNT-B002` (chiffrement massif = rançongiciel), `SNT-B003` (**usurpation de parent / PPID spoofing**).
 Enfin, une couche **allowlist + déduplication** contient les faux positifs et le bruit.
 
 **Ajouter une détection** = ajouter une entrée JSON, ou déposer une règle Sigma dans

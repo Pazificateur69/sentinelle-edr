@@ -28,7 +28,12 @@ pub struct Event {
     pub kind: EventKind,
 
     pub pid: u32,
+    /// PID du parent déclaré.
     pub ppid: u32,
+    /// PID réel du créateur (fourni par ETW) ; 0 = inconnu. Un écart avec `ppid`
+    /// révèle une usurpation de parent (PPID spoofing).
+    #[serde(default)]
+    pub real_ppid: u32,
 
     /// Chemin complet de l'image (ou nom si le chemin manque).
     #[serde(default)]
@@ -71,6 +76,7 @@ impl Event {
             kind: EventKind::ProcessStart,
             pid,
             ppid,
+            real_ppid: 0,
             image: image.to_string(),
             parent_image: parent_image.to_string(),
             command_line: String::new(),
@@ -137,6 +143,12 @@ impl Event {
 
     pub fn with_cmdline(mut self, cmd: &str) -> Self {
         self.command_line = cmd.to_string();
+        self
+    }
+
+    /// Renseigne le vrai PID créateur (pour la détection d'usurpation de parent).
+    pub fn with_real_ppid(mut self, real_ppid: u32) -> Self {
+        self.real_ppid = real_ppid;
         self
     }
 

@@ -32,7 +32,7 @@ pub fn tactic_of(technique: &str) -> &'static str {
         "T1189" | "T1566" => "Initial Access",
         "T1059" | "T1203" | "T1047" | "T1569" | "T1106" => "Execution",
         "T1547" | "T1053" | "T1543" | "T1136" | "T1546" | "T1197" => "Persistence",
-        "T1548" | "T1068" => "Privilege Escalation",
+        "T1548" | "T1068" | "T1134" => "Privilege Escalation",
         "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" | "T1055" => "Defense Evasion",
         "T1003" | "T1552" | "T1555" => "Credential Access",
         "T1087" | "T1082" | "T1016" | "T1049" | "T1018" | "T1482" | "T1033" | "T1007" => "Discovery",
@@ -180,6 +180,24 @@ impl Engine {
             EventKind::ProcessStart => {
                 if let Some(a) = self.detect_spawn_burst(&ev, now) {
                     alerts.push(a);
+                }
+                // Usurpation de parent : le créateur réel diffère du parent déclaré.
+                if ev.real_ppid != 0 && ev.real_ppid != ev.ppid {
+                    alerts.push(Alert {
+                        ts: ev.ts,
+                        host: ev.host.clone(),
+                        rule_id: "SNT-B003".to_string(),
+                        title: "Usurpation de parent (PPID spoofing)".to_string(),
+                        description: format!(
+                            "Parent déclaré pid {} mais créateur réel pid {} — parent falsifié",
+                            ev.ppid, ev.real_ppid
+                        ),
+                        severity: Severity::High,
+                        attack: vec!["T1134.004".to_string()],
+                        score: Severity::High.weight(),
+                        event: ev.clone(),
+                        ancestors: Vec::new(),
+                    });
                 }
             }
             EventKind::FileWrite => {
@@ -353,6 +371,7 @@ mod tests {
             "SNT-0300", // accès LSASS par handle
             "SNT-0310", // injection par thread distant
             "SNT-0320", // tube nommé C2
+            "SNT-B003", // usurpation de parent
             "SNT-0101", // note de rançon
             "SNT-B002", // chiffrement massif
             "SNT-0050", // suppression shadow copies
@@ -459,6 +478,23 @@ mod tests {
             r"C:\temp\RTCore64.sys",
         ));
         assert!(alerts.iter().any(|a| a.rule_id == "SNT-0200"));
+    }
+
+    #[test]
+    fn ppid_spoofing_fires() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts = eng.ingest(
+            Event::process_start("h", 500, 4, r"C:\t\evil.exe", "").with_real_ppid(999),
+        );
+        assert!(alerts.iter().any(|a| a.rule_id == "SNT-B003"));
+    }
+
+    #[test]
+    fn matching_ppid_no_spoof() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let alerts =
+            eng.ingest(Event::process_start("h", 501, 7, r"C:\t\x.exe", "").with_real_ppid(7));
+        assert!(!alerts.iter().any(|a| a.rule_id == "SNT-B003"));
     }
 
     #[test]

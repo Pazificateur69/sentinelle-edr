@@ -26,8 +26,10 @@ abonnements WMI.
 
 ## 3. Ascendance fiable & contexte de sécurité — impact fort
 Le **PPID spoofing** peut tromper le moteur actuel (qui fait confiance au parent déclaré).
-- ⬜ Comparer le PID émetteur ETW (`Microsoft-Windows-Kernel-Process`) au parent
-  déclaré ; conserver les deux ; identité = PID + date de création.
+- 🟡 **Détection livrée** : `SNT-B003` compare le parent déclaré (`ppid`) au créateur
+  réel (`real_ppid`) ; un écart lève une alerte (T1134.004). Schéma étendu.
+- ⬜ **Source à brancher** : renseigner `real_ppid` depuis le PID émetteur des
+  événements ETW `Microsoft-Windows-Kernel-Process` ; identité = PID + date de création.
 - ⬜ Contexte de sécurité : `OpenProcessToken`/`GetTokenInformation` (SID, intégrité,
   privilèges, AuthenticationId) ; détecter les transitions incohérentes (exceptions UAC).
 

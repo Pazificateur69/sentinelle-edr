@@ -10,7 +10,7 @@ Toutes les évolutions notables de Sentinelle. Format libre, ordre antéchronolo
 - Corrélation par **arbre de processus** (ascendance) ; **scoring** avec décroissance par hôte + **confiance** par règle.
 - **Allowlist/suppression** et **déduplication** (anti-faux-positifs, anti-bruit).
 - Détecteurs **comportementaux** : rafale de créations de processus (SNT-B001), chiffrement massif de fichiers (SNT-B002).
-- **36 règles** couvrant les **10 tactiques** ATT&CK ; télémétrie processus + réseau + fichier + chargement d'image (détection **BYOVD**).
+- **39 règles + détecteurs comportementaux** (dont **PPID spoofing** `SNT-B003`, LSASS handle, injection, pipes C2) couvrant **11 tactiques** ATT&CK ; télémétrie processus + réseau + fichier + chargement d'image (détection **BYOVD**).
 - **Seuils réglables** par fichier TOML (`SENTINELLE_CONFIG`).
 
 ### Collecte & plateforme

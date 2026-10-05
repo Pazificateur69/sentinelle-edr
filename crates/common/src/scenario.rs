@@ -70,6 +70,12 @@ pub fn attack_chain(host: &str) -> Vec<Event> {
     // Tube nomme de C2 (Cobalt Strike).
     events.push(Event::named_pipe(host, 4300, r"C:\W\powershell.exe", r"\\.\pipe\msagent_7f"));
 
+    // Usurpation de parent : evil.exe prétend être lancé par explorer (4000),
+    // créé en réalité par powershell (4300).
+    events.push(
+        Event::process_start(host, 4950, 4000, r"C:\temp\evil.exe", "").with_real_ppid(4300),
+    );
+
     // Rançongiciel : note de rançon puis chiffrement massif de fichiers.
     let locker = r"C:\temp\locker.exe";
     events.push(Event::file_write(
