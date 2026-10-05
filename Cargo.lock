@@ -2578,6 +2578,7 @@ dependencies = [
  "sentinelle-common",
  "sentinelle-console",
  "sentinelle-scan",
+ "sentinelle-sensor-proc",
  "sentinelle-sensor-windows",
  "serde_json",
  "tokio",

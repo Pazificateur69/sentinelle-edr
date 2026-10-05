@@ -460,5 +460,146 @@
     "all": [
       { "field": "PipeName", "op": "contains", "values": ["\\msagent_", "\\cobaltstrike", "\\postex_", "\\status_", "\\msse-", "\\psexesvc", "\\paexec", "\\remcom"] }
     ]
+  },
+  {
+    "id": "SNT-1000",
+    "title": "Telechargement piping vers un shell (curl|bash)",
+    "description": "Un shell Unix execute du contenu telecharge via un pipe (curl/wget | sh/bash). Install-script malveillant classique (T1059.004 / T1105).",
+    "severity": "high",
+    "attack": ["T1059.004", "T1105"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bash", "sh", "zsh", "dash", "ash", "ksh"] },
+      { "field": "CommandLine", "op": "contains", "values": ["curl", "wget", "fetch"] },
+      { "field": "CommandLine", "op": "contains", "values": ["| bash", "|bash", "| sh", "|sh", "| python", "|python"] }
+    ]
+  },
+  {
+    "id": "SNT-1001",
+    "title": "Decodage base64 execute par un shell",
+    "description": "Chaine encodee en base64 decodee puis passee a un shell (obfuscation d'execution, T1140 / T1059.004).",
+    "severity": "high",
+    "attack": ["T1140", "T1059.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bash", "sh", "zsh", "dash"] },
+      { "field": "CommandLine", "op": "contains", "values": ["base64"] },
+      { "field": "CommandLine", "op": "contains", "values": ["| bash", "|bash", "| sh", "|sh", "-d |", "--decode |"] }
+    ]
+  },
+  {
+    "id": "SNT-1002",
+    "title": "Reverse shell Unix",
+    "description": "Signature de reverse shell : redirection /dev/tcp ou netcat avec execution (T1059.004 / T1071).",
+    "severity": "critical",
+    "attack": ["T1059.004", "T1071"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["/dev/tcp/", "/dev/udp/", "nc -e", "ncat -e", "nc.traditional -e"] }
+    ]
+  },
+  {
+    "id": "SNT-1003",
+    "title": "chmod +x dans un repertoire temporaire",
+    "description": "Rend executable un fichier depose dans /tmp, /var/tmp ou /dev/shm (preparation d'execution de payload, T1222.002).",
+    "severity": "medium",
+    "attack": ["T1222.002"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["chmod"] },
+      { "field": "CommandLine", "op": "contains", "values": ["+x", "777", "755", "0755"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/tmp/", "/var/tmp/", "/dev/shm/", "/private/tmp/"] }
+    ]
+  },
+  {
+    "id": "SNT-1004",
+    "title": "Execution depuis un repertoire temporaire",
+    "description": "Un binaire s'execute depuis /tmp, /var/tmp ou /dev/shm (emplacement typique des payloads, T1059).",
+    "severity": "medium",
+    "confidence": 0.5,
+    "attack": ["T1059"],
+    "kind": "process_start",
+    "all": [
+      { "field": "Image", "op": "starts_with", "values": ["/tmp/", "/var/tmp/", "/dev/shm/", "/private/tmp/"] }
+    ]
+  },
+  {
+    "id": "SNT-1005",
+    "title": "Lecture d'identifiants Unix (/etc/shadow, cles SSH)",
+    "description": "Acces a des secrets locaux : hachages /etc/shadow ou cles privees SSH (T1003.008 / T1552.004).",
+    "severity": "high",
+    "attack": ["T1003.008", "T1552.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["/etc/shadow", "id_rsa", "id_ed25519", "authorized_keys"] }
+    ]
+  },
+  {
+    "id": "SNT-1006",
+    "title": "Persistance via cron",
+    "description": "Installation d'une tache planifiee cron (crontab -, ecriture dans /etc/cron*) : persistance (T1053.003).",
+    "severity": "medium",
+    "attack": ["T1053.003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["crontab -", "/etc/cron", "/var/spool/cron"] }
+    ]
+  },
+  {
+    "id": "SNT-1007",
+    "title": "Persistance via fichier de demarrage shell",
+    "description": "Ecriture dans ~/.bashrc, ~/.zshrc, ~/.profile ou /etc/profile.d : execution a chaque session (T1546.004).",
+    "severity": "medium",
+    "attack": ["T1546.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": [".bashrc", ".zshrc", ".bash_profile", "/etc/profile.d"] },
+      { "field": "CommandLine", "op": "contains", "values": [">>", ">", "tee ", "sed -i"] }
+    ]
+  },
+  {
+    "id": "SNT-1008",
+    "title": "Effacement de l'historique shell (anti-forensique)",
+    "description": "Suppression ou neutralisation de l'historique de commandes (T1070.003).",
+    "severity": "medium",
+    "attack": ["T1070.003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["history -c", "unset histfile", "histfile=/dev/null", ".bash_history", ".zsh_history"] }
+    ]
+  },
+  {
+    "id": "SNT-1009",
+    "title": "macOS : osascript execute du shell",
+    "description": "AppleScript lancant une commande shell via osascript (do shell script) : execution/evasion macOS (T1059.002).",
+    "severity": "high",
+    "attack": ["T1059.002"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["osascript"] },
+      { "field": "CommandLine", "op": "contains", "values": ["do shell script", "-e"] }
+    ]
+  },
+  {
+    "id": "SNT-1010",
+    "title": "macOS : desactivation de SIP / Gatekeeper",
+    "description": "Neutralisation des protections macOS (csrutil disable, spctl --master-disable) : defense evasion (T1562.001).",
+    "severity": "high",
+    "attack": ["T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["csrutil disable", "spctl --master-disable", "spctl --disable"] }
+    ]
+  },
+  {
+    "id": "SNT-1011",
+    "title": "macOS : persistance LaunchAgent / LaunchDaemon",
+    "description": "Installation ou chargement d'un agent/daemon de demarrage (launchctl load, LaunchAgents/LaunchDaemons) : persistance (T1543.001).",
+    "severity": "medium",
+    "attack": ["T1543.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["launchagents", "launchdaemons", "launchctl load", "launchctl bootstrap"] }
+    ]
   }
 ]

