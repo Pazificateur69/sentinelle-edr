@@ -77,3 +77,35 @@ impl Store {
         Ok(n as u64)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sentinelle_common::rules::Severity;
+    use sentinelle_common::Event;
+
+    fn alert(rule: &str) -> Alert {
+        Alert {
+            ts: chrono::Utc::now(),
+            host: "h".into(),
+            rule_id: rule.into(),
+            title: "test".into(),
+            description: "d".into(),
+            severity: Severity::High,
+            attack: vec!["T1059".into()],
+            score: 70,
+            event: Event::process_start("h", 1, 2, r"C:\a.exe", ""),
+        }
+    }
+
+    #[test]
+    fn insert_count_recent_roundtrip() {
+        let store = Store::open(":memory:").unwrap();
+        store.insert_alert(&alert("R1")).unwrap();
+        store.insert_alert(&alert("R2")).unwrap();
+        assert_eq!(store.count().unwrap(), 2);
+        let recent = store.recent(10).unwrap();
+        assert_eq!(recent.len(), 2);
+        assert_eq!(recent[0].rule_id, "R2"); // plus récente d'abord
+    }
+}

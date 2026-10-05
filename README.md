@@ -37,6 +37,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 🔁 | **Déduplication d'alertes** | une même (règle, hôte, pid) n'alerte qu'une fois par fenêtre — anti-bruit |
 | 📜 | **Import de règles Sigma** | `.yml` Sigma appliqué directement ; modificateurs `contains`/`startswith`/`endswith`/`re`/`base64`/`windash`/`cidr`/`all`, condition `and`/`or`/`not` + quantificateurs ; champs non mappés rejetés explicitement |
 | 📊 | **Scoring** | risque par hôte (accumulation + décroissance temporelle) ; pondération par **confiance** par règle (abaisser une règle bruyante sans changer sa sévérité) |
+| 💾 | **Persistance (SQLite)** | historique d'alertes qui survit aux redémarrages + base interrogeable pour l'investigation (`SENTINELLE_DB`, optionnel) |
 | 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE cliquables, **filtres par sévérité + recherche**, **répartition des sévérités**, ligne de commande & score par alerte, **mode démo** autonome ; 100 % embarquée dans le binaire |
 | 🌐 | **Parc multi-postes** | agents → serveur central en **gRPC + mTLS bidirectionnel**, console multi-hôtes |
 | ⚔️ | **Réponse** | terminaison de processus (Windows), en mono-poste **et à distance dans le parc** (ordre poussé à l'agent depuis la console) ; quarantaine & isolation WFP au backlog |
@@ -49,6 +50,9 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 ```bash
 cargo run --release -p sentinelle-agentd
 # puis ouvrir http://localhost:8787 et cliquer « Simuler une attaque »
+#
+# avec historique persistant (SQLite) :
+# SENTINELLE_DB=sentinelle.db cargo run --release -p sentinelle-agentd
 ```
 
 Avec des règles Sigma en plus :
@@ -148,7 +152,7 @@ processus, terminaison effective, agents se connectant au serveur en mTLS.
 
 1. Valider capteur ETW + parc gRPC/mTLS sur VM Windows
 2. Sources ETW réseau + fichier + chargement d'images/DLL
-3. Persistance (SQLite) + rétention pour l'investigation
+3. ~~Persistance (SQLite)~~ ✅ **fait** (`SENTINELLE_DB`) ; rétention/purge automatique au backlog
 4. Réponse : quarantaine fichier, isolation réseau (WFP)
 5. Anti-tamper réaliste (détection d'arrêt d'agent, heartbeat) — *limite honnête : sans PPL, un admin peut tuer l'agent*
 6. Classifieur ML statique d'exécutables (ONNX)
