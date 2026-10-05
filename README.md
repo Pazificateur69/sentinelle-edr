@@ -38,8 +38,8 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 📜 | **Import de règles Sigma** | `.yml` Sigma appliqué directement ; modificateurs `contains`/`startswith`/`endswith`/`re`/`base64`/`windash`/`cidr`/`all`, condition `and`/`or`/`not` + quantificateurs ; champs non mappés rejetés explicitement |
 | 📊 | **Scoring** | risque par hôte (accumulation + décroissance temporelle) ; pondération par **confiance** par règle (abaisser une règle bruyante sans changer sa sévérité) |
 | 🖥️ | **Console SOC temps réel** | flux SSE, badges MITRE cliquables, **filtres par sévérité + recherche**, **répartition des sévérités**, ligne de commande & score par alerte, **mode démo** autonome ; 100 % embarquée dans le binaire |
-| 🌐 | **Parc multi-postes** | agents → serveur central en **gRPC + mTLS**, console multi-hôtes |
-| ⚔️ | **Réponse** | terminaison de processus (Windows) ; quarantaine & isolation réseau WFP au backlog |
+| 🌐 | **Parc multi-postes** | agents → serveur central en **gRPC + mTLS bidirectionnel**, console multi-hôtes |
+| ⚔️ | **Réponse** | terminaison de processus (Windows), en mono-poste **et à distance dans le parc** (ordre poussé à l'agent depuis la console) ; quarantaine & isolation WFP au backlog |
 | 🧪 | **Simulation d'attaque** | rejoue une kill chain réaliste (Office → PowerShell → vol de secrets → ransomware) |
 
 ## 🚀 Démarrage rapide
@@ -138,7 +138,7 @@ parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
 | Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
-| Parc gRPC + mTLS (`proto`/`server`/`agent`/`certgen`) | ✅ **compile + tests en CI (Ubuntu + Windows)** ; handshake mTLS live à valider |
+| Parc gRPC + mTLS **bidirectionnel** + réponse à distance | ✅ **compile + tests en CI (Ubuntu + Windows)** ; handshake mTLS & kill distant à valider en live |
 
 Ce qui reste à valider n'est donc plus la compilation (CI verte partout) mais le
 **comportement à l'exécution** sous Windows : ETW capturant réellement les
@@ -152,7 +152,7 @@ processus, terminaison effective, agents se connectant au serveur en mTLS.
 4. Réponse : quarantaine fichier, isolation réseau (WFP)
 5. Anti-tamper réaliste (détection d'arrêt d'agent, heartbeat) — *limite honnête : sans PPL, un admin peut tuer l'agent*
 6. Classifieur ML statique d'exécutables (ONNX)
-7. Commandes serveur → agent (réponse pilotée depuis la console du parc)
+7. ~~Commandes serveur → agent~~ ✅ **fait** (kill à distance via la console du parc)
 
 Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.md`](docs/ARCHITECTURE-REVIEW.md).
 
