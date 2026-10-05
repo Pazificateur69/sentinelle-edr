@@ -23,7 +23,8 @@ async fn main() -> Result<()> {
 
     let host = hostname();
     let (sse_tx, _) = broadcast::channel(1024);
-    let (inject_tx, inject_rx) = mpsc::unbounded_channel();
+    // Canal d'ingestion borné : backpressure plutôt que croissance mémoire illimitée.
+    let (inject_tx, inject_rx) = mpsc::channel::<sentinelle_common::Event>(8192);
 
     let store = open_store();
     let state = AppState::new(sse_tx, host.clone(), Some(inject_tx.clone()), store);
@@ -33,11 +34,19 @@ async fn main() -> Result<()> {
 
     #[cfg(windows)]
     {
+        use std::sync::atomic::{AtomicU64, Ordering};
         let tx = inject_tx.clone();
         let h = host.clone();
+        let dropped = std::sync::Arc::new(AtomicU64::new(0));
         std::thread::spawn(move || {
             if let Err(e) = sentinelle_sensor_windows::run(h, move |ev| {
-                let _ = tx.send(ev);
+                // try_send : si la file est pleine, on abandonne (et on compte).
+                if tx.try_send(ev).is_err() {
+                    let n = dropped.fetch_add(1, Ordering::Relaxed) + 1;
+                    if n % 1000 == 0 {
+                        tracing::warn!("file d'ingestion pleine : {n} événements abandonnés");
+                    }
+                }
             }) {
                 tracing::error!("capteur ETW arrete : {e:#}");
             }

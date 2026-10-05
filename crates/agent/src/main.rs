@@ -90,11 +90,12 @@ async fn main() -> Result<()> {
 
     #[cfg(windows)]
     {
-        let (ev_tx, mut ev_rx) = mpsc::unbounded_channel::<Event>();
+        let (ev_tx, mut ev_rx) = mpsc::channel::<Event>(8192);
         let h = host.clone();
         std::thread::spawn(move || {
             if let Err(e) = sentinelle_sensor_windows::run(h, move |ev| {
-                let _ = ev_tx.send(ev);
+                // try_send : file bornée, abandon silencieux si saturée.
+                let _ = ev_tx.try_send(ev);
             }) {
                 tracing::error!("capteur ETW : {e:#}");
             }

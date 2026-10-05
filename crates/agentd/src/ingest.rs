@@ -3,7 +3,7 @@ use sentinelle_console::AppState;
 use tokio::sync::mpsc;
 
 /// Boucle de detection mono-poste : un evenement entre, les regles sortent.
-pub async fn ingest_loop(mut rx: mpsc::UnboundedReceiver<Event>, state: AppState) {
+pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
     let mut engine = match Engine::with_builtin_rules() {
         Ok(e) => e,
         Err(e) => {

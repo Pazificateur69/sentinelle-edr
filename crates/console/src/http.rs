@@ -27,6 +27,12 @@ pub fn base_routes() -> Router<AppState> {
         .route("/api/stats", get(stats))
         .route("/api/history", get(history))
         .route("/api/coverage", get(coverage))
+        .route("/healthz", get(healthz))
+}
+
+/// Sonde de disponibilité (ops / orchestrateur).
+async fn healthz() -> &'static str {
+    "ok"
 }
 
 async fn index() -> Html<&'static str> {

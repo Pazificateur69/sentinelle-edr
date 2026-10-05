@@ -11,7 +11,7 @@ pub async fn run_simulation(state: AppState) {
     };
     let step = Duration::from_millis(500);
     for ev in sentinelle_common::scenario::attack_chain(&state.host) {
-        if inject.send(ev).is_err() {
+        if inject.send(ev).await.is_err() {
             break;
         }
         tokio::time::sleep(step).await;

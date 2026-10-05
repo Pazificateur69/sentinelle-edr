@@ -177,6 +177,12 @@ cargo test -p sentinelle-common   # 31 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 
+## 📚 Documentation
+
+- [Guide d'utilisation](docs/GUIDE.md) — installer, lancer (mono-poste & parc), écrire des règles, régler les seuils.
+- [Revue d'architecture](docs/ARCHITECTURE-REVIEW.md) — fait / à-faire, par composant.
+- [Changelog](docs/CHANGELOG.md).
+
 ## 📄 Licence
 
 MIT — voir [LICENSE](LICENSE).

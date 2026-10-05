@@ -54,9 +54,10 @@ pub struct Shared {
 pub struct AppState {
     pub tx: broadcast::Sender<SseMsg>,
     pub host: String,
-    /// Canal d'injection d'evenement (mode mono-poste, pour la simulation).
-    /// `None` cote serveur de parc (les evenements arrivent par gRPC).
-    pub inject: Option<mpsc::UnboundedSender<Event>>,
+    /// Canal d'injection d'evenement BORNÉ (mode mono-poste, simulation/capteur).
+    /// Borné pour éviter l'OOM sous un flot d'événements ; `None` côté serveur de
+    /// parc (les événements arrivent par gRPC).
+    pub inject: Option<mpsc::Sender<Event>>,
     /// Persistance SQLite optionnelle des alertes.
     pub store: Option<Arc<crate::store::Store>>,
     pub inner: Arc<Mutex<Shared>>,
@@ -73,7 +74,7 @@ impl AppState {
     pub fn new(
         tx: broadcast::Sender<SseMsg>,
         host: String,
-        inject: Option<mpsc::UnboundedSender<Event>>,
+        inject: Option<mpsc::Sender<Event>>,
         store: Option<Arc<crate::store::Store>>,
     ) -> Self {
         AppState {
