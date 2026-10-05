@@ -23,8 +23,8 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 > noyau). Ce dépôt couvre la **chaîne complète** — capteur → détection →
 > corrélation → score → réponse → console → parc — et documente précisément ce qui
 > reste à faire. Le cœur (détection, règles, corrélation, scoring, import Sigma) est
-> **testé** et multiplateforme ; le capteur ETW et le transport gRPC/mTLS se valident
-> sur Windows (voir [Statut de vérification](#-statut-de-vérification)).
+> **testé** et multiplateforme ; le capteur ETW et le transport gRPC/mTLS **compilent en CI sur
+> Windows et Linux** ; reste la validation à l'exécution (voir [Statut de vérification](#-statut-de-vérification)).
 
 ## ✨ Fonctionnalités
 
@@ -128,16 +128,21 @@ ou un fichier pointé par `SENTINELLE_ALLOWLIST`.
 
 ## ✅ Statut de vérification
 
+La **CI compile tout le workspace sur Ubuntu *et* Windows** et lance les tests à
+chaque push (badge en haut). Autrement dit, le capteur ETW, le kill Win32 et le
+parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
+
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **27 tests unitaires**, `cargo test` |
+| Cœur de détection (règles, arbre, score, Sigma) | ✅ **27 tests unitaires**, verts en CI |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
-| Capteur ETW Windows | ⚠️ écrit, **à valider sur Windows** (dev sur macOS) |
-| Réponse `kill` (Win32) | ⚠️ compile sous Windows uniquement |
-| Parc gRPC + mTLS (`proto`/`server`/`agent`/`certgen`) | ⚠️ écrit, **à valider sur Windows** — voir en-têtes de fichiers |
+| Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
+| Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
+| Parc gRPC + mTLS (`proto`/`server`/`agent`/`certgen`) | ✅ **compile + tests en CI (Ubuntu + Windows)** ; handshake mTLS live à valider |
 
-Les fichiers non vérifiés portent un en-tête listant précisément les API à confirmer
-(ferrisetw, tonic 0.14 TLS, rcgen 0.13). Aucun n'est bloqué techniquement.
+Ce qui reste à valider n'est donc plus la compilation (CI verte partout) mais le
+**comportement à l'exécution** sous Windows : ETW capturant réellement les
+processus, terminaison effective, agents se connectant au serveur en mTLS.
 
 ## 🗺️ Feuille de route
 
