@@ -5,24 +5,9 @@
 //! tel quel, s'affiche sur GitHub et se convertit en PDF d'un clic (impression
 //! navigateur ou pandoc) — pas de dépendance de rendu embarquée.
 
-use crate::{tactic_of, Alert, Severity};
+use crate::incident;
+use crate::{tactic_of, Alert, Severity, KILL_CHAIN};
 use chrono::{DateTime, Utc};
-
-/// Ordre « kill chain » des tactiques, pour présenter l'incident comme une
-/// progression plutôt qu'un tas d'alertes.
-const KILL_CHAIN: &[&str] = &[
-    "Initial Access",
-    "Execution",
-    "Persistence",
-    "Privilege Escalation",
-    "Defense Evasion",
-    "Credential Access",
-    "Discovery",
-    "Lateral Movement",
-    "Command and Control",
-    "Exfiltration",
-    "Impact",
-];
 
 fn sev_label(s: Severity) -> &'static str {
     match s {
@@ -101,6 +86,31 @@ pub fn incident_markdown(host: &str, generated: DateTime<Utc>, alerts: &[Alert])
     .collect();
     out.push_str(&parts.join(" · "));
     out.push_str("\n\n");
+
+    // --- Incidents corrélés (regroupement des alertes d'une même séquence) ---
+    let incidents = incident::correlate(alerts, incident::DEFAULT_WINDOW_SECS);
+    out.push_str(&format!("## Incidents corrélés ({})\n\n", incidents.len()));
+    for inc in &incidents {
+        out.push_str(&format!(
+            "### {} — {} ({} alerte{})\n\n",
+            inc.id,
+            sev_label(inc.severity),
+            inc.alert_count,
+            if inc.alert_count > 1 { "s" } else { "" }
+        ));
+        out.push_str(&format!(
+            "- **Fenêtre** : {} → {}\n",
+            inc.started.format("%Y-%m-%d %H:%M:%S"),
+            inc.ended.format("%H:%M:%S")
+        ));
+        if !inc.tactics.is_empty() {
+            out.push_str(&format!("- **Progression** : {}\n", inc.tactics.join(" → ")));
+        }
+        if !inc.techniques.is_empty() {
+            out.push_str(&format!("- **Techniques** : {}\n", inc.techniques.join(", ")));
+        }
+        out.push('\n');
+    }
 
     // --- Couverture ATT&CK, en progression kill chain ---
     let mut techs: std::collections::BTreeSet<&str> = Default::default();

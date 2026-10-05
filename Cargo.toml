@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "crates/common",
   "crates/sensor-windows",
+  "crates/sensor-proc",
   "crates/console",
   "crates/agentd",
   "crates/proto",

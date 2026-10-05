@@ -4,6 +4,7 @@
 
 pub mod config;
 pub mod event;
+pub mod incident;
 pub mod proctree;
 pub mod report;
 pub mod risk;
@@ -27,6 +28,23 @@ const BUILTIN_RULES_JSON: &str = include_str!("../rules.json");
 const BUILTIN_ALLOWLIST_JSON: &str = include_str!("../allowlist.json");
 
 /// Tactique MITRE ATT&CK d'une technique (sous-technique ignorée).
+/// Ordre « kill chain » des tactiques ATT&CK, pour présenter détections et
+/// incidents comme une progression plutôt qu'un tas. Partagé par le rapport et
+/// la corrélation.
+pub const KILL_CHAIN: &[&str] = &[
+    "Initial Access",
+    "Execution",
+    "Persistence",
+    "Privilege Escalation",
+    "Defense Evasion",
+    "Credential Access",
+    "Discovery",
+    "Lateral Movement",
+    "Command and Control",
+    "Exfiltration",
+    "Impact",
+];
+
 pub fn tactic_of(technique: &str) -> &'static str {
     let base = technique.split('.').next().unwrap_or(technique);
     match base {

@@ -1,0 +1,12 @@
+[package]
+name = "sentinelle-sensor-proc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Capteur multi-OS (Linux/macOS/Windows) par scrutation de la table des processus"
+
+[dependencies]
+sentinelle-common = { path = "../common" }
+sysinfo = "0.39"
+anyhow.workspace = true
+tracing.workspace = true

@@ -2650,6 +2650,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sentinelle-sensor-proc"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "sentinelle-common",
+ "sysinfo",
+ "tracing",
+]
+
+[[package]]
 name = "sentinelle-sensor-windows"
 version = "0.1.0"
 dependencies = [

@@ -53,8 +53,21 @@ async fn main() -> Result<()> {
         });
         tracing::info!("Capteur ETW actif (lancer en Administrateur).");
     }
+    // Hors Windows : capteur multi-OS par scrutation des processus (Linux/macOS).
+    // Moins profond que l'ETW (pas de réseau/fichier/handle, rate les process
+    // très brefs) mais c'est de la vraie télémétrie, pas une simulation.
     #[cfg(not(windows))]
-    tracing::warn!("Hors Windows : pas de capteur ETW. Bouton 'Simuler une attaque' ou POST /api/simulate.");
+    {
+        let tx = inject_tx.clone();
+        let h = host.clone();
+        std::thread::spawn(move || {
+            if let Err(e) = sentinelle_sensor_proc::run(h, move |ev| {
+                let _ = tx.try_send(ev);
+            }) {
+                tracing::error!("capteur multi-OS arrêté : {e:#}");
+            }
+        });
+    }
 
     // Rejeu d'une capture d'événements (JSONL, un Event par ligne) à travers tout
     // le pipeline — utile pour tester/affiner les détections sur de la télémétrie réelle.

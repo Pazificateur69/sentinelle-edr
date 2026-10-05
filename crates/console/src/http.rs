@@ -27,6 +27,7 @@ pub fn base_routes() -> Router<AppState> {
         .route("/api/stats", get(stats))
         .route("/api/history", get(history))
         .route("/api/coverage", get(coverage))
+        .route("/api/incidents", get(incidents))
         .route("/api/report", get(report))
         .route("/healthz", get(healthz))
 }
@@ -51,6 +52,16 @@ async fn report(State(st): State<AppState>) -> impl axum::response::IntoResponse
         ],
         md,
     )
+}
+
+/// Alertes regroupées en incidents (hôte + proximité temporelle), pour une vue
+/// « histoire d'attaque » plutôt qu'une liste plate.
+async fn incidents(State(st): State<AppState>) -> Json<Vec<sentinelle_common::incident::Incident>> {
+    let alerts = collect_alerts(&st);
+    Json(sentinelle_common::incident::correlate(
+        &alerts,
+        sentinelle_common::incident::DEFAULT_WINDOW_SECS,
+    ))
 }
 
 /// Source d'alertes pour le rapport : SQLite si activé, sinon tampon mémoire.
