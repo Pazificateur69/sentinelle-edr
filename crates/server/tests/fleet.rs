@@ -92,6 +92,10 @@ async fn mtls_fleet_roundtrip() -> anyhow::Result<()> {
         ancestors: vec![],
     };
     tx_tel.send(tel_alert(&alert)).await?;
+    // Battement de cœur (santé du capteur).
+    tx_tel
+        .send(sentinelle_proto::tel_heartbeat("poste-x"))
+        .await?;
 
     // Le serveur ingère l'alerte et enregistre l'agent.
     let mut registered = false;
@@ -106,6 +110,10 @@ async fn mtls_fleet_roundtrip() -> anyhow::Result<()> {
     assert!(
         state.inner.lock().unwrap().last_stats.total_alerts >= 1,
         "l'alerte doit être ingérée côté serveur"
+    );
+    assert!(
+        state.seen.lock().unwrap().contains_key("poste-x"),
+        "la santé du capteur (heartbeat) doit être enregistrée"
     );
 
     // Le serveur pousse un ordre de kill ; l'agent doit le recevoir.

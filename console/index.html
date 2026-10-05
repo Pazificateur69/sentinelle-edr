@@ -278,7 +278,10 @@ function renderStats(s){
   const col = { critical:"var(--crit)", warning:"var(--high)", ok:"var(--accent)" };
   hosts.innerHTML = s.hosts.map(h => {
     const pct = Math.min(100, (h.score/300)*100); const c = col[h.level] || "var(--accent)";
-    return `<div class="host"><span class="name">${esc(h.host)}</span><span class="bar"><span style="width:${pct}%;background:${c}"></span></span><span class="sc" style="color:${c}">${esc(h.score)}</span></div>`;
+    const st = h.status || "live";
+    const stcol = st==="silent" ? "var(--crit)" : st==="stale" ? "var(--high)" : "var(--accent)";
+    const sttitle = st==="live" ? "capteur actif" : `capteur ${st==="silent"?"silencieux (mort/aveuglé ?)":"ralenti"} — ${h.silent_secs||0}s sans télémétrie`;
+    return `<div class="host"><span class="name"><span title="${sttitle}" style="color:${stcol}">●</span> ${esc(h.host)}</span><span class="bar"><span style="width:${pct}%;background:${c}"></span></span><span class="sc" style="color:${c}">${esc(h.score)}</span></div>`;
   }).join("");
 }
 
@@ -330,7 +333,7 @@ function runDemo(){
     const a = alerts[i++];
     addEvent(a.event); addAlert(a);
     renderStats({ total_events: i*3, total_alerts: i, tracked_processes: 9, rule_count: 27,
-      hosts: [{ host:"poste-demo", score: Math.min(1000, i*95), level: i>1?"critical":"warning" }] });
+      hosts: [{ host:"poste-demo", score: Math.min(1000, i*95), level: i>1?"critical":"warning", status:"live", silent_secs:1 }] });
   }, 650);
 }
 

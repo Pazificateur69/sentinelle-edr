@@ -35,11 +35,17 @@ message Alert {
   repeated string ancestors = 10;
 }
 
-// Un message de flux : soit un evenement, soit une alerte.
+// Battement de cœur : l'agent signale qu'il est vivant, même sans activité.
+message Heartbeat {
+  string host = 1;
+}
+
+// Un message de flux : evenement, alerte, ou battement de cœur.
 message Telemetry {
   oneof payload {
     Event event = 1;
     Alert alert = 2;
+    Heartbeat heartbeat = 3;
   }
 }
 

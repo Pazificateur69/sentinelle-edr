@@ -104,6 +104,14 @@ pub fn tel_alert(a: &Alert) -> v1::Telemetry {
     }
 }
 
+pub fn tel_heartbeat(host: &str) -> v1::Telemetry {
+    v1::Telemetry {
+        payload: Some(v1::telemetry::Payload::Heartbeat(v1::Heartbeat {
+            host: host.to_string(),
+        })),
+    }
+}
+
 // ---- enum <-> string ----
 
 fn kind_str(k: EventKind) -> &'static str {

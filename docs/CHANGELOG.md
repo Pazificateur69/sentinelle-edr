@@ -21,6 +21,7 @@ Toutes les évolutions notables de Sentinelle. Format libre, ordre antéchronolo
 - Agents ↔ serveur central en **gRPC + mTLS bidirectionnel**.
 - **Réponse à distance** : terminaison de processus sur n'importe quel poste depuis la console.
 - Génération de PKI intégrée (`sentinelle-certgen`).
+- **Santé des capteurs** : heartbeat agent→serveur ; statut de vivacité par hôte (live/ralenti/silencieux) dans la console — distingue « calme » de « capteur mort/aveuglé ».
 
 ### Console & persistance
 - Console SOC temps réel (SSE) : filtres par sévérité, recherche, répartition, couverture ATT&CK, mode démo autonome.

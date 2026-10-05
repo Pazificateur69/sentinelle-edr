@@ -43,6 +43,7 @@ impl Ingest for IngestService {
                     let h = match &msg.payload {
                         Some(telemetry::Payload::Event(e)) => Some(e.host.clone()),
                         Some(telemetry::Payload::Alert(a)) => Some(a.host.clone()),
+                        Some(telemetry::Payload::Heartbeat(hb)) => Some(hb.host.clone()),
                         None => None,
                     };
                     if let Some(hh) = h {
@@ -58,6 +59,7 @@ impl Ingest for IngestService {
                     Some(telemetry::Payload::Alert(a)) => {
                         state.ingest_alert(sentinelle_proto::alert_from_proto(a))
                     }
+                    Some(telemetry::Payload::Heartbeat(hb)) => state.mark_seen(&hb.host, now),
                     None => {}
                 }
                 state.broadcast_stats(now);

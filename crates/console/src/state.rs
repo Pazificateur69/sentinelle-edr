@@ -1,6 +1,6 @@
 use sentinelle_common::{risk::RiskTracker, Alert, Event};
 use serde::Serialize;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use tokio::sync::{broadcast, mpsc};
 
@@ -21,6 +21,21 @@ pub struct HostRisk {
     pub host: String,
     pub score: u32,
     pub level: &'static str,
+    /// Secondes depuis la dernière télémétrie reçue de cet hôte.
+    pub silent_secs: i64,
+    /// Vivacité du capteur : "live" | "stale" | "silent".
+    pub status: &'static str,
+}
+
+/// Vivacité d'un hôte d'après son silence (heartbeat attendu ~10 s).
+pub fn liveness(silent_secs: i64) -> &'static str {
+    if silent_secs > 60 {
+        "silent"
+    } else if silent_secs > 25 {
+        "stale"
+    } else {
+        "live"
+    }
 }
 
 #[derive(Clone, Serialize, Default)]
@@ -60,6 +75,8 @@ pub struct AppState {
     pub inject: Option<mpsc::Sender<Event>>,
     /// Persistance SQLite optionnelle des alertes.
     pub store: Option<Arc<crate::store::Store>>,
+    /// Dernière télémétrie reçue par hôte (epoch secondes) — santé des capteurs.
+    pub seen: Arc<Mutex<HashMap<String, i64>>>,
     pub inner: Arc<Mutex<Shared>>,
 }
 
@@ -82,6 +99,7 @@ impl AppState {
             host,
             inject,
             store,
+            seen: Arc::new(Mutex::new(HashMap::new())),
             inner: Arc::new(Mutex::new(Shared {
                 alerts: VecDeque::new(),
                 events: VecDeque::new(),
@@ -91,8 +109,14 @@ impl AppState {
         }
     }
 
+    /// Note qu'on vient de recevoir de la télémétrie de cet hôte (santé capteur).
+    pub fn mark_seen(&self, host: &str, now: i64) {
+        self.seen.lock().unwrap().insert(host.to_string(), now);
+    }
+
     /// Enregistre un evenement et le diffuse.
     pub fn ingest_event(&self, ev: Event) {
+        self.mark_seen(&ev.host, ev.ts.timestamp());
         {
             let mut s = self.inner.lock().unwrap();
             s.last_stats.total_events += 1;
@@ -109,6 +133,7 @@ impl AppState {
     /// le risque de cet hote, et diffuse.
     pub fn ingest_alert(&self, a: Alert) {
         let now = a.ts.timestamp();
+        self.mark_seen(&a.host, now);
         {
             let mut s = self.inner.lock().unwrap();
             s.last_stats.total_alerts += 1;
@@ -150,18 +175,29 @@ impl AppState {
         s.last_stats.tracked_processes = tracked;
     }
 
-    /// Recalcule la table de risque par hote et diffuse les stats.
+    /// Recalcule la table par hôte (risque + vivacité du capteur) et diffuse.
     pub fn broadcast_stats(&self, now: i64) {
+        let seen = self.seen.lock().unwrap().clone();
         let stats = {
             let mut s = self.inner.lock().unwrap();
-            let mut hosts: Vec<HostRisk> = s
-                .risk
-                .hosts(now)
+            // Union des hôtes vus (heartbeat/télémétrie) et des hôtes à risque.
+            let mut names: std::collections::BTreeSet<String> = seen.keys().cloned().collect();
+            for (h, _) in s.risk.hosts(now) {
+                names.insert(h);
+            }
+            let mut hosts: Vec<HostRisk> = names
                 .into_iter()
-                .map(|(host, score)| HostRisk {
-                    host,
-                    score: score.round() as u32,
-                    level: level_of(score),
+                .map(|host| {
+                    let score = s.risk.score(&host, now);
+                    let last = seen.get(&host).copied().unwrap_or(now);
+                    let silent = (now - last).max(0);
+                    HostRisk {
+                        host,
+                        score: score.round() as u32,
+                        level: level_of(score),
+                        silent_secs: silent,
+                        status: liveness(silent),
+                    }
                 })
                 .collect();
             hosts.sort_by(|a, b| b.score.cmp(&a.score));
@@ -169,5 +205,17 @@ impl AppState {
             s.last_stats.clone()
         };
         let _ = self.tx.send(SseMsg::Stats(stats));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::liveness;
+
+    #[test]
+    fn liveness_thresholds() {
+        assert_eq!(liveness(5), "live");
+        assert_eq!(liveness(40), "stale");
+        assert_eq!(liveness(120), "silent");
     }
 }

@@ -64,6 +64,26 @@ async fn main() -> Result<()> {
         .await
         .context("ouverture du flux gRPC")?;
     let mut commands = response.into_inner();
+
+    // Battement de cœur périodique : prouve que le capteur est vivant, même sans activité.
+    {
+        let hb_tx = tx_tel.clone();
+        let hb_host = host.clone();
+        tokio::spawn(async move {
+            let mut iv = tokio::time::interval(Duration::from_secs(10));
+            loop {
+                iv.tick().await;
+                if hb_tx
+                    .send(sentinelle_proto::tel_heartbeat(&hb_host))
+                    .await
+                    .is_err()
+                {
+                    break;
+                }
+            }
+        });
+    }
+
     // Tâche de réception des ordres de réponse (ex. kill) venant du serveur.
     let cmd_task = tokio::spawn(async move {
         while let Ok(Some(cmd)) = commands.message().await {
