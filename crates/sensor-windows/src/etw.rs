@@ -54,7 +54,8 @@ where
     let _trace = UserTrace::new()
         .named("sentinelle-kproc".to_string())
         .enable(provider)
-        .start_and_process()?;
+        .start_and_process()
+        .map_err(|e| anyhow::anyhow!("démarrage de la trace ETW : {e:?}"))?;
 
     // ponytail: park en boucle = garder la trace vivante sans busy-wait.
     loop {
@@ -71,13 +72,20 @@ fn handle<F>(
 where
     F: Fn(Event),
 {
-    let schema = locator.event_schema(record)?;
+    // Les erreurs ferrisetw n'implementent pas std::error::Error : on convertit a la main.
+    let schema = locator
+        .event_schema(record)
+        .map_err(|e| anyhow::anyhow!("schema ETW : {e:?}"))?;
     let parser = Parser::create(record, &schema);
 
     match record.event_id() {
         EVENT_PROCESS_START => {
-            let pid: u32 = parser.try_parse("ProcessID")?;
-            let ppid: u32 = parser.try_parse("ParentProcessID")?;
+            let pid: u32 = parser
+                .try_parse("ProcessID")
+                .map_err(|e| anyhow::anyhow!("ProcessID : {e:?}"))?;
+            let ppid: u32 = parser
+                .try_parse("ParentProcessID")
+                .map_err(|e| anyhow::anyhow!("ParentProcessID : {e:?}"))?;
             let image: String = parser.try_parse("ImageName").unwrap_or_default();
 
             let parent_image = {
