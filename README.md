@@ -133,6 +133,21 @@ Enfin, une couche **allowlist + déduplication** contient les faux positifs et l
 **Réduire un faux positif** = une entrée dans [`crates/common/allowlist.json`](crates/common/allowlist.json)
 ou un fichier pointé par `SENTINELLE_ALLOWLIST`.
 
+## ⚖️ Où Sentinelle se distingue des EDR commerciaux
+
+Sentinelle n'égale pas un leader sur la détection à l'échelle. Mais sur plusieurs
+axes concrets, un EDR **open-source en Rust** est honnêtement **meilleur** :
+
+- **Transparence totale** — règles ouvertes, détection versionnée comme du code, chaque alerte explicable (ascendance, ligne de commande, technique ATT&CK). Pas de boîte noire.
+- **Sûreté mémoire** — agent en Rust ; l'incident CrowdStrike (2024) venait d'un driver C++. L'agent est lui-même moins une surface d'attaque.
+- **Souveraineté** — 100 % on-prem, aucune donnée envoyée à un éditeur. Hébergement et contrôle chez vous.
+- **Coût & liberté** — gratuit, modifiable, pas de licence par poste.
+- **Auditable & réglable** — règles, allowlist et seuils en fichiers clairs ; contenu déployable progressivement (leçon CrowdStrike).
+
+**Honnêtement** : là où comptent le renseignement sur les menaces mondial,
+l'anti-tamper noyau (programme MVI) et une équipe SOC 24/7, un produit commercial
+reste devant — et c'est structurel, pas une question d'effort.
+
 ## ✅ Statut de vérification
 
 La **CI compile tout le workspace sur Ubuntu *et* Windows** et lance les tests à
