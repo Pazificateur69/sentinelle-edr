@@ -1,5 +1,6 @@
 // Sentinelle EDR — site vitrine. Aucune chaîne visible ici : les textes viennent du HTML
 // ou de window.SENTINELLE_I18N (une page par langue).
+window.__snt = 1;
 const I = window.SENTINELLE_I18N || { sev: {} };
 const t = (k, v = {}) => {
   let s = I[k] ?? k;
@@ -9,12 +10,20 @@ const t = (k, v = {}) => {
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const root = document.documentElement;
+root.classList.replace('no-js', 'js');
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const paused = () => root.dataset.motion === 'paused';
+const still = () => RM || paused();
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 const IO = 'IntersectionObserver' in window;
 const live = el('p', 'sr-only'); live.setAttribute('aria-live', 'polite'); document.body.append(live);
 const say = (msg) => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = msg; }); };
+// Entrée unique dans la vue : ajoute .play (le CSS n'anime que sous .play ; sans JS, état final).
+const onEnter = (els, cb = e => e.classList.add('play'), opt = { threshold: .2 }) => {
+  if (!IO) return els.forEach(cb);
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); cb(e.target); } }), opt);
+  els.forEach(e => io.observe(e));
+};
 
 /* ---------- pause globale (WCAG 2.2.2) ---------- */
 const mt = $('#motion-toggle');
@@ -38,7 +47,6 @@ if (IO && nav) {
     if (!e.isIntersecting) return;
     links.forEach(a => a.getAttribute('href') === '#' + e.target.id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
   }), { rootMargin: '-45% 0px -50% 0px' });
-  // Toutes les sections : une section absente de la nav éteint le lien précédent.
   $$('main > section').forEach(s => io.observe(s));
 }
 const menu = $('.nav-menu');
@@ -49,170 +57,120 @@ if (menu) {
   menu.addEventListener('focusout', e => { if (!menu.contains(e.relatedTarget)) menu.open = false; });
 }
 
-/* ---------- révélations + boucles ---------- */
-const revealSel = '.reveal,.eq,.truth,.ratio';
-if (!IO || RM) $$(revealSel).forEach(e => e.classList.add('is-in'));
-else {
-  const io = new IntersectionObserver(es => es.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-  }), { threshold: 0.25 });
-  $$(revealSel).forEach(e => io.observe(e));
-}
-// Filet de sécurité : le script inline repasse en .no-js si ce module ne s'exécute pas à temps.
-window.__snt = 1;
-root.classList.replace('no-js', 'js');
+/* ---------- boucles : actives seulement à l'écran ---------- */
 if (IO) {
   const lo = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('is-visible', e.isIntersecting)));
-  $$('[data-loop]').forEach(e => lo.observe(e));
+  $$('[data-loop],.tile,.term,.stage').forEach(e => lo.observe(e));
+}
+onEnter($$('.tile,.eq,.sevbar,.truth,.weights'));
+
+/* ---------- la trace : hero (boucle) + rejeu (étapes) ---------- */
+const heroFig = $('#hero-stage'), rjFig = $('#rj-stage'), dataEl = $('#replay-data');
+let stageRj = null, rjGo = null;
+if (dataEl && (heroFig || rjFig)) {
+  import('./scene.js').then(({ mountStage }) => {
+    const data = JSON.parse(dataEl.textContent);
+    if (heroFig) {
+      const hero = mountStage(heroFig, data, { mode: 'loop', I });
+      const hb = $('#hero-play');
+      if (hb) {
+        let off = false;
+        hb.addEventListener('click', () => {
+          off = !off; off ? hero.pause() : hero.play();
+          hb.classList.toggle('is-off', off); hb.setAttribute('aria-label', t(off ? 'heroPlay' : 'heroPause'));
+        });
+        const sync = () => { hb.hidden = still(); };
+        sync(); document.addEventListener('snt-motion', sync);
+      }
+    }
+    if (rjFig) { stageRj = mountStage(rjFig, data, { mode: 'steps', I }); if (rjGo) rjGo(); }
+  }).catch(() => { /* canvas ou import indisponible : le poster et le HTML (état final) restent */ });
 }
 
-/* ---------- hero : fil d'alertes en boucle (14 s) ---------- */
-const heroC = $('#hero-console'), heroBtn = $('#hero-play');
-if (heroC && !RM) {
-  const cards = $$('#hero-feed .alert-card').reverse(); // ordre chronologique
-  let k = 0, local = false;
-  const tick = () => {
-    if (!paused() && !local && heroC.classList.contains('is-visible')) {
-      if (k === 0) cards.forEach(c => { c.classList.add('off'); c.classList.remove('in'); });
-      if (k < cards.length) { cards[k].classList.remove('off'); cards[k].classList.add('in'); }
-      k = (k + 1) % 15;
+/* ---------- rejeu : étapes au scroll, transport, interrupteur Live ---------- */
+if (rjFig && dataEl) {
+  const states = JSON.parse(dataEl.textContent).states, total = states.length - 1;
+  const beats = $$('.beat'), range = $('#rj-range'), time = $('#rj-time'), liveR = $('#rj-live'), play = $('#rj-play');
+  let cur = 0, timer = 0, playing = false;
+  const go = (s, { announce = false } = {}) => {
+    cur = Math.max(0, Math.min(total, s));
+    if (stageRj) stageRj.setTarget(cur);
+    let b = null; beats.forEach(x => { if (+x.dataset.state <= cur) b = x; });
+    beats.forEach(x => x.classList.toggle('cur', x === b));
+    rjFig.dataset.state = cur;
+    if (range) {
+      range.value = cur; time.textContent = states[cur].t;
+      const msg = t('step', { n: cur, total, label: states[cur].label });
+      range.setAttribute('aria-valuetext', msg);
+      if (announce) liveR.textContent = msg;
     }
-    setTimeout(tick, 900);
   };
-  tick();
-  if (heroBtn) {
-    heroBtn.addEventListener('click', () => { local = !local; heroBtn.setAttribute('aria-pressed', String(local)); });
-    // Pause globale active : le fil est déjà figé, ce bouton local n'a plus d'effet.
-    const sync = () => { heroBtn.hidden = paused(); };
-    sync(); document.addEventListener('snt-motion', sync);
+  rjGo = () => go(cur);
+  const stop = () => { clearTimeout(timer); playing = false; play && play.setAttribute('aria-pressed', 'false'); };
+  // Lecture demandée (▶) : avance même en pause globale (action explicite), par sauts si figé.
+  const tick = () => { timer = setTimeout(() => { go(cur + 1, { announce: true }); if (cur >= total) stop(); else tick(); }, 1100); };
+  if (play) {
+    play.addEventListener('click', () => { if (playing) return stop(); if (cur >= total) go(0, { announce: true }); playing = true; play.setAttribute('aria-pressed', 'true'); tick(); });
+    $('#rj-reset').addEventListener('click', () => { stop(); go(0, { announce: true }); });
+    $('#rj-prev').addEventListener('click', () => { stop(); go(cur - 1, { announce: true }); });
+    $('#rj-next').addEventListener('click', () => { stop(); go(cur + 1, { announce: true }); });
+    range.addEventListener('input', () => { stop(); go(+range.value, { announce: true }); });
   }
-} else if (heroBtn) heroBtn.hidden = true;
+  // Le scroll suit : le beat qui franchit la bande centrale devient courant.
+  if (IO) {
+    const wide = matchMedia('(min-width:1024px)').matches;
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { stop(); go(+e.target.dataset.state); } }),
+      { rootMargin: wide ? '-45% 0px -45% 0px' : '-62% 0px -28% 0px' });
+    beats.forEach(b => io.observe(b));
+  }
+  go(0);
+  const help = $('#live-help');
+  $$('#view-switch input').forEach(r => r.addEventListener('change', () => {
+    const on = r.value === 'live' && r.checked;
+    if (!r.checked) return;
+    if (stageRj) stageRj.setLive(on);
+    rjFig.classList.toggle('is-live', on);
+    if (help) help.hidden = !on;
+  }));
+}
 
-/* ---------- rejeu ---------- */
-const scene = $('#scene');
-if (scene) {
-  const data = JSON.parse($('#replay-data').textContent);
-  const ats = $$('[data-at]', scene);
-  const feed = $('#feed-list'), inc = $('#inc-cards');
-  const cards = $$('.alert-card', feed);
-  const strips = $$('.odo-s', scene);
-  const steps = $$('#steps li');
-  const range = $('#rj-range'), time = $('#rj-time'), liveR = $('#rj-live'), play = $('#rj-play');
-  const pan = $('.svg-scroll', scene);
-  const PAN = [0, 0, 0, .75, 1, 0, 1, .5]; // < 640 px : partie du schéma à montrer à chaque étape
-  const total = data.length - 1;
-  let cur = -1, timer = 0, playing = false, userPlay = false;
-
-  const render = (step, { anim = !RM, announce = true } = {}) => {
-    step = Math.max(0, Math.min(total, step));
-    const fwd = anim && step === cur + 1;
-    ats.forEach(e => {
-      const on = +e.dataset.at <= step, was = e.classList.contains('on');
-      e.classList.toggle('on', on);
-      if (e.classList.contains('alert-card')) e.classList.toggle('cut', on && !was && fwd);
+/* ---------- onglets ARIA génériques ---------- */
+$$('[data-tabs]').forEach(box => {
+  const tabs = $$('[role=tab]', box), pans = tabs.map(b => document.getElementById(b.getAttribute('aria-controls')));
+  const sel = (i, focus) => {
+    tabs.forEach((b, j) => { b.setAttribute('aria-selected', String(i === j)); b.tabIndex = i === j ? 0 : -1; pans[j].hidden = i !== j; });
+    if (focus) tabs[i].focus();
+  };
+  tabs.forEach((b, i) => {
+    b.addEventListener('click', () => sel(i));
+    b.addEventListener('keydown', e => {
+      const n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (n === undefined) return;
+      e.preventDefault(); sel((n + tabs.length) % tabs.length, true);
     });
-    const inIncident = cards[0].parentNode === inc;
-    if (step === total && !inIncident) {
-      cards.forEach(c => c.classList.remove('cut'));
-      const first = cards.map(c => c.getBoundingClientRect());
-      cards.forEach(c => inc.append(c));
-      if (anim) cards.forEach((c, i) => {
-        const l = c.getBoundingClientRect(), f = first[i];
-        c.style.willChange = 'transform';
-        c.animate([{ transform: `translate(${f.left - l.left}px,${f.top - l.top}px)` }, { transform: 'none' }],
-          { duration: 700, easing: 'cubic-bezier(.65,0,.35,1)', delay: i * 60, fill: 'backwards' })
-          .finished.then(() => { c.style.willChange = ''; }, () => {});
-      });
-    } else if (step < total && inIncident) {
-      cards.forEach(c => { c.classList.remove('cut'); c.getAnimations().forEach(a => a.cancel()); feed.append(c); });
-    }
-    String(data[step].score).padStart(3, '0').split('').forEach((d, i) => strips[i].style.setProperty('--d', d));
-    steps.forEach((li, i) => { li.classList.toggle('cur', i === step); li.classList.toggle('future', i > step); });
-    scene.dataset.step = step;
-    range.value = step;
-    time.textContent = data[step].t;
-    const label = $('.st-title', steps[step]);
-    const msg = t('step', { n: step, total, label: label ? label.textContent : '' });
-    range.setAttribute('aria-valuetext', msg);
-    if (announce) liveR.textContent = msg;
-    if (pan && pan.scrollWidth > pan.clientWidth) pan.scrollTo({ left: (PAN[step] ?? 0) * (pan.scrollWidth - pan.clientWidth), behavior: anim ? 'smooth' : 'auto' });
-    cur = step;
-  };
-  const stop = () => { clearTimeout(timer); playing = false; play.setAttribute('aria-pressed', 'false'); };
-  // Lecture demandée (▶) : elle avance même en pause globale ; seule elle est annoncée.
-  const tick = () => {
-    timer = setTimeout(() => {
-      render(cur + 1, { announce: userPlay });
-      if (cur >= total) stop(); else tick();
-    }, 1100);
-  };
-  const start = (user = true) => { userPlay = user; if (cur >= total) render(0, { announce: user }); playing = true; play.setAttribute('aria-pressed', 'true'); tick(); };
-
-  play.addEventListener('click', () => (playing ? stop() : start()));
-  document.addEventListener('snt-motion', () => { if (paused() && !userPlay) stop(); });
-  $('#rj-reset').addEventListener('click', () => { stop(); render(0); });
-  $('#rj-prev').addEventListener('click', () => { stop(); render(cur - 1); });
-  $('#rj-next').addEventListener('click', () => { stop(); render(cur + 1); });
-  range.addEventListener('input', () => { stop(); render(+range.value, { anim: false }); });
-
-  if (RM || paused() || !IO) render(total, { anim: false, announce: false });
-  else {
-    render(0, { anim: false, announce: false });
-    // Lecture auto seulement quand le défilement s'arrête sur la scène : traversée pendant un saut
-    // d'ancre, elle ferait grandir la scène et repousserait la cible du saut.
-    let visible = false, armT = 0;
-    const arm = () => {
-      clearTimeout(armT);
-      armT = setTimeout(() => {
-        if (!visible || playing || cur !== 0) return;
-        io.disconnect(); removeEventListener('scroll', onScroll);
-        if (!paused()) start(false);
-      }, 600);
-    };
-    const onScroll = () => { if (visible) arm(); };
-    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) arm(); }, { threshold: 0.4 });
-    io.observe(scene);
-    addEventListener('scroll', onScroll, { passive: true });
-  }
-}
-
-/* ---------- fonctionnement : rail de télémétrie ---------- */
-const flow = $('#fonctionnement');
-if (flow) {
-  const lis = $$('.flow-steps li', flow), nodes = $$('.rail-nodes g', flow);
-  const setActive = (n, act = true) => {
-    flow.dataset.active = n;
-    flow.style.setProperty('--p', (n - 1) / (lis.length - 1));
-    nodes.forEach((g, i) => { g.classList.toggle('on', i < n); g.classList.toggle('is-active', act && i === n - 1); });
-    lis.forEach((l, i) => l.classList.toggle('is-active', act && i === n - 1));
-    flow.classList.toggle('hot', n >= 4);
-  };
-  if (RM || !IO) setActive(lis.length, false);
-  else {
-    setActive(1);
-    const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && setActive(+e.target.dataset.step)),
-      { rootMargin: '-45% 0px -45% 0px' });
-    lis.forEach(l => io.observe(l));
-  }
-}
-
-/* ---------- anatomie d'une règle : annotations ---------- */
-const rule = $('#regle');
-if (rule) {
-  const btns = $$('[data-hl]', rule);
-  const show = k => {
-    $$('[data-k].hit', rule).forEach(e => e.classList.remove('hit'));
-    btns.forEach(b => b.classList.toggle('hit', b.dataset.hl === k));
-    if (k) $$(`[data-k~="${k}"]`, rule).forEach(e => e.classList.add('hit'));
-  };
-  btns.forEach(b => {
-    const k = b.dataset.hl;
-    b.addEventListener('pointerenter', () => show(k));
-    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') show(null); });
-    b.addEventListener('focus', () => show(k));
-    b.addEventListener('blur', () => show(null));
-    b.addEventListener('click', () => show(k));
   });
+  if (tabs.length) sel(0);
+});
+
+/* ---------- tuile 03 : survol d'un fragment = surlignage manuel ---------- */
+$$('.codecard').forEach(cc => {
+  const show = k => { cc.classList.toggle('manual', !!k); $$('[data-k]', cc).forEach(e => e.classList.toggle('hit', !!k && e.dataset.k === k)); };
+  $$('[data-k]', cc).forEach(e => { e.addEventListener('pointerenter', () => show(e.dataset.k)); e.addEventListener('pointerleave', () => show(null)); });
+});
+
+/* ---------- tuile 04 : svchost.exe se brouille puis se fixe sur PowerShell.EXE ---------- */
+const mask = $('.mask'), mA = $('#mask-a');
+if (mask && mA) {
+  const a = mA.textContent, b = $('.mask-b', mask).textContent, G = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._', tile = mask.closest('.tile');
+  let k = 0;
+  setInterval(() => {
+    if (still() || !tile.classList.contains('is-visible')) { mask.classList.remove('anim'); mA.textContent = a; return; }
+    mask.classList.add('anim');
+    k = (k + 1) % 80; // pas de 50 ms → boucle de 4 s
+    const q = Math.min(1, Math.max(0, (k - 30) / 10)), lock = Math.floor(q * b.length);
+    mA.classList.toggle('fixed', k >= 40);
+    mA.textContent = k < 30 ? a : k >= 40 ? b : [...b].map((c, i) => (i < lock ? c : G[(i * 7 + k * 13) % G.length])).join('');
+  }, 50);
 }
 
 /* ---------- banc d'essai ---------- */
@@ -220,14 +178,22 @@ const bench = $('#banc-essai');
 if (bench) {
   const f = { img: $('#b-img'), anc: $('#b-anc'), cmd: $('#b-cmd') };
   const out = $('#bench-out'), sum = $('#b-sum'), totalEl = $('#b-total'), list = $('#b-hits'), none = $('#b-none');
-  const lesson = $('[data-lesson]', bench), presetBtns = $$('[data-preset]', bench);
+  const lesson = $('[data-lesson]', bench), presetBtns = $$('[data-preset]', bench), matrix = $('#matrix');
   const ORDER = ['critical', 'high', 'medium', 'low', 'info'];
-  let eng, rules, loading, preset = 'macro', deb = 0, shown = 210, lastEv;
+  let eng, rules, loading, preset = 'macro', deb = 0, shown = 210, lastEv, cells = [];
 
   const load = () => loading || (loading = Promise.all([
     import('./engine.js'),
     fetch(new URL('../data/rules.json', import.meta.url)).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-  ]).then(([m, r]) => { eng = m; rules = r; }, e => {
+  ]).then(([m, r]) => {
+    eng = m; rules = r;
+    if (matrix) {
+      cells = rules.filter(x => x.kind === 'process_start').map((x, i) => {
+        const c = el('i'); c.title = `${x.id} — ${(I.ruleTitles && I.ruleTitles[x.id]) || x.title}`; c.dataset.id = x.id; c.style.setProperty('--i', i); return c;
+      });
+      matrix.replaceChildren(...cells);
+    }
+  }, e => {
     loading = null; // un prochain essai relancera le chargement
     list.replaceChildren(); none.hidden = true; out.dataset.max = 'none'; sum.textContent = t('loadErr');
     throw e;
@@ -248,7 +214,7 @@ if (bench) {
     node.append(document.createTextNode(s.slice(0, i)), el('mark', null, s.slice(i, i + V.length)), document.createTextNode(s.slice(i + V.length)));
   };
   const card = (h, ev) => {
-    const r = h.rule, li = el('li', `alert-card sev-${r.severity}${RM ? '' : ' cut'}`);
+    const r = h.rule, li = el('li', `alert-card sev-${r.severity}${still() ? '' : ' cut'}`);
     const row = el('div', 'ac-row');
     row.append(el('span', `pill sev-${r.severity}`, I.sev[r.severity] || r.severity), el('span', 'rid', r.id));
     const tt = el('span', 'ttps');
@@ -258,7 +224,7 @@ if (bench) {
     row.append(tt, el('span', 'sc', sc));
     li.append(row, el('p', 'ac-title', (I.ruleTitles && I.ruleTitles[r.id]) || r.title));
     const why = el('div', 'why'), ul = el('ul');
-    why.append(el('p', 'hud', t('why')));
+    why.append(el('p', 'side-h', t('why')));
     h.why.forEach(w => {
       const it = el('li');
       it.append(el('code', null, `${w.field} ${w.op} "${w.value}"`));
@@ -271,7 +237,7 @@ if (bench) {
   };
   const rollTo = (to) => {
     const from = shown; shown = to;
-    if (RM) { totalEl.textContent = to; return; }
+    if (still()) { totalEl.textContent = to; return; }
     const t0 = performance.now();
     const step = (now) => {
       const p = Math.min(1, (now - t0) / 400), e = 1 - Math.pow(1 - p, 3);
@@ -294,8 +260,13 @@ if (bench) {
     rollTo(hits.reduce((a, h) => a + h.score, 0));
     const wasHidden = none.hidden;
     none.hidden = hits.length > 0;
-    if (!hits.length && wasHidden && !RM) { none.classList.remove('draw'); void none.offsetWidth; none.classList.add('draw'); }
+    if (!hits.length && wasHidden && !still()) { none.classList.remove('draw'); void none.offsetWidth; none.classList.add('draw'); }
     lesson.hidden = !(preset === lesson.dataset.lesson && !hits.length);
+    if (cells.length) {
+      const sev = Object.fromEntries(hits.map(h => [h.rule.id, h.rule.severity]));
+      cells.forEach(c => { c.className = sev[c.dataset.id] ? `on sev-${sev[c.dataset.id]}` : ''; });
+      if (!still()) { matrix.classList.remove('wave'); void matrix.offsetWidth; matrix.classList.add('wave'); }
+    }
   };
   const setPreset = (k) => {
     if (!eng || !eng.PRESETS[k]) return;
@@ -316,15 +287,12 @@ if (bench) {
   const fromHash = () => {
     const m = /^#banc-essai\?preset=(\w+)/.exec(location.hash);
     if (!m) return;
-    bench.scrollIntoView({ behavior: RM ? 'auto' : 'smooth' });
+    bench.scrollIntoView({ behavior: still() ? 'auto' : 'smooth' });
     load().then(() => setPreset(m[1])).catch(ok);
   };
   addEventListener('hashchange', fromHash);
   fromHash();
-  if (IO) {
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); load().then(run).catch(ok); } }, { rootMargin: '600px' });
-    io.observe(bench);
-  } else load().then(run).catch(ok);
+  onEnter([bench], () => load().then(run).catch(ok), { rootMargin: '600px' });
 
   const jb = $('#b-jsonl'), js = $('#b-jsonl-s');
   jb && jb.addEventListener('click', () => {
@@ -341,7 +309,7 @@ if (bench) {
       if (done) { js.textContent = t('copied'); setTimeout(() => { js.textContent = ''; }, 1600); return; }
       // Presse-papiers refusé : on affiche les lignes et on les sélectionne.
       let pre = $('pre.jsonl-out', jb.parentNode);
-      if (!pre) { pre = el('pre', 'insp jsonl-out'); jb.parentNode.append(pre); }
+      if (!pre) { pre = el('pre', 'jsonl-out'); jb.parentNode.append(pre); }
       pre.textContent = text; selectNode(pre); js.textContent = t('selected');
     });
   });
@@ -364,7 +332,7 @@ $$('.cmd').forEach(c => {
 });
 
 /* ---------- bento : spotlight ---------- */
-const bento = $('#bento');
+const bento = $('#fonctionnalites');
 if (bento && !RM && matchMedia('(hover:hover) and (pointer:fine)').matches) {
   let raf = 0, last;
   bento.addEventListener('pointermove', e => {
@@ -381,12 +349,6 @@ if (bento && !RM && matchMedia('(hover:hover) and (pointer:fine)').matches) {
   });
 }
 
-/* ---------- multi-OS : rejouer les traces ---------- */
-const osBtn = $('#os-replay');
-osBtn && osBtn.addEventListener('click', () => $$('.os-col').forEach(c => {
-  c.classList.add('re'); void c.offsetWidth; c.classList.remove('re');
-}));
-
 /* ---------- parc : kill + coupure ---------- */
 const fleet = $('#fleet');
 if (fleet) {
@@ -395,8 +357,8 @@ if (fleet) {
   let tm = [];
   $('#fleet-kill').addEventListener('click', () => {
     chk.classList.remove('on');
-    const a = dot.animate([{ transform: 'translate(262px,150px)', opacity: 1 }, { transform: 'translate(170px,150px)', opacity: 1 }],
-      { duration: RM ? 1 : 700, easing: 'cubic-bezier(.65,0,.35,1)' });
+    const a = dot.animate([{ transform: 'translate(176px,100px)', opacity: 1 }, { transform: 'translate(118px,100px)', opacity: 1 }],
+      { duration: still() ? 1 : 700, easing: 'cubic-bezier(.65,0,.35,1)' });
     a.finished.then(() => { void chk.getBoundingClientRect(); chk.classList.add('on'); say(t('killed')); }, () => {});
   });
   const setState = s => {
@@ -409,12 +371,18 @@ if (fleet) {
     tm.forEach(clearTimeout); tm = [];
     fleet.classList.toggle('cut3', on);
     if (!on) return setState('live');
-    if (RM) return setState('silent');
+    if (still()) return setState('silent');
     tm = [setTimeout(() => setState('stale'), 2000), setTimeout(() => setState('silent'), 4000)];
   });
 }
 
-/* ---------- couverture réelle : liste ↔ grille (survol souris seulement : la liste porte déjà l'info) ---------- */
+/* ---------- couverture réelle : ratio qui roule + liste ↔ grille ---------- */
+const ratio = $('#ratio-n');
+if (ratio && !still()) onEnter([ratio], () => {
+  const to = +ratio.textContent, t0 = performance.now();
+  const step = now => { const p = Math.min(1, (now - t0) / 600); ratio.textContent = Math.round(to * (1 - (1 - p) ** 3)); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}, { threshold: .6 });
 $$('#sim-list [data-rule]').forEach(li => {
   const cell = $(`#truth [data-rule="${li.dataset.rule}"]`);
   if (!cell) return;
