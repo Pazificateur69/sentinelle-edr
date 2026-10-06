@@ -4,3 +4,4 @@
 {"ts":"2026-10-06T09:00:50Z","host":"srv-linux","kind":"process_start","pid":5003,"ppid":5000,"image":"/usr/bin/python3","command_line":"python3 deploy.py"}
 {"ts":"2026-10-06T09:01:20Z","host":"srv-linux","kind":"process_start","pid":5004,"ppid":5000,"image":"/usr/bin/node","command_line":"node app.js"}
 {"ts":"2026-10-06T09:02:00Z","host":"srv-linux","kind":"process_start","pid":5005,"ppid":5000,"image":"/bin/cat","command_line":"cat /etc/hostname"}
+{"ts":"2026-10-06T09:02:30Z","host":"srv-linux","kind":"process_start","pid":5006,"ppid":5000,"image":"/bin/bash","command_line":"bash -c curl -s http://127.0.0.1:8080/health | python3 -m json.tool"}

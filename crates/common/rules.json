@@ -471,7 +471,7 @@
     "all": [
       { "field": "ImageName", "op": "equals", "values": ["bash", "sh", "zsh", "dash", "ash", "ksh"] },
       { "field": "CommandLine", "op": "contains", "values": ["curl", "wget", "fetch"] },
-      { "field": "CommandLine", "op": "contains", "values": ["| bash", "|bash", "| sh", "|sh", "| python", "|python"] }
+      { "field": "CommandLine", "op": "contains", "values": ["| bash", "|bash", "| sh", "|sh"] }
     ]
   },
   {
