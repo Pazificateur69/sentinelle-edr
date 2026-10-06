@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
         let emit = move |ev: sentinelle_common::Event| {
             if tx.try_send(ev).is_err() {
                 let n = st.note_dropped(1);
-                if n % 1000 == 0 {
+                if n.is_multiple_of(1000) {
                     tracing::warn!("file d'ingestion pleine : {n} événements abandonnés");
                 }
             }

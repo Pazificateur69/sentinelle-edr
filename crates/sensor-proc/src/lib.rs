@@ -139,6 +139,7 @@ mod tests {
             }
         }
         let _ = child.kill();
+        let _ = child.wait(); // on attend l'enfant terminé pour éviter un zombie
         assert!(
             found,
             "le capteur multi-OS doit détecter le processus enfant (pid {target})"
