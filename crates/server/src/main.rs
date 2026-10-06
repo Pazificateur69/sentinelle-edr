@@ -11,13 +11,14 @@ use anyhow::{Context, Result};
 use axum::{
     extract::Path,
     http::StatusCode,
+    middleware,
     response::Json,
     routing::post,
     Extension, Router,
 };
 use sentinelle_server::ingest::{IngestService, Registry};
 use sentinelle_common::Engine;
-use sentinelle_console::{base_routes, AppState};
+use sentinelle_console::{base_routes, require_token, AppState};
 use sentinelle_proto::v1::{ingest_server::IngestServer, Command};
 use serde_json::json;
 use std::collections::HashMap;
@@ -59,9 +60,15 @@ async fn main() -> Result<()> {
     // --- Console HTTP (multi-hôtes) + réponse à distance ---
     let http_addr =
         std::env::var("SENTINELLE_HTTP").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
+    // La réponse `kill` à distance est destructrice : garde par jeton
+    // (`SENTINELLE_TOKEN`). Ouvert si non défini, mais FORTEMENT recommandé pour
+    // un serveur de parc exposé au réseau.
+    let kill_route = Router::new()
+        .route("/api/respond/kill/{host}/{pid}", post(kill))
+        .route_layer(middleware::from_fn(require_token));
     let app: Router = base_routes()
         .with_state(state.clone())
-        .merge(Router::new().route("/api/respond/kill/{host}/{pid}", post(kill)))
+        .merge(kill_route)
         .layer(Extension(registry.clone()))
         .layer(CorsLayer::permissive());
     {

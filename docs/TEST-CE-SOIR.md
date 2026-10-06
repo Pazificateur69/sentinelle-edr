@@ -99,6 +99,8 @@ SENTINELLE_YARA_DIR=./yara.d cargo run --release -p sentinelle-agentd
 cargo run -p sentinelle-certgen -- ./certs
 
 # 2. Serveur central (console multi-hôtes sur http://localhost:8080)
+#    Recommandé si exposé au réseau : exiger un jeton sur les actions (kill).
+#    $env:SENTINELLE_TOKEN = "un-secret-long"   # PowerShell ; sinon ouvert
 cargo run --release -p sentinelle-server
 
 # 3. Un agent (sur cette machine : capteur réel ; ailleurs : idem)
@@ -109,6 +111,8 @@ SENTINELLE_HOST=poste-demo SENTINELLE_REPLAY_SECS=20 cargo run --release -p sent
 ```
 
 La console du serveur montre tous les postes, leur risque, et l'état de vivacité du capteur (live / ralenti / silencieux).
+
+> 🔐 **Garde par jeton sur les actions** : si `SENTINELLE_TOKEN` est défini (serveur **ou** `agentd`), les routes **destructrices** (`kill`, `simulate`) exigent l'en-tête `X-Sentinelle-Token`. Dans la console web, le poser une fois : ouvrir la console du navigateur (F12) et taper `localStorage.setItem('sentinelle_token','<le-jeton>')`. Sans jeton configuré, tout reste ouvert (démo / mono-poste sur localhost). Les routes de **lecture** restent ouvertes pour l'instant.
 
 ---
 

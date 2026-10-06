@@ -71,6 +71,28 @@ pub struct CoverageReality {
     pub missing_kinds: Vec<EventKind>,
 }
 
+/// Compare un jeton fourni au jeton attendu en **temps constant** (évite la fuite
+/// par timing). `None`, longueur différente ou jeton vide → refus.
+///
+/// ponytail: la différence de longueur revient tôt (fuite de la longueur via le
+/// timing) — acceptable pour un secret partagé ; passer à `subtle` si un jour on
+/// durcit vraiment.
+pub fn token_ok(expected: &str, provided: Option<&str>) -> bool {
+    let provided = match provided {
+        Some(p) => p.as_bytes(),
+        None => return false,
+    };
+    let expected = expected.as_bytes();
+    if expected.is_empty() || expected.len() != provided.len() {
+        return false;
+    }
+    let mut diff = 0u8;
+    for (a, b) in expected.iter().zip(provided.iter()) {
+        diff |= a ^ b;
+    }
+    diff == 0
+}
+
 pub fn tactic_of(technique: &str) -> &'static str {
     let base = technique.split('.').next().unwrap_or(technique);
     match base {
@@ -460,6 +482,15 @@ mod tests {
         assert!(cov.contains(&"T1003".to_string())); // credential dumping
         assert!(cov.contains(&"T1486".to_string())); // ransomware
         assert!(cov.windows(2).all(|w| w[0] < w[1])); // trié, sans doublon
+    }
+
+    #[test]
+    fn token_ok_matches_only_exact() {
+        assert!(crate::token_ok("s3cret", Some("s3cret")));
+        assert!(!crate::token_ok("s3cret", Some("wrong")));
+        assert!(!crate::token_ok("s3cret", Some("s3cre"))); // longueur différente
+        assert!(!crate::token_ok("s3cret", None));
+        assert!(!crate::token_ok("", Some(""))); // jeton vide refusé
     }
 
     #[test]

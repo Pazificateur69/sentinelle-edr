@@ -296,17 +296,28 @@ document.querySelectorAll(".fpill").forEach(p => p.onclick = () => {
 });
 $("search").oninput = (e) => { searchTerm = e.target.value.trim().toLowerCase(); document.querySelectorAll(".alert").forEach(applySearch); };
 
+// Si un jeton d'action est configuré côté serveur (SENTINELLE_TOKEN), le poser une
+// fois dans la console : localStorage.setItem('sentinelle_token','<jeton>').
+// Sinon (démo / mono-poste), aucun en-tête n'est envoyé et rien ne change.
+function actionHeaders(){
+  try { const t = localStorage.getItem('sentinelle_token'); return t ? { 'X-Sentinelle-Token': t } : {}; }
+  catch(e){ return {}; }
+}
 async function killProc(pid, host){
   if (demoMode){ toast(`(démo) ordre de terminaison du pid ${pid} sur ${host}`); return; }
   try {
-    const r = await fetch(`/api/respond/kill/${encodeURIComponent(host||"local")}/${pid}`, { method:"POST" });
+    const r = await fetch(`/api/respond/kill/${encodeURIComponent(host||"local")}/${pid}`, { method:"POST", headers: actionHeaders() });
+    if (r.status === 401){ toast("Action refusée : jeton requis (voir SENTINELLE_TOKEN).", false); return; }
     const j = await r.json();
     toast(j.ok ? `Ordre envoyé : pid ${pid} sur ${host}.` : `Échec : ${j.error}`, j.ok);
   } catch(e){ toast("Requête échouée : " + e, false); }
 }
 $("simBtn").onclick = async () => {
   if (demoMode){ runDemo(); return; }
-  try { await fetch("/api/simulate", { method:"POST" }); toast("Simulation d'attaque lancée."); }
+  try {
+    const r = await fetch("/api/simulate", { method:"POST", headers: actionHeaders() });
+    toast(r.status === 401 ? "Action refusée : jeton requis." : "Simulation d'attaque lancée.", r.status !== 401);
+  }
   catch(e){ toast("Échec : " + e, false); }
 };
 

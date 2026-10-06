@@ -1,19 +1,25 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    middleware,
     response::Json,
     routing::post,
     Router,
 };
-use sentinelle_console::{base_routes, AppState};
+use sentinelle_console::{base_routes, require_token, AppState};
 use serde_json::json;
 use tower_http::cors::CorsLayer;
 
 /// Routes de base (console) + routes specifiques a l'agent mono-poste.
+/// Les routes d'ACTION (simulate, kill) sont protégées par jeton si
+/// `SENTINELLE_TOKEN` est défini ; sinon ouvertes (mono-poste localhost).
 pub fn router(state: AppState) -> Router {
-    base_routes()
+    let guarded = Router::new()
         .route("/api/simulate", post(simulate))
         .route("/api/respond/kill/{host}/{pid}", post(kill))
+        .route_layer(middleware::from_fn(require_token));
+    base_routes()
+        .merge(guarded)
         .layer(CorsLayer::permissive())
         .with_state(state)
 }
