@@ -46,6 +46,31 @@ pub const KILL_CHAIN: &[&str] = &[
     "Impact",
 ];
 
+/// Types d'événements qu'au moins un capteur LIVE produit aujourd'hui.
+///
+/// L'ETW Kernel-Process et la scrutation `sysinfo` ne fournissent que le
+/// démarrage de processus (l'ETW émet aussi l'arrêt). Les autres types — réseau,
+/// écriture fichier, chargement d'image, accès processus (handle LSASS), thread
+/// distant, tube nommé — ne sont alimentés que par le rejeu/simulation pour
+/// l'instant : les règles correspondantes NE PROTÈGENT PAS encore un vrai poste.
+/// Honnêteté > esbroufe : on l'affiche. Mettre à jour quand un capteur gagne un
+/// type (providers ETW additionnels, Sysmon).
+pub const LIVE_EVENT_KINDS: &[EventKind] = &[EventKind::ProcessStart, EventKind::ProcessStop];
+
+/// Couverture « réelle » : part des règles réellement alimentables par un capteur
+/// live, vs celles qui ne se déclenchent qu'en rejeu/simulation (type non collecté).
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct CoverageReality {
+    /// Règles natives dont le type d'événement est produit par un capteur live.
+    pub live: usize,
+    /// Règles natives qui ne se déclenchent qu'en rejeu/simulation.
+    pub simulation_only: usize,
+    /// IDs des règles simulation-seulement (à brancher côté capteur).
+    pub simulation_only_rules: Vec<String>,
+    /// Types d'événements requis par des règles mais non collectés en live.
+    pub missing_kinds: Vec<EventKind>,
+}
+
 pub fn tactic_of(technique: &str) -> &'static str {
     let base = technique.split('.').next().unwrap_or(technique);
     match base {
@@ -211,6 +236,27 @@ impl Engine {
             *counts.entry(t.to_string()).or_insert(0) += 1;
         }
         crate::navigator::layer(name, &counts)
+    }
+
+    /// Partitionne les règles natives selon que leur type d'événement est
+    /// produit par un capteur live ou seulement par le rejeu/simulation.
+    pub fn coverage_reality(&self) -> CoverageReality {
+        let mut cr = CoverageReality::default();
+        for r in &self.rules {
+            match r.kind {
+                // Un type précis non collecté en live → simulation-seulement.
+                Some(k) if !LIVE_EVENT_KINDS.contains(&k) => {
+                    cr.simulation_only_rules.push(r.id.clone());
+                    if !cr.missing_kinds.contains(&k) {
+                        cr.missing_kinds.push(k);
+                    }
+                }
+                // Sans restriction de type (None) ou type collecté en live → live.
+                _ => cr.live += 1,
+            }
+        }
+        cr.simulation_only = cr.simulation_only_rules.len();
+        cr
     }
 
     pub fn tracked_processes(&self) -> usize {
@@ -414,6 +460,21 @@ mod tests {
         assert!(cov.contains(&"T1003".to_string())); // credential dumping
         assert!(cov.contains(&"T1486".to_string())); // ransomware
         assert!(cov.windows(2).all(|w| w[0] < w[1])); // trié, sans doublon
+    }
+
+    #[test]
+    fn coverage_reality_flags_simulation_only_rules() {
+        let eng = Engine::with_builtin_rules().unwrap();
+        let cr = eng.coverage_reality();
+        // Tout est comptabilisé : live + simulation-seulement = total des règles.
+        assert_eq!(cr.live + cr.simulation_only, eng.rule_count());
+        // La majorité (process_start) est alimentable en live.
+        assert!(cr.live >= 40, "trop peu de règles live : {}", cr.live);
+        // Les types non collectés en live doivent être signalés (réseau, fichier,
+        // image, accès-processus, thread-distant, tube-nommé).
+        assert!(cr.simulation_only >= 6, "attendu >=6 sim-only, obtenu {}", cr.simulation_only);
+        // SNT-0300 (accès handle LSASS) n'a pas de source live → simulation-seulement.
+        assert!(cr.simulation_only_rules.iter().any(|r| r == "SNT-0300"));
     }
 
     #[test]

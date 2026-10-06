@@ -143,6 +143,14 @@ comportementales** à états complètent les règles unitaires : `SNT-B001` (raf
 créations de processus) et `SNT-B002` (chiffrement massif = rançongiciel), `SNT-B003` (**usurpation de parent / PPID spoofing**).
 Enfin, une couche **allowlist + déduplication** contient les faux positifs et le bruit.
 
+**Couverture *réelle*, pas sur le papier** : `GET /api/coverage/reality` distingue les
+règles réellement **alimentables par un capteur live** de celles qui ne se déclenchent
+qu'en **rejeu/simulation**. Aujourd'hui les capteurs (ETW Kernel-Process, scrutation
+`sysinfo`) ne produisent que le **démarrage de processus** : les règles réseau, fichier,
+chargement d'image, accès-handle (LSASS), thread distant et tube nommé existent mais
+attendent leur source (providers ETW additionnels / Sysmon). On l'affiche plutôt que de
+le cacher.
+
 **Ajouter une détection** = ajouter une entrée JSON, ou déposer une règle Sigma dans
 [`rules.d/`](rules.d/). Exemple fourni : [`rules.d/recon_discovery.yml`](rules.d/recon_discovery.yml).
 **Réduire un faux positif** = une entrée dans [`crates/common/allowlist.json`](crates/common/allowlist.json)

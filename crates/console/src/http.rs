@@ -27,6 +27,7 @@ pub fn base_routes() -> Router<AppState> {
         .route("/api/stats", get(stats))
         .route("/api/history", get(history))
         .route("/api/coverage", get(coverage))
+        .route("/api/coverage/reality", get(coverage_reality))
         .route("/api/incidents", get(incidents))
         .route("/api/navigator", get(navigator))
         .route("/api/report", get(report))
@@ -143,6 +144,18 @@ async fn coverage() -> Json<Vec<(String, usize)>> {
         Ok(e) => Json(e.tactic_coverage()),
         Err(_) => Json(vec![]),
     }
+}
+
+/// Couverture « réelle » : combien de règles sont réellement alimentables par un
+/// capteur live vs seulement par le rejeu/simulation (type d'événement non collecté).
+/// Honnêteté affichée : une règle qui ne se déclenche qu'en simulation ne protège
+/// pas encore le poste.
+async fn coverage_reality() -> Json<sentinelle_common::CoverageReality> {
+    Json(
+        sentinelle_common::Engine::with_builtin_rules()
+            .map(|e| e.coverage_reality())
+            .unwrap_or_default(),
+    )
 }
 
 /// Historique persistant (depuis SQLite si activé, sinon le tampon en mémoire).
