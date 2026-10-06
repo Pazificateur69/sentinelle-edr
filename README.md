@@ -13,7 +13,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 ![License](https://img.shields.io/badge/licence-MIT-green)
 ![Status](https://img.shields.io/badge/statut-alpha-orange)
 
-**🌐 [pazificateur69.github.io/sentinelle-edr](https://pazificateur69.github.io/sentinelle-edr/)** — fonctionnement animé, rejeu d'une vraie kill chain, banc d'essai interactif des règles
+**🌐 [pazificateur69.github.io/sentinelle-edr](https://pazificateur69.github.io/sentinelle-edr/)** — fonctionnement animé, rejeu animé d'un scénario d'attaque, banc d'essai interactif des règles
 
 </div>
 

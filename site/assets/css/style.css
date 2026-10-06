@@ -40,6 +40,7 @@ h1,h2,h3{margin:0;font-weight:600;line-height:1.1}
 h2{font-size:var(--fs-h2);letter-spacing:-.025em;margin-bottom:var(--s5);max-width:22ch;text-wrap:balance}
 h3{font-size:var(--fs-h3);letter-spacing:-.01em;margin-bottom:var(--s3)}
 code,pre,kbd{font-family:var(--mono);font-size:.875em}
+pre code{font-size:inherit}
 :not(pre)>code{background:rgba(255,255,255,.06);border:1px solid var(--card-br);border-radius:6px;padding:.08em .38em;word-break:break-word}
 pre{margin:0;overflow-x:auto}
 ul,ol{margin:0;padding:0;list-style:none}
@@ -109,7 +110,7 @@ a.ttp:hover{background:rgba(77,168,255,.28);color:#a9d3ff}
 .alert-card .ac-meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin:4px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alert-card.is-sim{border-style:dashed;border-left-style:dashed;border-color:rgba(138,147,168,.5);border-left-color:var(--sev)}
 .alert-card.is-sim::after{content:"";position:absolute;right:0;top:0;width:56px;height:100%;background:var(--hatch);border-radius:0 var(--r-inner) var(--r-inner) 0;pointer-events:none;-webkit-mask:linear-gradient(90deg,transparent,#000);mask:linear-gradient(90deg,transparent,#000)}
-.sim-tag{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--txt);border:1px dashed var(--muted);border-radius:6px;padding:1px 6px;background:var(--hatch)}
+.sim-tag{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--txt);border:1px dashed var(--muted);border-radius:6px;padding:1px 6px;background:var(--hatch)}
 
 /* ---------- panneaux HUD ---------- */
 .panel{position:relative;background:rgba(18,24,40,.9);border:1px solid var(--card-br);border-radius:var(--r-card);box-shadow:var(--sh-card);padding:var(--s5)}
@@ -303,7 +304,7 @@ h1{font-size:var(--fs-display);line-height:1.02;letter-spacing:-.035em;margin-bo
 .feed-list{display:grid;gap:6px}
 .feed-list .alert-card,.inc-cards .alert-card{padding:7px 10px}
 .feed-list .ac-title,.inc-cards .ac-title{font-size:.8125rem;margin-top:3px}
-.feed-list .sim-tag,.inc-cards .sim-tag{font-size:9.5px}
+.feed-list .sim-tag,.inc-cards .sim-tag{font-size:10.5px}
 .js .feed-list .alert-card[data-at]{transition:opacity var(--d-micro) ease-out,transform var(--d-micro) ease-out}
 .js .feed-list .alert-card[data-at]:not(.on){display:none}
 .js .feed-list .alert-card.on.cut{animation:cut 120ms ease-out both,ping 600ms ease-out;animation-delay:calc(500ms + var(--k,0) * 80ms)}
@@ -580,7 +581,7 @@ mark[data-k].hit{background:rgba(77,168,255,.45);box-shadow:0 0 0 2px rgba(77,16
 .catalog td:nth-child(4) .ttp{display:inline-block;margin:0 4px 4px 0}
 .catalog td:nth-child(5){color:var(--muted);min-width:150px}
 .st-live{font-family:var(--mono);font-size:11px;color:var(--accent)}
-.st-sim{font-family:var(--mono);font-size:10.5px;padding:1px 6px;border:1px dashed var(--muted);border-radius:6px;background:var(--hatch);white-space:nowrap}
+.st-sim{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px dashed var(--muted);border-radius:6px;background:var(--hatch);white-space:nowrap}
 
 /* ================= COUVERTURE RÉELLE ================= */
 .reality-grid{display:grid;gap:var(--s7);margin-top:var(--s5)}

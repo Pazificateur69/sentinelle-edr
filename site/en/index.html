@@ -729,7 +729,7 @@ cargo run --release -p sentinelle-agentd</code></pre><button class="copy js-only
       <div class="step-cmd"><h3 class="hud">2 · Replay the demo attack</h3><div class="cmd"><pre><code>SENTINELLE_REPLAY_FILE=./captures/demo.jsonl cargo run --release -p sentinelle-agentd</code></pre><button class="copy js-only" type="button" aria-label="Copy the command: replay the demo attack"><span class="copy-l">Copy</span></button></div></div>
       <div class="step-cmd"><h3 class="hud">3 · mTLS fleet</h3><div class="cmd"><pre><code>cargo run -p sentinelle-certgen -- ./certs
 cargo run --release -p sentinelle-server
-SENTINELLE_HOST=poste-1 cargo run --release -p sentinelle-agent</code></pre><button class="copy js-only" type="button" aria-label="Copy the commands: mTLS fleet"><span class="copy-l">Copy</span></button></div><p class="note">Set <code>SENTINELLE_TOKEN</code> before exposing the server: without a token, the action routes (kill, simulate) are open.</p></div>
+SENTINELLE_HOST=poste-1 cargo run --release -p sentinelle-agent</code></pre><button class="copy js-only" type="button" aria-label="Copy the commands: mTLS fleet"><span class="copy-l">Copy</span></button></div><p class="note">Set <code>SENTINELLE_TOKEN</code> before exposing the server: without a token, its <code>kill</code> response route is open. The single-host agent listens on 127.0.0.1 and leaves <code>kill</code> and <code>simulate</code> open until a token is set.</p></div>
     </div>
     <aside class="win-note"><h3 class="hud">Windows</h3><p>Run the terminal as Administrator for ETW. Defender may quarantine the binaries, which is expected for an unsigned EDR: exclude the folder in Windows Security.</p></aside>
     <details class="envs">
