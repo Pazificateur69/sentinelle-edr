@@ -17,7 +17,8 @@ pub fn generate_pki(dir: &Path) -> Result<()> {
     let ca_key = KeyPair::generate()?;
     let mut ca = CertificateParams::new(Vec::<String>::new())?;
     ca.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
-    ca.distinguished_name.push(DnType::CommonName, "Sentinelle Root CA");
+    ca.distinguished_name
+        .push(DnType::CommonName, "Sentinelle Root CA");
     ca.key_usages = vec![KeyUsagePurpose::KeyCertSign, KeyUsagePurpose::CrlSign];
     let ca_cert = ca.self_signed(&ca_key)?;
     fs::write(dir.join("ca.pem"), ca_cert.pem())?;
@@ -25,7 +26,8 @@ pub fn generate_pki(dir: &Path) -> Result<()> {
     // Certificat serveur (SAN localhost).
     let srv_key = KeyPair::generate()?;
     let mut srv = CertificateParams::new(vec!["localhost".to_string()])?;
-    srv.distinguished_name.push(DnType::CommonName, "sentinelle-server");
+    srv.distinguished_name
+        .push(DnType::CommonName, "sentinelle-server");
     srv.key_usages = vec![
         KeyUsagePurpose::DigitalSignature,
         KeyUsagePurpose::KeyEncipherment,
@@ -38,7 +40,8 @@ pub fn generate_pki(dir: &Path) -> Result<()> {
     // Certificat client (agents).
     let cli_key = KeyPair::generate()?;
     let mut cli = CertificateParams::new(vec!["sentinelle-agent".to_string()])?;
-    cli.distinguished_name.push(DnType::CommonName, "sentinelle-agent");
+    cli.distinguished_name
+        .push(DnType::CommonName, "sentinelle-agent");
     cli.extended_key_usages = vec![ExtendedKeyUsagePurpose::ClientAuth];
     let cli_cert = cli.signed_by(&cli_key, &ca_cert, &ca_key)?;
     fs::write(dir.join("client.pem"), cli_cert.pem())?;

@@ -60,7 +60,9 @@ impl Cond {
                 Op::StartsWith => hay.starts_with(&needle),
                 Op::EndsWith => hay.ends_with(&needle),
                 // Regex : on compile a la volee ; une regex invalide ne matche pas.
-                Op::Regex => regex::Regex::new(v).map(|re| re.is_match(&raw)).unwrap_or(false),
+                Op::Regex => regex::Regex::new(v)
+                    .map(|re| re.is_match(&raw))
+                    .unwrap_or(false),
                 // CIDR : le champ (IP) est-il dans le reseau `v` (IPv4).
                 Op::Cidr => cidr_match(&raw, v),
             }
@@ -82,7 +84,11 @@ pub fn cidr_match(ip: &str, cidr: &str) -> bool {
     if bits > 32 {
         return false;
     }
-    let mask: u32 = if bits == 0 { 0 } else { u32::MAX << (32 - bits) };
+    let mask: u32 = if bits == 0 {
+        0
+    } else {
+        u32::MAX << (32 - bits)
+    };
     (ip4 & mask) == (net4 & mask)
 }
 
@@ -166,7 +172,9 @@ fn default_confidence() -> f32 {
 impl Rule {
     /// Score effectif = poids de severite x confiance (borne 0..=1000).
     pub fn score(&self) -> u32 {
-        (self.severity.weight() as f32 * self.confidence).round().clamp(0.0, 1000.0) as u32
+        (self.severity.weight() as f32 * self.confidence)
+            .round()
+            .clamp(0.0, 1000.0) as u32
     }
 }
 
@@ -200,10 +208,7 @@ impl Rule {
 
 fn lineage_matches(lin: &Lineage, ev: &Event, ancestors: &[String]) -> bool {
     let child = ev.image_name();
-    let child_ok = lin
-        .children
-        .iter()
-        .any(|c| c.eq_ignore_ascii_case(&child));
+    let child_ok = lin.children.iter().any(|c| c.eq_ignore_ascii_case(&child));
     if !child_ok {
         return false;
     }
@@ -226,7 +231,13 @@ mod tests {
     use crate::event::Event;
 
     fn office() -> Event {
-        Event::process_start("h", 100, 50, r"C:\Office\winword.exe", r"C:\Windows\explorer.exe")
+        Event::process_start(
+            "h",
+            100,
+            50,
+            r"C:\Office\winword.exe",
+            r"C:\Windows\explorer.exe",
+        )
     }
 
     #[test]
@@ -263,7 +274,10 @@ mod tests {
         assert!(lineage_matches(&lin, &ev, &ancestors));
 
         // sans ancestor=true, le parent direct est cmd.exe -> pas de match
-        let direct = Lineage { ancestor: false, ..lin };
+        let direct = Lineage {
+            ancestor: false,
+            ..lin
+        };
         assert!(!lineage_matches(&direct, &ev, &ancestors));
     }
 }

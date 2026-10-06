@@ -56,8 +56,8 @@ async fn mtls_fleet_roundtrip() -> anyhow::Result<()> {
         .ca_certificate(Certificate::from_pem(read("ca.pem")))
         .identity(Identity::from_pem(read("client.pem"), read("client.key")))
         .domain_name("localhost");
-    let endpoint = Channel::from_shared(format!("https://localhost:{}", addr.port()))?
-        .tls_config(cli_tls)?;
+    let endpoint =
+        Channel::from_shared(format!("https://localhost:{}", addr.port()))?.tls_config(cli_tls)?;
 
     let channel = {
         let mut got = None;
@@ -106,7 +106,10 @@ async fn mtls_fleet_roundtrip() -> anyhow::Result<()> {
         }
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
-    assert!(registered, "l'agent 'poste-x' doit être enregistré côté serveur");
+    assert!(
+        registered,
+        "l'agent 'poste-x' doit être enregistré côté serveur"
+    );
     assert!(
         state.inner.lock().unwrap().last_stats.total_alerts >= 1,
         "l'alerte doit être ingérée côté serveur"

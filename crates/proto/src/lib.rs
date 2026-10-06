@@ -91,9 +91,10 @@ pub fn alert_from_proto(p: v1::Alert) -> Alert {
         severity: sev_from_str(&p.severity),
         attack: p.attack,
         score: p.score,
-        event: p.event.map(event_from_proto).unwrap_or_else(|| {
-            Event::process_start("", 0, 0, "", "")
-        }),
+        event: p
+            .event
+            .map(event_from_proto)
+            .unwrap_or_else(|| Event::process_start("", 0, 0, "", "")),
         ancestors: p.ancestors,
     }
 }

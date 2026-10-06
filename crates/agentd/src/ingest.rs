@@ -22,7 +22,10 @@ pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
             tracing::warn!("Sigma ignore {file} : {msg}");
         }
         engine.add_rules(extra);
-        tracing::info!("Sigma : {n} regle(s) importee(s) ({} ignoree(s))", errs.len());
+        tracing::info!(
+            "Sigma : {n} regle(s) importee(s) ({} ignoree(s))",
+            errs.len()
+        );
     }
 
     // Seuils réglables optionnels (SENTINELLE_CONFIG = fichier TOML).
@@ -48,9 +51,8 @@ pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
     }
 
     // Scan YARA optionnel des images de processus (SENTINELLE_YARA_DIR).
-    let yara: Option<Arc<YaraScanner>> = std::env::var("SENTINELLE_YARA_DIR")
-        .ok()
-        .and_then(|d| match YaraScanner::from_dir(std::path::Path::new(&d)) {
+    let yara: Option<Arc<YaraScanner>> = std::env::var("SENTINELLE_YARA_DIR").ok().and_then(|d| {
+        match YaraScanner::from_dir(std::path::Path::new(&d)) {
             Ok(Some(s)) => {
                 tracing::info!("YARA actif : règles chargées depuis {d}");
                 Some(Arc::new(s))
@@ -63,7 +65,8 @@ pub async fn ingest_loop(mut rx: mpsc::Receiver<Event>, state: AppState) {
                 tracing::warn!("YARA {d} ignoré : {e:#}");
                 None
             }
-        });
+        }
+    });
 
     let rule_count = engine.rule_count();
     state.set_runtime(rule_count, 0);

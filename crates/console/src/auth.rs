@@ -33,7 +33,11 @@ pub async fn require_token(req: Request, next: Next) -> Response {
             if sentinelle_common::token_ok(&expected, provided) {
                 next.run(req).await
             } else {
-                (StatusCode::UNAUTHORIZED, "jeton d'action invalide ou absent").into_response()
+                (
+                    StatusCode::UNAUTHORIZED,
+                    "jeton d'action invalide ou absent",
+                )
+                    .into_response()
             }
         }
         // Pas de jeton configuré → ouvert (démo / mono-poste localhost).

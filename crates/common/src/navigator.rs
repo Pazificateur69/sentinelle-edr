@@ -57,6 +57,8 @@ mod tests {
         assert_eq!(v["domain"], "enterprise-attack");
         assert_eq!(v["gradient"]["maxValue"], 3);
         let techs = v["techniques"].as_array().unwrap();
-        assert!(techs.iter().any(|t| t["techniqueID"] == "T1059" && t["score"] == 3));
+        assert!(techs
+            .iter()
+            .any(|t| t["techniqueID"] == "T1059" && t["score"] == 3));
     }
 }

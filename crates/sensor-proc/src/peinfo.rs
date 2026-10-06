@@ -28,8 +28,7 @@ pub fn original_file_name_of(path: &str) -> String {
             return String::new();
         }
         let mut buf = vec![0u8; size as usize];
-        if GetFileVersionInfoW(PCWSTR(wpath.as_ptr()), 0, size, buf.as_mut_ptr() as *mut _)
-            .is_err()
+        if GetFileVersionInfoW(PCWSTR(wpath.as_ptr()), 0, size, buf.as_mut_ptr() as *mut _).is_err()
         {
             return String::new();
         }

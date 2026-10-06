@@ -108,9 +108,7 @@ where
     {
         tracing::info!("Capteur ETW (lancer en Administrateur pour la télémétrie noyau).");
         if let Err(e) = sentinelle_sensor_windows::run(host.clone(), emit.clone()) {
-            tracing::warn!(
-                "capteur ETW indisponible ({e:#}) — repli sur la scrutation multi-OS."
-            );
+            tracing::warn!("capteur ETW indisponible ({e:#}) — repli sur la scrutation multi-OS.");
             if let Err(e) = sentinelle_sensor_proc::run(host, emit) {
                 tracing::error!("capteur multi-OS arrêté : {e:#}");
             }

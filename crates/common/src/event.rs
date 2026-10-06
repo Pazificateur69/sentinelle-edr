@@ -103,7 +103,13 @@ impl Event {
     }
 
     /// Accès à un autre processus (handle), ex. lecture de LSASS.
-    pub fn process_access(host: &str, pid: u32, image: &str, target_image: &str, granted_access: &str) -> Self {
+    pub fn process_access(
+        host: &str,
+        pid: u32,
+        image: &str,
+        target_image: &str,
+        granted_access: &str,
+    ) -> Self {
         let mut e = Self::process_start(host, pid, 0, image, "");
         e.kind = EventKind::ProcessAccess;
         e.target_image = target_image.to_string();

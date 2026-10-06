@@ -99,7 +99,11 @@ where
             // echoue (process trop bref), on retombe sur l'ImageName ETW.
             let nt_image: String = parser.try_parse("ImageName").unwrap_or_default();
             let (dos_image, cmdline) = image_and_cmdline_of(pid);
-            let image = if dos_image.is_empty() { nt_image } else { dos_image };
+            let image = if dos_image.is_empty() {
+                nt_image
+            } else {
+                dos_image
+            };
 
             let parent_image = {
                 let mut map = PID_IMAGE.lock().unwrap();

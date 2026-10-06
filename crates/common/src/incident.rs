@@ -100,7 +100,12 @@ fn finalize(inc: &mut Incident) {
         .collect::<std::collections::BTreeSet<_>>()
         .into_iter()
         .collect();
-    tacs.sort_by_key(|t| crate::KILL_CHAIN.iter().position(|k| k == t).unwrap_or(usize::MAX));
+    tacs.sort_by_key(|t| {
+        crate::KILL_CHAIN
+            .iter()
+            .position(|k| k == t)
+            .unwrap_or(usize::MAX)
+    });
     inc.tactics = tacs.into_iter().map(str::to_string).collect();
 }
 
@@ -134,9 +139,17 @@ mod tests {
             alerts.extend(eng.ingest(ev));
         }
         let inc = correlate(&alerts, DEFAULT_WINDOW_SECS);
-        assert_eq!(inc.len(), 1, "une chaîne rapprochée = 1 incident, obtenu {}", inc.len());
+        assert_eq!(
+            inc.len(),
+            1,
+            "une chaîne rapprochée = 1 incident, obtenu {}",
+            inc.len()
+        );
         assert_eq!(inc[0].alert_count, alerts.len());
-        assert!(inc[0].tactics.len() >= 3, "l'incident doit couvrir plusieurs tactiques");
+        assert!(
+            inc[0].tactics.len() >= 3,
+            "l'incident doit couvrir plusieurs tactiques"
+        );
     }
 
     #[test]
@@ -162,6 +175,9 @@ mod tests {
         let inc = correlate(&[a, b], DEFAULT_WINDOW_SECS);
         assert_eq!(inc.len(), 1);
         assert_eq!(inc[0].alert_count, 2);
-        assert_eq!(inc[0].techniques, vec!["T1003".to_string(), "T1059".to_string()]);
+        assert_eq!(
+            inc[0].techniques,
+            vec!["T1003".to_string(), "T1059".to_string()]
+        );
     }
 }

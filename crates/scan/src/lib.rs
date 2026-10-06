@@ -96,7 +96,10 @@ pub fn scan_image_alerts(scanner: &YaraScanner, ev: &Event, max_bytes: usize) ->
             host: ev.host.clone(),
             rule_id: format!("YARA:{name}"),
             title: format!("Signature YARA : {name}"),
-            description: format!("L'image {} correspond à la règle YARA « {name} ».", ev.image),
+            description: format!(
+                "L'image {} correspond à la règle YARA « {name} ».",
+                ev.image
+            ),
             severity: Severity::High,
             attack: vec!["T1204".to_string()],
             score: Severity::High.weight(),
@@ -116,7 +119,10 @@ mod tests {
             r#"rule evil_marker { strings: $a = "EVILCODE" condition: $a }"#,
         )
         .unwrap();
-        assert_eq!(s.scan_bytes(b"xx EVILCODE yy"), vec!["evil_marker".to_string()]);
+        assert_eq!(
+            s.scan_bytes(b"xx EVILCODE yy"),
+            vec!["evil_marker".to_string()]
+        );
         assert!(s.scan_bytes(b"fichier sain").is_empty());
     }
 

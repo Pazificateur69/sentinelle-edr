@@ -267,8 +267,16 @@ fn base64_encode(data: &[u8]) -> String {
         let n = (b0 << 16) | (b1 << 8) | b2;
         out.push(T[((n >> 18) & 63) as usize] as char);
         out.push(T[((n >> 12) & 63) as usize] as char);
-        out.push(if chunk.len() > 1 { T[((n >> 6) & 63) as usize] as char } else { '=' });
-        out.push(if chunk.len() > 2 { T[(n & 63) as usize] as char } else { '=' });
+        out.push(if chunk.len() > 1 {
+            T[((n >> 6) & 63) as usize] as char
+        } else {
+            '='
+        });
+        out.push(if chunk.len() > 2 {
+            T[(n & 63) as usize] as char
+        } else {
+            '='
+        });
     }
     out
 }
@@ -306,7 +314,9 @@ fn parse_condition(cond: &Value, selections: &BTreeMap<String, Expr>) -> Result<
     if let Some(seq) = cond.as_sequence() {
         let mut ors = Vec::new();
         for c in seq {
-            let s = c.as_str().ok_or_else(|| anyhow!("condition non textuelle"))?;
+            let s = c
+                .as_str()
+                .ok_or_else(|| anyhow!("condition non textuelle"))?;
             ors.push(parse_condition_str(s, selections)?);
         }
         return Ok(Expr::Or(ors));
@@ -406,7 +416,9 @@ impl P<'_> {
         if self.advance().as_deref() != Some("of") {
             bail!("quantificateur : 'of' attendu apres '{q}'");
         }
-        let target = self.advance().ok_or_else(|| anyhow!("cible de quantificateur manquante"))?;
+        let target = self
+            .advance()
+            .ok_or_else(|| anyhow!("cible de quantificateur manquante"))?;
 
         let names: Vec<String> = if target == "them" {
             self.sels.keys().cloned().collect()

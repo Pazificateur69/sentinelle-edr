@@ -37,9 +37,11 @@ async fn main() -> Result<()> {
         .ok()
         .or_else(|| std::env::args().nth(1))
         .unwrap_or_else(hostname);
-    let endpoint =
-        std::env::var("SENTINELLE_SERVER").unwrap_or_else(|_| "https://localhost:50051".to_string());
-    let certs = PathBuf::from(std::env::var("SENTINELLE_CERTS_DIR").unwrap_or_else(|_| "certs".to_string()));
+    let endpoint = std::env::var("SENTINELLE_SERVER")
+        .unwrap_or_else(|_| "https://localhost:50051".to_string());
+    let certs = PathBuf::from(
+        std::env::var("SENTINELLE_CERTS_DIR").unwrap_or_else(|_| "certs".to_string()),
+    );
 
     // mTLS client.
     let ca = std::fs::read(certs.join("ca.pem")).context("lecture certs/ca.pem")?;
@@ -90,7 +92,9 @@ async fn main() -> Result<()> {
         while let Ok(Some(cmd)) = commands.message().await {
             if cmd.kind == "kill" {
                 match crate::respond::kill_process(cmd.pid) {
-                    Ok(()) => tracing::warn!("Réponse : processus {} terminé (ordre serveur)", cmd.pid),
+                    Ok(()) => {
+                        tracing::warn!("Réponse : processus {} terminé (ordre serveur)", cmd.pid)
+                    }
                     Err(e) => tracing::error!("Réponse kill {} : {e:#}", cmd.pid),
                 }
             }
@@ -111,7 +115,11 @@ async fn main() -> Result<()> {
     // Scan YARA optionnel (SENTINELLE_YARA_DIR).
     let yara: Option<Arc<sentinelle_scan::YaraScanner>> = std::env::var("SENTINELLE_YARA_DIR")
         .ok()
-        .and_then(|d| sentinelle_scan::YaraScanner::from_dir(std::path::Path::new(&d)).ok().flatten())
+        .and_then(|d| {
+            sentinelle_scan::YaraScanner::from_dir(std::path::Path::new(&d))
+                .ok()
+                .flatten()
+        })
         .map(Arc::new);
     if yara.is_some() {
         tracing::info!("YARA actif sur l'agent.");

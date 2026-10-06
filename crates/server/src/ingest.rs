@@ -70,6 +70,8 @@ impl Ingest for IngestService {
             }
         });
 
-        Ok(Response::new(Box::pin(ReceiverStream::new(cmd_rx)) as CmdStream))
+        Ok(Response::new(
+            Box::pin(ReceiverStream::new(cmd_rx)) as CmdStream
+        ))
     }
 }

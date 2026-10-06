@@ -109,12 +109,21 @@ mod tests {
     fn observes_a_newly_spawned_process() {
         let (tx, rx) = mpsc::channel::<Event>();
         std::thread::spawn(move || {
-            let _ = run_with_poll("test".into(), move |ev| { let _ = tx.send(ev); }, 100);
+            let _ = run_with_poll(
+                "test".into(),
+                move |ev| {
+                    let _ = tx.send(ev);
+                },
+                100,
+            );
         });
         // Laisse la première passe enregistrer l'existant.
         std::thread::sleep(Duration::from_millis(300));
 
-        let mut child = std::process::Command::new("sleep").arg("3").spawn().unwrap();
+        let mut child = std::process::Command::new("sleep")
+            .arg("3")
+            .spawn()
+            .unwrap();
         let target = child.id();
 
         let mut found = false;
@@ -130,6 +139,9 @@ mod tests {
             }
         }
         let _ = child.kill();
-        assert!(found, "le capteur multi-OS doit détecter le processus enfant (pid {target})");
+        assert!(
+            found,
+            "le capteur multi-OS doit détecter le processus enfant (pid {target})"
+        );
     }
 }

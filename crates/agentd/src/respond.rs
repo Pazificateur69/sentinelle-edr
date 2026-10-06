@@ -5,9 +5,7 @@
 #[cfg(windows)]
 pub fn kill_process(pid: u32) -> anyhow::Result<()> {
     use windows::Win32::Foundation::{CloseHandle, FALSE};
-    use windows::Win32::System::Threading::{
-        OpenProcess, TerminateProcess, PROCESS_TERMINATE,
-    };
+    use windows::Win32::System::Threading::{OpenProcess, TerminateProcess, PROCESS_TERMINATE};
     // SAFETY : handles Win32 fermes systematiquement ; echecs remontes en erreur.
     unsafe {
         let handle = OpenProcess(PROCESS_TERMINATE, FALSE, pid)

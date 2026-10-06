@@ -9,17 +9,12 @@
 
 use anyhow::{Context, Result};
 use axum::{
-    extract::Path,
-    http::StatusCode,
-    middleware,
-    response::Json,
-    routing::post,
-    Extension, Router,
+    extract::Path, http::StatusCode, middleware, response::Json, routing::post, Extension, Router,
 };
-use sentinelle_server::ingest::{IngestService, Registry};
 use sentinelle_common::Engine;
 use sentinelle_console::{base_routes, require_token, AppState};
 use sentinelle_proto::v1::{ingest_server::IngestServer, Command};
+use sentinelle_server::ingest::{IngestService, Registry};
 use serde_json::json;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -36,18 +31,19 @@ async fn main() -> Result<()> {
         .init();
 
     let (sse_tx, _) = broadcast::channel(2048);
-    let store = std::env::var("SENTINELLE_DB").ok().and_then(|path| {
-        match sentinelle_console::Store::open(&path) {
-            Ok(s) => {
-                tracing::info!("Persistance SQLite : {path}");
-                Some(Arc::new(s))
-            }
-            Err(e) => {
-                tracing::error!("ouverture base {path} : {e:#}");
-                None
-            }
-        }
-    });
+    let store =
+        std::env::var("SENTINELLE_DB")
+            .ok()
+            .and_then(|path| match sentinelle_console::Store::open(&path) {
+                Ok(s) => {
+                    tracing::info!("Persistance SQLite : {path}");
+                    Some(Arc::new(s))
+                }
+                Err(e) => {
+                    tracing::error!("ouverture base {path} : {e:#}");
+                    None
+                }
+            });
     let state = AppState::new(sse_tx, "serveur-central".to_string(), None, store);
     state.load_history();
     if let Ok(e) = Engine::with_builtin_rules() {

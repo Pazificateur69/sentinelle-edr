@@ -104,10 +104,16 @@ pub fn incident_markdown(host: &str, generated: DateTime<Utc>, alerts: &[Alert])
             inc.ended.format("%H:%M:%S")
         ));
         if !inc.tactics.is_empty() {
-            out.push_str(&format!("- **Progression** : {}\n", inc.tactics.join(" → ")));
+            out.push_str(&format!(
+                "- **Progression** : {}\n",
+                inc.tactics.join(" → ")
+            ));
         }
         if !inc.techniques.is_empty() {
-            out.push_str(&format!("- **Techniques** : {}\n", inc.techniques.join(", ")));
+            out.push_str(&format!(
+                "- **Techniques** : {}\n",
+                inc.techniques.join(", ")
+            ));
         }
         out.push('\n');
     }
@@ -167,7 +173,10 @@ pub fn incident_markdown(host: &str, generated: DateTime<Utc>, alerts: &[Alert])
             sev_label(a.severity),
             a.score
         ));
-        out.push_str(&format!("- **Horodatage** : {}\n", a.ts.format("%Y-%m-%d %H:%M:%S")));
+        out.push_str(&format!(
+            "- **Horodatage** : {}\n",
+            a.ts.format("%Y-%m-%d %H:%M:%S")
+        ));
         if !a.attack.is_empty() {
             out.push_str(&format!("- **ATT&CK** : {}\n", a.attack.join(", ")));
         }
