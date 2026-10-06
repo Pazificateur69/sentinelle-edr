@@ -84,7 +84,7 @@ impl Store {
             ],
         )?;
         // Purge périodique (évite une croissance illimitée de la base).
-        if (self.inserts.fetch_add(1, Ordering::Relaxed) + 1) % PRUNE_EVERY == 0 {
+        if (self.inserts.fetch_add(1, Ordering::Relaxed) + 1).is_multiple_of(PRUNE_EVERY) {
             let _ = self.prune();
         }
         Ok(())
@@ -100,7 +100,9 @@ impl Store {
             "INSERT INTO events (ts,host,kind,image,pid,json) VALUES (?1,?2,?3,?4,?5,?6)",
             rusqlite::params![e.ts.to_rfc3339(), e.host, kind, e.image, e.pid, json],
         )?;
-        if (self.event_inserts.fetch_add(1, Ordering::Relaxed) + 1) % EVENT_PRUNE_EVERY == 0 {
+        if (self.event_inserts.fetch_add(1, Ordering::Relaxed) + 1)
+            .is_multiple_of(EVENT_PRUNE_EVERY)
+        {
             let _ = self.prune_events();
         }
         Ok(())

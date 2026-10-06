@@ -33,7 +33,7 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 | 🔬 | **Moteur de détection** | opérateurs façon Sigma (`equals`/`contains`/`startswith`/`endswith`/`regex`), arbre booléen `and`/`or`/`not` |
 | 🧬 | **Corrélation par ascendance** | détecte « PowerShell dont un *ancêtre* est Office », pas seulement le parent direct |
 | 🧠 | **Détection comportementale** | rafale de créations de processus, chiffrement massif, **PPID spoofing**, **masquerading** (binaire renommé via le nom d'origine du PE, `SNT-B004`) |
-| 📚 | **51 règles prêtes** | Windows **+ Linux/macOS** (`curl\|bash`, reverse shell `/dev/tcp`, `/tmp`, clés SSH, cron, LaunchAgent, SIP/Gatekeeper, `osascript`…), 11 tactiques ATT&CK |
+| 📚 | **51 règles prêtes** | Windows **+ Linux/macOS** (`curl\|bash`, reverse shell `/dev/tcp`, `/tmp`, clés SSH, cron, LaunchAgent, SIP/Gatekeeper, `osascript`…), 10 tactiques ATT&CK |
 | 🌍 | **Capteur multi-OS** | ETW (Windows) **+ scrutation de la table des processus** via `sysinfo` (Linux/macOS/Windows) |
 | 🧯 | **Corrélation en incidents** | les alertes d'une même séquence (hôte + proximité temporelle) regroupées en un incident (progression kill chain, score cumulé) |
 | 📤 | **Exports** | rapport d'incident **Markdown**, couche **MITRE ATT&CK Navigator** JSON, incidents JSON — boutons dédiés dans la console |
@@ -108,13 +108,15 @@ flowchart LR
 
 ## 🏗️ Architecture
 
-Workspace Cargo, 8 crates à responsabilité unique :
+Workspace Cargo, 10 crates à responsabilité unique :
 
 | Crate | Rôle |
 |-------|------|
-| `common` | **cœur pur, testé** : schéma d'événement, moteur de règles, arbre de processus, scoring, import Sigma, scénario |
-| `sensor-windows` | capteur **ETW** (processus) + enrichissement ligne de commande |
-| `console` | état partagé + console web temps réel (SSE) réutilisée par les deux modes |
+| `common` | **cœur pur, testé** : schéma d'événement, moteur de règles, arbre de processus, scoring, corrélation, import Sigma, rapport, Navigator, scénario |
+| `sensor-windows` | capteur **ETW** (processus) + enrichissement ligne de commande + lecture PE |
+| `sensor-proc` | capteur **multi-OS** (Linux/macOS/Windows) par scrutation `sysinfo` |
+| `scan` | moteur **YARA-X** : signatures sur l'image des processus |
+| `console` | état partagé + console web temps réel (SSE) + garde par jeton, réutilisée par les deux modes |
 | `agentd` | **mode mono-poste** : capteur → moteur → console + réponse, tout-en-un |
 | `proto` | contrat **gRPC** (protobuf) + conversions avec les types internes |
 | `server` | **serveur de parc** : ingestion gRPC/mTLS + console multi-hôtes |
@@ -129,7 +131,7 @@ rapides. Le capteur ETW et le transport gRPC/mTLS sont isolés dans leurs crates
 
 ## 🎯 Détection
 
-39 règles embarquées ([`crates/common/rules.json`](crates/common/rules.json)), mappées MITRE ATT&CK :
+51 règles embarquées ([`crates/common/rules.json`](crates/common/rules.json)), mappées MITRE ATT&CK :
 chaîne de macro Office (T1203/T1059), PowerShell encodé/furtif/download-cradle
 (T1059.001, T1027), dump LSASS & mimikatz (T1003), suppression des *shadow copies*
 & sabotage `bcdedit` (ransomware, T1490), persistance (Run key, tâches, services),
@@ -179,7 +181,7 @@ parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
 
 | Composant | État |
 |-----------|------|
-| Cœur de détection (règles, arbre, score, Sigma) | ✅ **39 tests unitaires**, verts en CI |
+| Cœur de détection (règles, arbre, score, Sigma, corrélation, corpus) | ✅ **55 tests unitaires**, verts en CI |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
 | Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
 | Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
@@ -213,7 +215,7 @@ Revue d'architecture détaillée (fait / à-faire) : [`docs/ARCHITECTURE-REVIEW.
 ## 🧪 Tests
 
 ```bash
-cargo test -p sentinelle-common   # 39 tests, multiplateforme, rapides
+cargo test -p sentinelle-common   # 55 tests, multiplateforme, rapides
 cargo build -p sentinelle-agentd  # mode mono-poste
 ```
 

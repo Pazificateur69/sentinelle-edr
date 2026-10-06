@@ -10,7 +10,7 @@ Toutes les évolutions notables de Sentinelle. Format libre, ordre antéchronolo
 - Corrélation par **arbre de processus** (ascendance) ; **scoring** avec décroissance par hôte + **confiance** par règle.
 - **Allowlist/suppression** et **déduplication** (anti-faux-positifs, anti-bruit).
 - Détecteurs **comportementaux** : rafale de créations de processus (SNT-B001), chiffrement massif de fichiers (SNT-B002), **PPID spoofing** (SNT-B003), **masquerading** (SNT-B004 — binaire sensible renommé, détecté via le nom d'origine du PE).
-- **51 règles + détecteurs comportementaux** (LSASS handle, injection, pipes C2, BYOVD...) couvrant **11 tactiques** ATT&CK ; télémétrie processus + réseau + fichier + chargement d'image.
+- **51 règles + détecteurs comportementaux** (LSASS handle, injection, pipes C2, BYOVD...) couvrant **10 tactiques** ATT&CK ; télémétrie processus + réseau + fichier + chargement d'image.
 - **Règles Linux/macOS** : `curl|bash`, reverse shell (`/dev/tcp`, `nc -e`), base64→shell, exécution depuis `/tmp`, lecture `/etc/shadow` + clés SSH, persistance cron / `.bashrc` / LaunchAgent, désactivation SIP/Gatekeeper, `osascript do shell script`, effacement d'historique.
 - **Corrélation en incidents** : les alertes d'une même séquence (hôte + proximité temporelle) sont regroupées en un incident avec progression kill chain, sévérité et score cumulés.
 - **Seuils réglables** par fichier TOML (`SENTINELLE_CONFIG`).

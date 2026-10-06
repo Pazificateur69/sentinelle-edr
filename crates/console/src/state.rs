@@ -227,7 +227,7 @@ impl AppState {
                     }
                 })
                 .collect();
-            hosts.sort_by(|a, b| b.score.cmp(&a.score));
+            hosts.sort_by_key(|h| std::cmp::Reverse(h.score));
             s.last_stats.hosts = hosts;
             s.last_stats.clone()
         };
