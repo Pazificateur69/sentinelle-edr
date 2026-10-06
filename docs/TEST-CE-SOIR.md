@@ -14,8 +14,11 @@ cargo run --release -p sentinelle-agentd
 
 Ouvre **http://localhost:8787**.
 
-- **Windows** : lance le terminal **en Administrateur** → capteur ETW réel.
+- **Windows** : lance le terminal **en Administrateur** → capteur ETW réel. Sans admin, repli automatique sur la scrutation (vraie télémétrie, moins profonde).
 - **Linux / macOS** : capteur multi-OS (scrutation des processus) → vraie télémétrie.
+
+> ⚠️ **Windows Defender met les binaires en quarantaine — c'est attendu pour un EDR.** Au 1er `cargo test`/`run`, Defender peut supprimer `sentinelle-*.exe` (les binaires embarquent des signatures reverse-shell, LSASS, PowerShell encodé → l'heuristique les prend pour du malware). Symptôme : `os error 225` (`ERROR_VIRUS_INFECTED`).
+> **Solution** : Sécurité Windows → *Protection contre les virus* → *Gérer les paramètres* → *Exclusions* → ajouter le **dossier du repo**. ⚠️ Avec la **Protection contre les falsifications** active, `Add-MpPreference -ExclusionPath` en PowerShell est **ignoré silencieusement** : passe par l'**interface graphique**. (À terme : signer les binaires release en Authenticode règle le souci.)
 
 ---
 

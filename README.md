@@ -69,6 +69,8 @@ cargo run --release -p sentinelle-agentd
 
 Dans la console : **⬇ Rapport d'incident** (Markdown) et **⬇ Couche ATT&CK** (fichier à déposer sur [attack-navigator](https://mitre-attack.github.io/attack-navigator/)).
 
+> 🛡️ **Windows** : Defender peut mettre les binaires en quarantaine (`os error 225`) — c'est **normal** pour un EDR. Exclure le dossier du repo via *Sécurité Windows → Exclusions* (voir [docs/TEST-CE-SOIR.md](docs/TEST-CE-SOIR.md)).
+
 Avec des règles Sigma en plus :
 
 ```bash

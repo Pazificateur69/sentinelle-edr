@@ -247,7 +247,7 @@ Ces points nécessitent une session **administrateur** et restent à confirmer :
 | 5 | Réponse `kill` Win32 réelle | ✅ |
 | 6 | Parc : PKI + handshake mTLS live | ✅ (transport) |
 | 7 | Options SQLite / Sigma / YARA | ✅ |
-| A | Faux positif Defender (doc + signature) | ⚠️ à documenter |
+| A | Faux positif Defender (doc + signature) | ✅ documenté (README + TEST-CE-SOIR) ; signature Authenticode au backlog |
 | B | Pas de repli sysinfo sous Windows (non-admin) | ✅ corrigé (PR #2) |
 | B-bis | `command_line` vide sous Windows | ✅ corrigé (PR #2) |
 | C | Mode démo agent absent du build Windows | ✅ corrigé (PR #2) |
