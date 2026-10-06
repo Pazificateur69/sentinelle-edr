@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://pazificateur69.github.io/sentinelle-edr/sitemap.xml

@@ -7,10 +7,13 @@ Détection par règles façon Sigma, corrélation par arbre de processus, consol
 temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 
 [![CI](https://github.com/Pazificateur69/sentinelle-edr/actions/workflows/ci.yml/badge.svg)](https://github.com/Pazificateur69/sentinelle-edr/actions/workflows/ci.yml)
+[![Site](https://img.shields.io/badge/site-sentinelle--edr-2ce6a6)](https://pazificateur69.github.io/sentinelle-edr/)
 ![Rust](https://img.shields.io/badge/Rust-1.95-000?logo=rust)
-![Platform](https://img.shields.io/badge/cible-Windows-0078D6?logo=windows)
+![Platform](https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS-0078D6)
 ![License](https://img.shields.io/badge/licence-MIT-green)
 ![Status](https://img.shields.io/badge/statut-alpha-orange)
+
+**🌐 [pazificateur69.github.io/sentinelle-edr](https://pazificateur69.github.io/sentinelle-edr/)** — fonctionnement animé, rejeu d'une vraie kill chain, banc d'essai interactif des règles
 
 </div>
 
@@ -23,8 +26,9 @@ temps réel, et architecture de parc agent ↔ serveur en gRPC + mTLS.
 > noyau). Ce dépôt couvre la **chaîne complète** — capteur → détection →
 > corrélation → score → réponse → console → parc — et documente précisément ce qui
 > reste à faire. Le cœur (détection, règles, corrélation, scoring, import Sigma) est
-> **testé** et multiplateforme ; le capteur ETW et le transport gRPC/mTLS **compilent en CI sur
-> Windows et Linux** ; reste la validation à l'exécution (voir [Statut de vérification](#-statut-de-vérification)).
+> **testé** et multiplateforme ; le capteur ETW, le kill Win32 et le parc gRPC/mTLS ont été
+> **validés sur un vrai Windows 11**, le capteur multi-OS **en live sur macOS**, et tout est
+> compilé + testé en CI Ubuntu + Windows (voir [Statut de vérification](#-statut-de-vérification)).
 
 ## ✨ Fonctionnalités
 
@@ -183,15 +187,15 @@ parc gRPC/mTLS **compilent sur Windows** — ce n'est plus une promesse.
 |-----------|------|
 | Cœur de détection (règles, arbre, score, Sigma, corrélation, corpus) | ✅ **55 tests unitaires**, verts en CI |
 | Console + état + SSE (mode mono-poste) | ✅ compile & tourne (démo vérifiée) |
-| Capteur ETW Windows | ✅ **compile en CI Windows** ; capture live à valider sur une vraie machine (admin) |
-| Réponse `kill` (Win32) | ✅ **compile en CI Windows** ; effet à valider en conditions réelles |
-| Parc gRPC + mTLS **bidirectionnel** + réponse à distance | ✅ **runtime validé en CI (Ubuntu + Windows)** : handshake mTLS mutuel, flux bidi, ingestion, ordre de kill routé au client (test d'intégration `tests/fleet.rs`) |
+| Capteur ETW Windows | ✅ **validé sur Windows 11 réel** (admin) : capture live de vrais processus, détections SNT-0012 / B001 / B004 |
+| Réponse `kill` (Win32) | ✅ **validé en conditions réelles** sur Windows 11 (processus effectivement terminé) |
+| Capteur multi-OS (macOS / Linux) | ✅ **validé en live sur macOS** : vraie télémétrie, détection réelle SNT-1002 |
+| Parc gRPC + mTLS **bidirectionnel** + réponse à distance | ✅ **runtime validé en CI (Ubuntu + Windows)** et **en live sur Windows** entre deux processus (test d'intégration `tests/fleet.rs`) |
 
-Le **runtime du parc** (handshake mTLS, streaming bidi, ingestion, routage d'un
-ordre de kill) est désormais **validé en CI** par un test d'intégration qui monte
-un vrai serveur et un vrai client. Ce qui reste à valider sur une **machine réelle**
-se réduit à : ETW capturant réellement les processus (admin requis) et la
-terminaison effective d'un processus cible.
+Détail de la campagne Windows : [docs/RESULTATS-TEST-WINDOWS.md](docs/RESULTATS-TEST-WINDOWS.md).
+Ce qui reste hors de portée aujourd'hui : la télémétrie live réseau / fichier / handle /
+thread distant / tube nommé (6 règles « simulation-seulement », voir `/api/coverage/reality`)
+et l'anti-tamper noyau.
 
 ## 🗺️ Feuille de route
 

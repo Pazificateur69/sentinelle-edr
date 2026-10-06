@@ -1,0 +1,605 @@
+[
+  {
+    "id": "SNT-0001",
+    "title": "Application Office lance un interpreteur de script",
+    "description": "Un processus Office a pour descendant un interpreteur de commandes/scripts. Signature classique d'une macro malveillante (T1203 -> T1059).",
+    "severity": "critical",
+    "attack": ["T1203", "T1059"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe", "mspub.exe", "visio.exe"],
+      "children": ["cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe", "mshta.exe"],
+      "ancestor": true
+    }
+  },
+  {
+    "id": "SNT-0002",
+    "title": "Navigateur web lance un interpreteur de script",
+    "description": "Un navigateur engendre directement un interpreteur de script : telechargement + execution probable.",
+    "severity": "high",
+    "attack": ["T1059"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["chrome.exe", "msedge.exe", "firefox.exe", "iexplore.exe", "brave.exe"],
+      "children": ["powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe", "mshta.exe", "cmd.exe"],
+      "ancestor": false
+    }
+  },
+  {
+    "id": "SNT-0003",
+    "title": "Chaine de LOLBins vers un interpreteur",
+    "description": "Un binaire detourne (mshta, wscript, regsvr32, rundll32) lance un interpreteur : technique d'execution indirecte (T1218).",
+    "severity": "high",
+    "attack": ["T1059", "T1218"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["mshta.exe", "wscript.exe", "cscript.exe", "regsvr32.exe", "rundll32.exe"],
+      "children": ["powershell.exe", "pwsh.exe", "cmd.exe"],
+      "ancestor": false
+    }
+  },
+  {
+    "id": "SNT-0010",
+    "title": "PowerShell avec commande encodee",
+    "description": "PowerShell lance avec -EncodedCommand : obfuscation frequente de charges malveillantes (T1027).",
+    "severity": "high",
+    "attack": ["T1059.001", "T1027"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-encodedcommand", "-enc ", " -e "] }
+    ]
+  },
+  {
+    "id": "SNT-0011",
+    "title": "PowerShell download cradle",
+    "description": "PowerShell telecharge et execute du code en memoire (DownloadString / IEX / WebClient).",
+    "severity": "high",
+    "attack": ["T1059.001", "T1105"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["downloadstring", "downloadfile", "net.webclient", "invoke-webrequest", "iwr ", "iex(", "invoke-expression"] }
+    ]
+  },
+  {
+    "id": "SNT-0012",
+    "title": "PowerShell furtif (hidden / bypass)",
+    "description": "Combinaison de drapeaux d'evasion : fenetre cachee, politique d'execution contournee, pas de profil (T1562).",
+    "severity": "medium",
+    "attack": ["T1059.001", "T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-w hidden", "-windowstyle hidden", "-ep bypass", "-executionpolicy bypass"] }
+    ]
+  },
+  {
+    "id": "SNT-0020",
+    "title": "Outil de vol d'identifiants",
+    "description": "Signature d'outils de credential dumping (mimikatz, sekurlsa) (T1003).",
+    "severity": "critical",
+    "attack": ["T1003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["sekurlsa", "mimikatz", "lsadump", "::logonpasswords"] }
+    ]
+  },
+  {
+    "id": "SNT-0021",
+    "title": "Dump de LSASS via comsvcs MiniDump",
+    "description": "rundll32 comsvcs.dll MiniDump cible la memoire de LSASS pour en extraire des secrets (T1003.001).",
+    "severity": "critical",
+    "attack": ["T1003.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["comsvcs.dll", "minidump"] }
+    ]
+  },
+  {
+    "id": "SNT-0030",
+    "title": "Persistance par cle Run du registre",
+    "description": "Ecriture d'une cle Run (demarrage automatique) via reg.exe (T1547.001).",
+    "severity": "medium",
+    "attack": ["T1547.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["reg.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["\\currentversion\\run", "\\currentversion\\runonce"] }
+    ]
+  },
+  {
+    "id": "SNT-0031",
+    "title": "Creation de tache planifiee",
+    "description": "schtasks /create : mecanisme de persistance ou d'execution differee (T1053.005).",
+    "severity": "low",
+    "attack": ["T1053.005"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["schtasks.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/create", "/sc "] }
+    ]
+  },
+  {
+    "id": "SNT-0040",
+    "title": "Creation/modification de service Windows",
+    "description": "sc.exe create/config : persistance au niveau service (T1543.003).",
+    "severity": "medium",
+    "attack": ["T1543.003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["sc.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": [" create ", " config "] }
+    ]
+  },
+  {
+    "id": "SNT-0050",
+    "title": "Suppression des clichés instantanés (ransomware)",
+    "description": "Destruction des Volume Shadow Copies pour empecher la restauration : etape typique de ransomware (T1490).",
+    "severity": "critical",
+    "attack": ["T1490"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["delete shadows", "shadowcopy delete", "win32_shadowcopy"] }
+    ]
+  },
+  {
+    "id": "SNT-0051",
+    "title": "Sabotage de la recuperation Windows",
+    "description": "bcdedit desactive la reparation automatique / ignore les echecs : pre-chiffrement ransomware (T1490).",
+    "severity": "high",
+    "attack": ["T1490"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bcdedit.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["recoveryenabled no", "bootstatuspolicy ignoreallfailures"] }
+    ]
+  },
+  {
+    "id": "SNT-0060",
+    "title": "Execution a distance via WMI",
+    "description": "wmic process call create : execution laterale/locale via WMI (T1047).",
+    "severity": "medium",
+    "attack": ["T1047"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["wmic.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["process call create"] }
+    ]
+  },
+  {
+    "id": "SNT-0070",
+    "title": "Desactivation de Microsoft Defender",
+    "description": "Tentative de desactivation de la protection temps reel de Defender (T1562.001).",
+    "severity": "high",
+    "attack": ["T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["set-mppreference", "disablerealtimemonitoring", "add-mppreference -exclusionpath"] }
+    ]
+  },
+  {
+    "id": "SNT-0100",
+    "title": "Connexion vers un port de C2 courant",
+    "description": "Connexion sortante vers un port frequemment utilise par des cadres de commande & controle (Metasploit, etc.) (T1571).",
+    "severity": "high",
+    "attack": ["T1571", "T1095"],
+    "kind": "network",
+    "all": [
+      { "field": "DestinationPort", "op": "equals", "values": ["4444", "1337", "5555", "6666", "8081"] }
+    ]
+  },
+  {
+    "id": "SNT-0101",
+    "title": "Note de rançon déposée",
+    "description": "Ecriture d'un fichier dont le nom correspond a une note de rançon : chiffrement en cours (T1486).",
+    "severity": "critical",
+    "attack": ["T1486"],
+    "kind": "file_write",
+    "all": [
+      { "field": "TargetFilename", "op": "contains", "values": ["read_me_to_decrypt", "how_to_decrypt", "_restore_files", "decrypt_instructions", "recover_your_files", ".locked", ".crypted"] }
+    ]
+  },
+  {
+    "id": "SNT-0110",
+    "title": "Mouvement latéral via PsExec",
+    "description": "Execution de PsExec / service PSEXESVC : exécution à distance typique de déplacement latéral (T1021.002, T1569.002).",
+    "severity": "high",
+    "attack": ["T1021.002", "T1569.002"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["psexec.exe", "psexec64.exe", "psexesvc.exe"] }
+    ]
+  },
+  {
+    "id": "SNT-0111",
+    "title": "Exécution à distance via WMIC /node",
+    "description": "wmic /node:<cible> process call create : exécution sur une machine distante (T1021).",
+    "severity": "high",
+    "attack": ["T1021", "T1047"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["wmic.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/node:"] },
+      { "field": "CommandLine", "op": "contains", "values": ["process call create"] }
+    ]
+  },
+  {
+    "id": "SNT-0120",
+    "title": "Effacement des journaux d'événements",
+    "description": "wevtutil cl / Clear-EventLog : suppression des traces pour entraver l'investigation (T1070.001).",
+    "severity": "high",
+    "attack": ["T1070.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["wevtutil cl", "wevtutil clear-log", "clear-eventlog", "limit-eventlog"] }
+    ]
+  },
+  {
+    "id": "SNT-0121",
+    "title": "Suppression du journal USN",
+    "description": "fsutil usn deletejournal : efface l'historique des modifications de fichiers (anti-forensic, T1070).",
+    "severity": "medium",
+    "attack": ["T1070"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["fsutil.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["usn deletejournal", "deletejournal"] }
+    ]
+  },
+  {
+    "id": "SNT-0130",
+    "title": "Contournement d'UAC (fodhelper / eventvwr)",
+    "description": "Un binaire d'auto-élévation connu lance un interpréteur : contournement du contrôle de compte (T1548.002).",
+    "severity": "high",
+    "attack": ["T1548.002"],
+    "kind": "process_start",
+    "lineage": {
+      "parents": ["fodhelper.exe", "eventvwr.exe", "computerdefaults.exe", "sdclt.exe"],
+      "children": ["cmd.exe", "powershell.exe", "pwsh.exe"],
+      "ancestor": false
+    }
+  },
+  {
+    "id": "SNT-0140",
+    "title": "Tentative de contournement d'AMSI",
+    "description": "Référence à AmsiUtils / amsiInitFailed : neutralisation de l'inspection antimalware en mémoire (T1562.001).",
+    "severity": "high",
+    "attack": ["T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["amsiutils", "amsiinitfailed", "amsicontext"] }
+    ]
+  },
+  {
+    "id": "SNT-0160",
+    "title": "Désactivation du pare-feu Windows",
+    "description": "netsh advfirewall set allprofiles state off : ouverture du poste avant une action malveillante (T1562.004).",
+    "severity": "medium",
+    "attack": ["T1562.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["advfirewall set allprofiles state off", "netsh firewall set opmode disable"] }
+    ]
+  },
+  {
+    "id": "SNT-0080",
+    "title": "Téléchargement via certutil (LOLBin)",
+    "description": "certutil detourne en telechargeur : urlcache/verifyctl recupere une charge distante (T1105, T1218).",
+    "severity": "high",
+    "attack": ["T1105", "T1218"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["certutil.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["urlcache", "verifyctl", "-split"] }
+    ]
+  },
+  {
+    "id": "SNT-0081",
+    "title": "Téléchargement via bitsadmin (LOLBin)",
+    "description": "bitsadmin /transfer : telechargement furtif en tache de fond (T1105, T1197).",
+    "severity": "medium",
+    "attack": ["T1105", "T1197"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bitsadmin.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/transfer", "/addfile"] }
+    ]
+  },
+  {
+    "id": "SNT-0090",
+    "title": "Création de compte local",
+    "description": "net user /add : creation d'un compte, potentielle persistance ou escalade (T1136.001).",
+    "severity": "medium",
+    "attack": ["T1136.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["net.exe", "net1.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["user ", "localgroup administrators"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/add"] }
+    ]
+  },
+  {
+    "id": "SNT-0200",
+    "title": "Chargement d'un driver vulnérable connu (BYOVD)",
+    "description": "Chargement d'un driver signé mais vulnérable, abusé pour désactiver les protections (Bring Your Own Vulnerable Driver / EDR killer) (T1068, T1211).",
+    "severity": "critical",
+    "attack": ["T1068", "T1211"],
+    "kind": "image_load",
+    "all": [
+      { "field": "ImageLoaded", "op": "ends_with", "values": ["\\rtcore64.sys", "\\dbutil_2_3.sys", "\\gdrv.sys", "\\aswarpot.sys", "\\procexp152.sys", "\\winring0x64.sys", "\\kprocesshacker.sys"] }
+    ]
+  },
+  {
+    "id": "SNT-0210",
+    "title": "Reconnaissance réseau",
+    "description": "Commandes de découverte de la configuration et des connexions réseau (T1016, T1049). Fréquentes aussi en administration : confiance volontairement basse.",
+    "severity": "info",
+    "attack": ["T1016", "T1049"],
+    "confidence": 0.3,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["ipconfig.exe", "arp.exe", "route.exe", "netstat.exe", "nbtstat.exe"] }
+    ]
+  },
+  {
+    "id": "SNT-0211",
+    "title": "Reconnaissance système",
+    "description": "Collecte d'informations sur l'hôte (T1082).",
+    "severity": "info",
+    "attack": ["T1082"],
+    "confidence": 0.3,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["systeminfo.exe", "hostname.exe"] }
+    ]
+  },
+  {
+    "id": "SNT-0212",
+    "title": "Reconnaissance comptes / domaine",
+    "description": "Énumération d'utilisateurs, groupes ou partages (T1087, T1018).",
+    "severity": "low",
+    "attack": ["T1087", "T1018"],
+    "confidence": 0.5,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["net.exe", "net1.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": [" view", " group ", " accounts", "localgroup", " user"] }
+    ]
+  },
+  {
+    "id": "SNT-0220",
+    "title": "Recherche d'identifiants en clair",
+    "description": "Recherche de mots de passe dans les fichiers ou le registre (T1552.001).",
+    "severity": "medium",
+    "attack": ["T1552.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["findstr", "select-string", "reg query"] },
+      { "field": "CommandLine", "op": "contains", "values": ["password", "passwd", "credential"] }
+    ]
+  },
+  {
+    "id": "SNT-0230",
+    "title": "Téléchargement via curl / wget",
+    "description": "Récupération d'un fichier distant avec les binaires natifs curl/wget (T1105).",
+    "severity": "medium",
+    "attack": ["T1105"],
+    "confidence": 0.6,
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["curl.exe", "wget.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["http://", "https://"] }
+    ]
+  },
+  {
+    "id": "SNT-0231",
+    "title": "Décodage via certutil",
+    "description": "certutil -decode : désobfuscation d'une charge encodée (T1140).",
+    "severity": "medium",
+    "attack": ["T1140"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["certutil.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-decode", "decodehex"] }
+    ]
+  },
+  {
+    "id": "SNT-0240",
+    "title": "Exfiltration HTTP (PowerShell)",
+    "description": "Envoi de données vers un hôte distant via une requête HTTP POST (T1048, T1567).",
+    "severity": "medium",
+    "attack": ["T1048", "T1567"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["powershell.exe", "pwsh.exe"] },
+      { "field": "CommandLine", "op": "contains", "values": ["invoke-restmethod", "invoke-webrequest"] },
+      { "field": "CommandLine", "op": "contains", "values": ["-method post", "-infile", "-body "] }
+    ]
+  },
+  {
+    "id": "SNT-0250",
+    "title": "Persistance par Image File Execution Options (debugger)",
+    "description": "Détournement d'un exécutable via la clé IFEO Debugger : persistance et contournement (T1546.012).",
+    "severity": "high",
+    "attack": ["T1546.012"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["image file execution options"] },
+      { "field": "CommandLine", "op": "contains", "values": ["debugger"] }
+    ]
+  },
+  {
+    "id": "SNT-0300",
+    "title": "Accès mémoire à LSASS (vol d'identifiants par handle)",
+    "description": "Ouverture d'un handle sur lsass.exe avec des droits de lecture mémoire : extraction d'identifiants (T1003.001). Un accès est un signal, pas une preuve de lecture.",
+    "severity": "critical",
+    "attack": ["T1003.001"],
+    "kind": "process_access",
+    "all": [
+      { "field": "TargetImageName", "op": "equals", "values": ["lsass.exe"] },
+      { "field": "GrantedAccess", "op": "contains", "values": ["0x1010", "0x1410", "0x1438", "0x143a", "0x1fffff", "0x0010"] }
+    ]
+  },
+  {
+    "id": "SNT-0310",
+    "title": "Injection par thread distant",
+    "description": "Création d'un thread dans un autre processus : injection de code (T1055.003). Confiance modérée (certains cas légitimes).",
+    "severity": "high",
+    "attack": ["T1055.003"],
+    "confidence": 0.7,
+    "kind": "remote_thread"
+  },
+  {
+    "id": "SNT-0320",
+    "title": "Tube nommé de C2 connu",
+    "description": "Tube nommé correspondant à des motifs d'outils offensifs (Cobalt Strike, etc.) (T1572, T1055).",
+    "severity": "high",
+    "attack": ["T1572", "T1055"],
+    "kind": "named_pipe",
+    "all": [
+      { "field": "PipeName", "op": "contains", "values": ["\\msagent_", "\\cobaltstrike", "\\postex_", "\\status_", "\\msse-", "\\psexesvc", "\\paexec", "\\remcom"] }
+    ]
+  },
+  {
+    "id": "SNT-1000",
+    "title": "Telechargement piping vers un shell (curl|bash)",
+    "description": "Un shell Unix execute du contenu telecharge via un pipe (curl/wget | sh/bash). Install-script malveillant classique (T1059.004 / T1105).",
+    "severity": "high",
+    "attack": ["T1059.004", "T1105"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bash", "sh", "zsh", "dash", "ash", "ksh"] },
+      { "field": "CommandLine", "op": "contains", "values": ["curl", "wget", "fetch"] },
+      { "field": "CommandLine", "op": "contains", "values": ["| bash", "|bash", "| sh", "|sh"] }
+    ]
+  },
+  {
+    "id": "SNT-1001",
+    "title": "Decodage base64 execute par un shell",
+    "description": "Chaine encodee en base64 decodee puis passee a un shell (obfuscation d'execution, T1140 / T1059.004).",
+    "severity": "high",
+    "attack": ["T1140", "T1059.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["bash", "sh", "zsh", "dash"] },
+      { "field": "CommandLine", "op": "contains", "values": ["base64"] },
+      { "field": "CommandLine", "op": "contains", "values": ["| bash", "|bash", "| sh", "|sh", "-d |", "--decode |"] }
+    ]
+  },
+  {
+    "id": "SNT-1002",
+    "title": "Reverse shell Unix",
+    "description": "Signature de reverse shell : redirection /dev/tcp ou netcat avec execution (T1059.004 / T1071).",
+    "severity": "critical",
+    "attack": ["T1059.004", "T1071"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["/dev/tcp/", "/dev/udp/", "nc -e", "ncat -e", "nc.traditional -e"] }
+    ]
+  },
+  {
+    "id": "SNT-1003",
+    "title": "chmod +x dans un repertoire temporaire",
+    "description": "Rend executable un fichier depose dans /tmp, /var/tmp ou /dev/shm (preparation d'execution de payload, T1222.002).",
+    "severity": "medium",
+    "attack": ["T1222.002"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["chmod"] },
+      { "field": "CommandLine", "op": "contains", "values": ["+x", "777", "755", "0755"] },
+      { "field": "CommandLine", "op": "contains", "values": ["/tmp/", "/var/tmp/", "/dev/shm/", "/private/tmp/"] }
+    ]
+  },
+  {
+    "id": "SNT-1004",
+    "title": "Execution depuis un repertoire temporaire",
+    "description": "Un binaire s'execute depuis /tmp, /var/tmp ou /dev/shm (emplacement typique des payloads, T1059).",
+    "severity": "medium",
+    "confidence": 0.5,
+    "attack": ["T1059"],
+    "kind": "process_start",
+    "all": [
+      { "field": "Image", "op": "starts_with", "values": ["/tmp/", "/var/tmp/", "/dev/shm/", "/private/tmp/"] }
+    ]
+  },
+  {
+    "id": "SNT-1005",
+    "title": "Lecture d'identifiants Unix (/etc/shadow, cles SSH)",
+    "description": "Acces a des secrets locaux : hachages /etc/shadow ou cles privees SSH (T1003.008 / T1552.004).",
+    "severity": "high",
+    "attack": ["T1003.008", "T1552.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["/etc/shadow", "id_rsa", "id_ed25519", "authorized_keys"] }
+    ]
+  },
+  {
+    "id": "SNT-1006",
+    "title": "Persistance via cron",
+    "description": "Installation d'une tache planifiee cron (crontab -, ecriture dans /etc/cron*) : persistance (T1053.003).",
+    "severity": "medium",
+    "attack": ["T1053.003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["crontab -", "/etc/cron", "/var/spool/cron"] }
+    ]
+  },
+  {
+    "id": "SNT-1007",
+    "title": "Persistance via fichier de demarrage shell",
+    "description": "Ecriture dans ~/.bashrc, ~/.zshrc, ~/.profile ou /etc/profile.d : execution a chaque session (T1546.004).",
+    "severity": "medium",
+    "attack": ["T1546.004"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": [".bashrc", ".zshrc", ".bash_profile", "/etc/profile.d"] },
+      { "field": "CommandLine", "op": "contains", "values": [">>", ">", "tee ", "sed -i"] }
+    ]
+  },
+  {
+    "id": "SNT-1008",
+    "title": "Effacement de l'historique shell (anti-forensique)",
+    "description": "Suppression ou neutralisation de l'historique de commandes (T1070.003).",
+    "severity": "medium",
+    "attack": ["T1070.003"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["history -c", "unset histfile", "histfile=/dev/null", ".bash_history", ".zsh_history"] }
+    ]
+  },
+  {
+    "id": "SNT-1009",
+    "title": "macOS : osascript execute du shell",
+    "description": "AppleScript lancant une commande shell via osascript (do shell script) : execution/evasion macOS (T1059.002).",
+    "severity": "high",
+    "attack": ["T1059.002"],
+    "kind": "process_start",
+    "all": [
+      { "field": "ImageName", "op": "equals", "values": ["osascript"] },
+      { "field": "CommandLine", "op": "contains", "values": ["do shell script", "-e"] }
+    ]
+  },
+  {
+    "id": "SNT-1010",
+    "title": "macOS : desactivation de SIP / Gatekeeper",
+    "description": "Neutralisation des protections macOS (csrutil disable, spctl --master-disable) : defense evasion (T1562.001).",
+    "severity": "high",
+    "attack": ["T1562.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["csrutil disable", "spctl --master-disable", "spctl --disable"] }
+    ]
+  },
+  {
+    "id": "SNT-1011",
+    "title": "macOS : persistance LaunchAgent / LaunchDaemon",
+    "description": "Installation ou chargement d'un agent/daemon de demarrage (launchctl load, LaunchAgents/LaunchDaemons) : persistance (T1543.001).",
+    "severity": "medium",
+    "attack": ["T1543.001"],
+    "kind": "process_start",
+    "all": [
+      { "field": "CommandLine", "op": "contains", "values": ["launchagents", "launchdaemons", "launchctl load", "launchctl bootstrap"] }
+    ]
+  }
+]

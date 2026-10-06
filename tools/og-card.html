@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sentinelle EDR — social card</title>
+<!-- Carte sociale 1200×630, autonome (polices système). Export :
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars --window-size=1200,630 --screenshot=site/assets/img/og-image.png tools/og-card.html -->
+<style>
+  :root{--bg:#070a12;--card-br:rgba(120,140,190,.14);--txt:#e7ecf5;--muted:#8a93a8;--accent:#2ce6a6;--accent2:#4da8ff;--crit:#ff3b5c;--high:#ff8a3d;--med:#ffd23f;--on-pill:#0a0e17;
+    --sans:-apple-system,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{width:1200px;height:630px;overflow:hidden;font-family:var(--sans);color:var(--txt);position:relative;
+    background:radial-gradient(900px 520px at 88% -8%,rgba(44,230,166,.16),transparent 60%),radial-gradient(800px 500px at 0% 0%,rgba(77,168,255,.13),transparent 55%),var(--bg)}
+  body::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(120,140,190,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(120,140,190,.07) 1px,transparent 1px);background-size:60px 60px;-webkit-mask:radial-gradient(ellipse 80% 70% at 70% 40%,#000 20%,transparent 75%)}
+  .wrap{position:relative;height:100%;padding:64px 64px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:44px;align-items:center}
+  .brand{display:flex;align-items:center;gap:22px;margin-bottom:34px}
+  .brand svg{width:84px;height:84px;filter:drop-shadow(0 0 22px rgba(44,230,166,.45))}
+  .word{font-size:46px;white-space:nowrap;font-weight:700;letter-spacing:.12em;line-height:1}
+  .word b{font-weight:800;color:var(--accent)}
+  .word span{font-weight:500;color:var(--muted);letter-spacing:.08em;margin-left:14px}
+  h1{margin:0 0 26px;font-size:42px;line-height:1.15;font-weight:600;letter-spacing:-.02em;max-width:15em}
+  .stats{font-family:var(--mono);font-size:19px;white-space:nowrap;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+  .stats b{color:var(--txt);font-weight:500}
+  .inc{border:1px solid rgba(255,59,92,.45);border-left:6px solid var(--crit);border-radius:18px;padding:26px 28px;background:linear-gradient(180deg,rgba(255,59,92,.10),rgba(18,24,40,.92));box-shadow:0 40px 90px -40px rgba(0,0,0,.9)}
+  .hud{font-family:var(--mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  .pill{display:inline-block;font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:99px;color:var(--on-pill);background:var(--crit)}
+  .big{font-family:var(--mono);font-size:24px;white-space:nowrap;margin:16px 0 18px;line-height:1.25}
+  .big b{color:var(--accent)}
+  .score{display:flex;align-items:baseline;gap:14px;font-family:var(--mono)}
+  .score .n{font-size:64px;font-weight:300;line-height:1}
+  .score .l{white-space:nowrap;font-size:14px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+  .bars{display:flex;gap:6px;margin-top:18px}
+  .bars i{height:8px;flex:1;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2 20 5v6c0 5-3.4 8.6-8 11-4.6-2.4-8-6-8-11V5l8-3Z" fill="rgba(44,230,166,.14)" stroke="#2ce6a6" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.5 12.2 11 14.7l5-5.4" stroke="#2ce6a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="word">SENTIN<b>ELLE</b><span>EDR</span></div>
+    </div>
+    <h1>Open source EDR in Rust<br>self-hosted · MIT</h1>
+    <p class="stats"><span><b>51</b> rules</span><span>·</span><span><b>10</b> ATT&amp;CK tactics</span><span>·</span><span>Windows · Linux · macOS</span></p>
+  </div>
+  <div class="inc">
+    <p class="hud">replay · captures/demo.jsonl</p>
+    <span class="pill">critical</span>
+    <p class="big"><b>7</b> alerts → <b>1</b> incident</p>
+    <div class="score"><span class="n">520</span><span class="l">score · 5 tactics</span></div>
+    <div class="bars"><i style="background:#ff3b5c"></i><i style="background:#ff8a3d"></i><i style="background:#ffd23f"></i><i style="background:#ff3b5c"></i><i style="background:#ff8a3d"></i><i style="background:#ff8a3d"></i><i style="background:#ff8a3d"></i></div>
+  </div>
+</div>
+</body>
+</html>
