@@ -28,6 +28,7 @@ pub fn base_routes() -> Router<AppState> {
         .route("/api/history", get(history))
         .route("/api/coverage", get(coverage))
         .route("/api/coverage/reality", get(coverage_reality))
+        .route("/api/health", get(health))
         .route("/api/incidents", get(incidents))
         .route("/api/navigator", get(navigator))
         .route("/api/report", get(report))
@@ -101,6 +102,24 @@ fn collect_alerts(st: &AppState) -> Vec<Alert> {
 /// Sonde de disponibilité (ops / orchestrateur).
 async fn healthz() -> &'static str {
     "ok"
+}
+
+/// Santé de la collecte : événements reçus, **abandonnés** (file saturée),
+/// alertes, uptime, hôtes vus. Rend visible ce que `try_send` perdait en silence
+/// et permet de distinguer « poste calme » de « capteur mort/saturé ».
+async fn health(State(st): State<AppState>) -> Json<serde_json::Value> {
+    use std::sync::atomic::Ordering;
+    let (events, alerts) = {
+        let s = st.inner.lock().unwrap();
+        (s.last_stats.total_events, s.last_stats.total_alerts)
+    };
+    Json(serde_json::json!({
+        "received_events": events,
+        "dropped_events": st.health.dropped.load(Ordering::Relaxed),
+        "total_alerts": alerts,
+        "uptime_secs": st.health.started.elapsed().as_secs(),
+        "hosts_seen": st.seen.lock().unwrap().len(),
+    }))
 }
 
 async fn index() -> Html<&'static str> {

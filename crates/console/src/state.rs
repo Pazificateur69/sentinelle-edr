@@ -1,11 +1,29 @@
 use sentinelle_common::{risk::RiskTracker, Alert, Event};
 use serde::Serialize;
 use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 use tokio::sync::{broadcast, mpsc};
 
 const MAX_ALERTS: usize = 500;
 const MAX_EVENTS: usize = 2000;
+
+/// Santé de la collecte : compteur de pertes (file bornée saturée) + démarrage.
+/// Rend visible ce que `try_send` abandonnait silencieusement.
+pub struct SensorHealth {
+    pub dropped: AtomicU64,
+    pub started: Instant,
+}
+
+impl Default for SensorHealth {
+    fn default() -> Self {
+        SensorHealth {
+            dropped: AtomicU64::new(0),
+            started: Instant::now(),
+        }
+    }
+}
 
 /// Message pousse aux clients de la console (SSE).
 #[derive(Clone, Serialize)]
@@ -77,6 +95,8 @@ pub struct AppState {
     pub store: Option<Arc<crate::store::Store>>,
     /// Dernière télémétrie reçue par hôte (epoch secondes) — santé des capteurs.
     pub seen: Arc<Mutex<HashMap<String, i64>>>,
+    /// Compteurs de santé de la collecte (pertes, uptime).
+    pub health: Arc<SensorHealth>,
     pub inner: Arc<Mutex<Shared>>,
 }
 
@@ -100,6 +120,7 @@ impl AppState {
             inject,
             store,
             seen: Arc::new(Mutex::new(HashMap::new())),
+            health: Arc::new(SensorHealth::default()),
             inner: Arc::new(Mutex::new(Shared {
                 alerts: VecDeque::new(),
                 events: VecDeque::new(),
@@ -112,6 +133,12 @@ impl AppState {
     /// Note qu'on vient de recevoir de la télémétrie de cet hôte (santé capteur).
     pub fn mark_seen(&self, host: &str, now: i64) {
         self.seen.lock().unwrap().insert(host.to_string(), now);
+    }
+
+    /// Comptabilise `n` événements abandonnés (file d'ingestion saturée). Renvoie
+    /// le total cumulé. Rend observable ce qui était perdu en silence.
+    pub fn note_dropped(&self, n: u64) -> u64 {
+        self.health.dropped.fetch_add(n, Ordering::Relaxed) + n
     }
 
     /// Enregistre un evenement et le diffuse.

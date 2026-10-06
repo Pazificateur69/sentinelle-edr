@@ -38,14 +38,14 @@ async fn main() -> Result<()> {
     // réseau/fichier/handle, rate les process très brefs) mais c'est de la vraie
     // télémétrie, pas une simulation.
     {
-        use std::sync::atomic::{AtomicU64, Ordering};
         let tx = inject_tx.clone();
         let h = host.clone();
-        let dropped = std::sync::Arc::new(AtomicU64::new(0));
-        // try_send : si la file est pleine, on abandonne (et on compte).
+        let st = state.clone();
+        // try_send : si la file est pleine, on abandonne — mais on le COMPTE
+        // (exposé via /api/health) au lieu de perdre en silence.
         let emit = move |ev: sentinelle_common::Event| {
             if tx.try_send(ev).is_err() {
-                let n = dropped.fetch_add(1, Ordering::Relaxed) + 1;
+                let n = st.note_dropped(1);
                 if n % 1000 == 0 {
                     tracing::warn!("file d'ingestion pleine : {n} événements abandonnés");
                 }
