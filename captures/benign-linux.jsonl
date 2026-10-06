@@ -1,0 +1,6 @@
+{"ts":"2026-10-06T09:00:00Z","host":"srv-linux","kind":"process_start","pid":5000,"ppid":4999,"image":"/bin/bash","command_line":"bash"}
+{"ts":"2026-10-06T09:00:10Z","host":"srv-linux","kind":"process_start","pid":5001,"ppid":5000,"image":"/bin/ls","command_line":"ls -la"}
+{"ts":"2026-10-06T09:00:25Z","host":"srv-linux","kind":"process_start","pid":5002,"ppid":5000,"image":"/usr/bin/curl","command_line":"curl -s https://api.example.com/health -o /tmp/health.json"}
+{"ts":"2026-10-06T09:00:50Z","host":"srv-linux","kind":"process_start","pid":5003,"ppid":5000,"image":"/usr/bin/python3","command_line":"python3 deploy.py"}
+{"ts":"2026-10-06T09:01:20Z","host":"srv-linux","kind":"process_start","pid":5004,"ppid":5000,"image":"/usr/bin/node","command_line":"node app.js"}
+{"ts":"2026-10-06T09:02:00Z","host":"srv-linux","kind":"process_start","pid":5005,"ppid":5000,"image":"/bin/cat","command_line":"cat /etc/hostname"}

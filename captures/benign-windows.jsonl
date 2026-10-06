@@ -1,0 +1,8 @@
+{"ts":"2026-10-06T09:00:00Z","host":"poste-bureau","kind":"process_start","pid":4000,"ppid":3900,"image":"C:\\Windows\\explorer.exe","command_line":"explorer.exe"}
+{"ts":"2026-10-06T09:00:05Z","host":"poste-bureau","kind":"process_start","pid":4001,"ppid":4000,"image":"C:\\Program Files\\Google\\Chrome\\chrome.exe","command_line":"chrome.exe"}
+{"ts":"2026-10-06T09:00:20Z","host":"poste-bureau","kind":"process_start","pid":4002,"ppid":4000,"image":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","command_line":"powershell.exe -Command Get-ChildItem"}
+{"ts":"2026-10-06T09:00:35Z","host":"poste-bureau","kind":"process_start","pid":4003,"ppid":4000,"image":"C:\\Windows\\System32\\notepad.exe","command_line":"notepad.exe rapport.txt"}
+{"ts":"2026-10-06T09:01:10Z","host":"poste-bureau","kind":"process_start","pid":4004,"ppid":600,"image":"C:\\Windows\\System32\\svchost.exe","command_line":"svchost.exe -k netsvcs"}
+{"ts":"2026-10-06T09:01:40Z","host":"poste-bureau","kind":"process_start","pid":4005,"ppid":4000,"image":"C:\\Windows\\System32\\cmd.exe","command_line":"cmd.exe /c dir"}
+{"ts":"2026-10-06T09:02:15Z","host":"poste-bureau","kind":"process_start","pid":4006,"ppid":4005,"image":"C:\\Program Files\\Git\\bin\\git.exe","command_line":"git.exe status"}
+{"ts":"2026-10-06T09:03:00Z","host":"poste-bureau","kind":"process_start","pid":4007,"ppid":4000,"image":"C:\\Program Files\\nodejs\\node.exe","command_line":"node.exe server.js"}

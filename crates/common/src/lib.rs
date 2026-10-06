@@ -484,6 +484,55 @@ mod tests {
         assert!(cov.windows(2).all(|w| w[0] < w[1])); // trié, sans doublon
     }
 
+    /// Rejoue un corpus JSONL (depuis `captures/` à la racine du dépôt) à travers
+    /// le moteur et renvoie les IDs de règles déclenchés. Corpus = données
+    /// réalistes INDÉPENDANTES des scénarios internes : révèle les écarts entre
+    /// « le test passe » et « ça détecte/ne sur-détecte pas sur du vrai ».
+    fn replay_corpus(file: &str) -> Vec<String> {
+        let path = format!("{}/../../captures/{}", env!("CARGO_MANIFEST_DIR"), file);
+        let content =
+            std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("lecture {path} : {e}"));
+        let mut eng = Engine::with_builtin_rules().unwrap();
+        let mut fired = Vec::new();
+        for line in content.lines().filter(|l| !l.trim().is_empty()) {
+            let ev: Event =
+                serde_json::from_str(line).unwrap_or_else(|e| panic!("parse '{line}' : {e}"));
+            for a in eng.ingest(ev) {
+                fired.push(a.rule_id);
+            }
+        }
+        fired
+    }
+
+    #[test]
+    fn corpus_benign_windows_no_false_positive() {
+        let fired = replay_corpus("benign-windows.jsonl");
+        assert!(
+            fired.is_empty(),
+            "activité Windows bénigne ne doit lever AUCUNE alerte — faux positifs : {fired:?}"
+        );
+    }
+
+    #[test]
+    fn corpus_benign_linux_no_false_positive() {
+        let fired = replay_corpus("benign-linux.jsonl");
+        assert!(
+            fired.is_empty(),
+            "activité Linux bénigne ne doit lever AUCUNE alerte — faux positifs : {fired:?}"
+        );
+    }
+
+    #[test]
+    fn corpus_linux_attack_detected() {
+        let fired = replay_corpus("linux-attack.jsonl");
+        for want in ["SNT-1000", "SNT-1002", "SNT-1005", "SNT-1003"] {
+            assert!(
+                fired.contains(&want.to_string()),
+                "chaîne Linux réelle : {want} manquant dans {fired:?}"
+            );
+        }
+    }
+
     #[test]
     fn token_ok_matches_only_exact() {
         assert!(crate::token_ok("s3cret", Some("s3cret")));

