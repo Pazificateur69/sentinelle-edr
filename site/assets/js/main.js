@@ -55,12 +55,14 @@ if (menu) {
   menu.addEventListener('click', e => { if (e.target.closest('a')) menu.open = false; });
   menu.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.open) { menu.open = false; sum.focus(); } });
   menu.addEventListener('focusout', e => { if (!menu.contains(e.relatedTarget)) menu.open = false; });
+  // iOS Safari ne donne pas le focus au toucher : fermeture sur tout toucher extérieur
+  document.addEventListener('pointerdown', e => { if (menu.open && !menu.contains(e.target)) menu.open = false; });
 }
 
 /* ---------- boucles : actives seulement à l'écran ---------- */
 if (IO) {
   const lo = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('is-visible', e.isIntersecting)));
-  $$('[data-loop],.tile,.term,.stage').forEach(e => lo.observe(e));
+  $$('[data-loop],.tile,.term,.stage,.aurora').forEach(e => lo.observe(e));
 }
 onEnter($$('.tile,.eq,.sevbar,.truth,.weights'));
 
@@ -91,16 +93,21 @@ if (dataEl && (heroFig || rjFig)) {
 if (rjFig && dataEl) {
   const states = JSON.parse(dataEl.textContent).states, total = states.length - 1;
   const beats = $$('.beat'), range = $('#rj-range'), time = $('#rj-time'), liveR = $('#rj-live'), play = $('#rj-play');
-  let cur = 0, timer = 0, playing = false;
+  let cur = 0, timer = 0, playing = false, isLive = false;
+  const chips = $('.chips', rjFig);
   const go = (s, { announce = false } = {}) => {
     cur = Math.max(0, Math.min(total, s));
     if (stageRj) stageRj.setTarget(cur);
     let b = null; beats.forEach(x => { if (+x.dataset.state <= cur) b = x; });
     beats.forEach(x => x.classList.toggle('cur', x === b));
     rjFig.dataset.state = cur;
+    // rangée de puces qui défile (petits écrans) : la puce active reste visible
+    const a = chips && $(`[data-chip="${cur >= 7 ? 'corr' : cur >= 5 ? 'behav' : cur >= 2 ? 'rules' : 'sensor'}"]`, chips);
+    if (a && chips.scrollWidth > chips.clientWidth) chips.scrollBy({ left: a.getBoundingClientRect().left - chips.getBoundingClientRect().left - 14, behavior: still() ? 'auto' : 'smooth' });
     if (range) {
       range.value = cur; time.textContent = states[cur].t;
-      const msg = t('step', { n: cur, total, label: states[cur].label });
+      const label = isLive && cur === total ? t('liveCorr') : states[cur].label;
+      const msg = t('step', { n: cur, total, label });
       range.setAttribute('aria-valuetext', msg);
       if (announce) liveR.textContent = msg;
     }
@@ -118,19 +125,23 @@ if (rjFig && dataEl) {
   }
   // Le scroll suit : le beat qui franchit la bande centrale devient courant.
   if (IO) {
-    const wide = matchMedia('(min-width:1024px)').matches;
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { stop(); go(+e.target.dataset.state); } }),
-      { rootMargin: wide ? '-45% 0px -45% 0px' : '-62% 0px -28% 0px' });
-    beats.forEach(b => io.observe(b));
+    // bande de déclenchement selon la disposition (stage à côté ≥ 1024, collant en haut sinon), recalculée si elle change
+    const mq = matchMedia('(min-width:1024px)');
+    const make = () => new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { stop(); go(+e.target.dataset.state); } }),
+      { rootMargin: mq.matches ? '-45% 0px -45% 0px' : '-62% 0px -28% 0px' });
+    let io = make(); beats.forEach(b => io.observe(b));
+    mq.addEventListener('change', () => { io.disconnect(); io = make(); beats.forEach(b => io.observe(b)); });
   }
   go(0);
   const help = $('#live-help');
   $$('#view-switch input').forEach(r => r.addEventListener('change', () => {
     const on = r.value === 'live' && r.checked;
     if (!r.checked) return;
+    isLive = on;
     if (stageRj) stageRj.setLive(on);
-    rjFig.classList.toggle('is-live', on);
-    if (help) help.hidden = !on;
+    rjFig.closest('section').classList.toggle('is-live', on); // étapes et figure basculent ensemble
+    if (help) { help.hidden = !on; if (on) say(help.textContent); }
+    go(cur);
   }));
 }
 
@@ -164,7 +175,7 @@ if (mask && mA) {
   const a = mA.textContent, b = $('.mask-b', mask).textContent, G = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._', tile = mask.closest('.tile');
   let k = 0;
   setInterval(() => {
-    if (still() || !tile.classList.contains('is-visible')) { mask.classList.remove('anim'); mA.textContent = a; return; }
+    if (still() || !tile.classList.contains('is-visible')) { if (mask.classList.contains('anim')) { mask.classList.remove('anim'); mA.classList.remove('fixed'); mA.textContent = a; } return; }
     mask.classList.add('anim');
     k = (k + 1) % 80; // pas de 50 ms → boucle de 4 s
     const q = Math.min(1, Math.max(0, (k - 30) / 10)), lock = Math.floor(q * b.length);
@@ -254,8 +265,9 @@ if (bench) {
     list.replaceChildren(...hits.map(h => card(h, ev)));
     const counts = {};
     hits.forEach(h => { counts[h.rule.severity] = (counts[h.rule.severity] || 0) + 1; });
-    const parts = ORDER.filter(s => counts[s]).map(s => `${counts[s]} ${I.sev[s] || s}`);
-    sum.textContent = hits.length ? `${t('hits', { n: hits.length })}${t('sep')}${parts.join(', ')}` : t('none');
+    const parts = ORDER.filter(s => counts[s]).map(s => `${counts[s]}\u00a0${I.sev[s] || s}`);
+    const msg = hits.length ? `${t('hits', { n: hits.length })}${t('sep')}${parts.join(', ')}` : t('none');
+    if (sum.textContent !== msg) sum.textContent = msg; // région live : ne pas répéter un texte identique
     out.dataset.max = ORDER.find(s => counts[s]) || 'none';
     rollTo(hits.reduce((a, h) => a + h.score, 0));
     const wasHidden = none.hidden;
@@ -379,6 +391,7 @@ if (fleet) {
 /* ---------- couverture réelle : ratio qui roule + liste ↔ grille ---------- */
 const ratio = $('#ratio-n');
 if (ratio && !still()) onEnter([ratio], () => {
+  if (still()) return; // pause activée entre-temps : la valeur finale est déjà dans le HTML
   const to = +ratio.textContent, t0 = performance.now();
   const step = now => { const p = Math.min(1, (now - t0) / 600); ratio.textContent = Math.round(to * (1 - (1 - p) ** 3)); if (p < 1) requestAnimationFrame(step); };
   requestAnimationFrame(step);

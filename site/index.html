@@ -23,14 +23,14 @@
 <meta property="og:title" content="Sentinelle EDR — EDR open source en Rust, auto-hébergé">
 <meta property="og:description" content="EDR open source auto-hébergé en Rust : règles Sigma, arbre de processus, MITRE ATT&amp;CK, parc gRPC + mTLS. Windows, Linux, macOS. MIT.">
 <meta property="og:url" content="https://pazificateur69.github.io/sentinelle-edr/">
-<meta property="og:image" content="https://pazificateur69.github.io/sentinelle-edr/assets/img/og-image.png">
+<meta property="og:image" content="https://pazificateur69.github.io/sentinelle-edr/assets/img/og-image-fr.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Sentinelle EDR — EDR open source en Rust">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sentinelle EDR — EDR open source en Rust, auto-hébergé">
 <meta name="twitter:description" content="EDR open source auto-hébergé en Rust : règles Sigma, arbre de processus, MITRE ATT&amp;CK, parc gRPC + mTLS. Windows, Linux, macOS. MIT.">
-<meta name="twitter:image" content="https://pazificateur69.github.io/sentinelle-edr/assets/img/og-image.png">
+<meta name="twitter:image" content="https://pazificateur69.github.io/sentinelle-edr/assets/img/og-image-fr.png">
 <meta name="twitter:image:alt" content="Sentinelle EDR — EDR open source en Rust">
 <meta name="google-site-verification" content="L2TgubbCDhPmy9xbGy196gGuyh15JLQ6VFCff2d1EpI">
 <script>(function(d){d.className='js';setTimeout(function(){if(!window.__snt)d.className=d.className.replace('js','no-js')},3000);try{if(localStorage.getItem('snt-motion')==='paused')d.setAttribute('data-motion','paused')}catch(e){}})(document.documentElement)</script>
@@ -38,7 +38,7 @@
 copy:"Copier",copied:"Copié",
 step:"Étape {n} sur {total}\u00a0: {label}",
 heroPause:"Mettre le rejeu en pause",heroPlay:"Reprendre le rejeu",
-liveSum:"score 280 · 4 alertes · 2 tactiques",demoSum:"score 520 · 7 alertes · 5 tactiques",
+liveSum:"score 280 · 4 alertes · 2 tactiques",demoSum:"score 520 · 7 alertes · 5 tactiques",liveCorr:"4 alertes deviennent 1 incident (calcul)",
 declared:"parent déclaré",real:"parent réel",target:"cible hors de l'arbre",
 hits:{one:"{n} règle déclenchée",other:"{n} règles déclenchées"},sep:"\u00a0: ",none:"Aucune règle déclenchée",
 loadErr:"Moteur du banc indisponible\u00a0: rechargez la page pour réessayer.",selected:"Texte sélectionné\u00a0: copiez-le (Ctrl+C ou ⌘C)",
@@ -119,22 +119,22 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
       <li><a href="https://github.com/Pazificateur69/sentinelle-edr/blob/main/crates/common/rules.json">sources ↗</a></li>
     </ul>
     <figure class="stage" id="hero-stage" data-mode="loop">
-      <div class="hud"><span class="rec">Rejeu · captures/demo.jsonl · poste-test</span>
-        <span class="hud-score">Score <b class="sc-n">520</b></span>
+      <div class="hud"><span class="rec">Scénario rejoué · captures/demo.jsonl · poste-test</span>
+        <span class="hud-score" aria-hidden="true">Score <b class="sc-n">520</b></span>
         <button class="hp js-only" id="hero-play" type="button" aria-label="Mettre le rejeu en pause"><span class="hp-i" aria-hidden="true"></span></button></div>
       <div class="stage-body">
-        <div class="stage-canvas"><svg class="poster" viewBox="0 0 815 380" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><pattern id="phc" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff3b5c"/></pattern><pattern id="phh" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff8a3d"/></pattern></defs><path class="g" d="M44 32V368"/><text class="s" x="44" y="19" text-anchor="middle">20:00:00</text><path class="g" d="M142.8 32V368"/><text class="s" x="142.8" y="19" text-anchor="middle">20:00:01</text><path class="g" d="M241.7 32V368"/><text class="s" x="241.7" y="19" text-anchor="middle">20:00:02</text><path class="g" d="M340.5 32V368"/><text class="s" x="340.5" y="19" text-anchor="middle">20:00:03</text><path class="g" d="M439.3 32V368"/><text class="s" x="439.3" y="19" text-anchor="middle">20:00:04</text><path class="g" d="M538.2 32V368"/><text class="s" x="538.2" y="19" text-anchor="middle">20:00:05</text><path class="g" d="M637 32V368"/><text class="s" x="637" y="19" text-anchor="middle">20:00:06</text><path class="ll" d="M50 60H681"/><path class="ll" d="M148.8 116H681"/><path class="ll" style="stroke:var(--crit);opacity:.6" d="M247.7 172H681"/><path class="ll" style="stroke-dasharray:3 5" d="M346.5 228H681"/><path class="ll" d="M544.2 284H681"/><path class="ll" style="stroke:var(--high);opacity:.6" d="M643 340H681"/><path class="el" d="M128.8 60V108Q128.8 116 136.8 116H136.8"/><path class="el" d="M227.7 116V164Q227.7 172 235.7 172H235.7"/><path class="dash" style="opacity:.45" d="M524.2 60V276Q524.2 284 532.2 284H532.2"/><path class="dash" d="M508.2 172V276Q508.2 284 516.2 284H532.2"/><text class="s" x="518.2" y="91" text-anchor="end">✕ parent déclaré</text><text class="s" x="502.2" y="259" text-anchor="end" style="fill:var(--ink-2)">parent réel</text><path class="el" d="M623 172V332Q623 340 631 340H631"/><path d="M340.5 176Q392.5 200 345.5 225" style="fill:none;stroke:var(--info);stroke-dasharray:3 4;stroke-width:1.3"/><text class="s" x="374.5" y="201">0x1410</text><path d="M439.3 167l5 5-5 5-5-5z" style="fill:#070a12;stroke:var(--info);stroke-dasharray:3 3"/><text class="s" x="449.3" y="191">\\.\pipe\msagent_7f</text><circle class="nd" cx="44" cy="60" r="4.5"/><text x="54" y="52">explorer.exe<tspan class="s" dx="8">pid 4000</tspan></text><circle class="nd" cx="142.8" cy="116" r="4.5"/><text x="152.8" y="108">winword.exe<tspan class="s" dx="8">facture.docm · 4100</tspan></text><circle class="nd" cx="241.7" cy="172" r="4.5"/><text x="251.7" y="164">powershell.exe<tspan class="s" dx="8">-enc · 4200</tspan></text><circle cx="340.5" cy="228" r="5" style="fill:none;stroke:var(--muted);stroke-dasharray:2 3"/><text x="350.5" y="220">lsass.exe<tspan class="s" dx="8">cible hors de l'arbre</tspan></text><circle class="nd" cx="538.2" cy="284" r="4.5"/><text x="548.2" y="276">evil.exe<tspan class="s" dx="8">pid 4300</tspan></text><circle class="nd" cx="637" cy="340" r="4.5"/><text x="599.2" y="332" style="fill:var(--accent)">PowerShell.EXE<tspan class="s" dx="8">nom d'origine PE</tspan></text><circle cx="255.7" cy="172" r="3.5" style="fill:var(--crit)"/><circle cx="269.7" cy="172" r="3.5" style="fill:var(--high)"/><circle cx="283.7" cy="172" r="3.5" style="fill:var(--med)"/><circle cx="354.5" cy="228" r="3.5" fill="url(#phc)"/><circle cx="354.5" cy="228" r="5.5" style="fill:none;stroke:var(--crit);stroke-dasharray:2 2"/><circle cx="453.3" cy="172" r="3.5" fill="url(#phh)"/><circle cx="453.3" cy="172" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="552.2" cy="284" r="3.5" fill="url(#phh)"/><circle cx="552.2" cy="284" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="651" cy="340" r="3.5" style="fill:var(--high)"/></svg><canvas aria-hidden="true"></canvas></div>
+        <div class="stage-canvas"><svg class="poster" viewBox="0 0 815 380" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><pattern id="phc" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff3b5c"/></pattern><pattern id="phh" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff8a3d"/></pattern></defs><path class="g" d="M44 32V368"/><text class="s" x="44" y="19" text-anchor="middle">20:00:00</text><path class="g" d="M142.8 32V368"/><text class="s" x="142.8" y="19" text-anchor="middle">20:00:01</text><path class="g" d="M241.7 32V368"/><text class="s" x="241.7" y="19" text-anchor="middle">20:00:02</text><path class="g" d="M340.5 32V368"/><text class="s" x="340.5" y="19" text-anchor="middle">20:00:03</text><path class="g" d="M439.3 32V368"/><text class="s" x="439.3" y="19" text-anchor="middle">20:00:04</text><path class="g" d="M538.2 32V368"/><text class="s" x="538.2" y="19" text-anchor="middle">20:00:05</text><path class="g" d="M637 32V368"/><text class="s" x="637" y="19" text-anchor="middle">20:00:06</text><path class="ll" d="M50 60H681"/><path class="ll" d="M148.8 116H681"/><path class="ll" style="stroke:var(--crit);opacity:.6" d="M247.7 172H681"/><path class="ll" style="stroke-dasharray:3 5" d="M346.5 228H681"/><path class="ll" d="M544.2 284H681"/><path class="ll" style="stroke:var(--high);opacity:.6" d="M643 340H681"/><path class="el" d="M128.8 60V108Q128.8 116 136.8 116H136.8"/><path class="el" d="M227.7 116V164Q227.7 172 235.7 172H235.7"/><path class="dash" style="stroke:var(--crit);opacity:.6" d="M524.2 60V276Q524.2 284 532.2 284H532.2"/><path class="dash" d="M508.2 172V276Q508.2 284 516.2 284H532.2"/><text class="s" x="502.2" y="247" text-anchor="end" style="fill:var(--crit)">✕ parent déclaré</text><text class="s" x="502.2" y="259" text-anchor="end" style="fill:var(--ink-2)">parent réel</text><path class="el" d="M623 172V332Q623 340 631 340H631"/><path d="M340.5 176Q392.5 200 345.5 225" style="fill:none;stroke:var(--info);stroke-dasharray:3 4;stroke-width:1.3"/><text class="s" x="374.5" y="201">0x1410</text><path d="M439.3 167l5 5-5 5-5-5z" style="fill:#070a12;stroke:var(--info);stroke-dasharray:3 3"/><text class="s" x="449.3" y="191">\\.\pipe\msagent_7f</text><circle class="nd" cx="44" cy="60" r="4.5"/><text x="54" y="52">explorer.exe<tspan class="s" dx="8">pid 4000</tspan></text><circle class="nd" cx="142.8" cy="116" r="4.5"/><text x="152.8" y="108">winword.exe<tspan class="s" dx="8">facture.docm · 4100</tspan></text><circle class="nd" cx="241.7" cy="172" r="4.5"/><text x="251.7" y="164">powershell.exe<tspan class="s" dx="8">-enc · 4200</tspan></text><circle cx="340.5" cy="228" r="5" style="fill:none;stroke:var(--muted);stroke-dasharray:2 3"/><text x="350.5" y="220">lsass.exe<tspan class="s" dx="8">cible hors de l'arbre</tspan></text><circle class="nd" cx="538.2" cy="284" r="4.5"/><text x="548.2" y="276">evil.exe<tspan class="s" dx="8">pid 4300</tspan></text><circle class="nd" cx="637" cy="340" r="4.5"/><text x="647" y="332" style="fill:var(--accent)">PowerShell.EXE</text><text class="s" x="647" y="356.5">nom d'origine PE</text><circle cx="255.7" cy="172" r="3.5" style="fill:var(--crit)"/><circle cx="269.7" cy="172" r="3.5" style="fill:var(--high)"/><circle cx="283.7" cy="172" r="3.5" style="fill:var(--med)"/><circle cx="354.5" cy="228" r="3.5" fill="url(#phc)"/><circle cx="354.5" cy="228" r="5.5" style="fill:none;stroke:var(--crit);stroke-dasharray:2 2"/><circle cx="453.3" cy="172" r="3.5" fill="url(#phh)"/><circle cx="453.3" cy="172" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="552.2" cy="284" r="3.5" fill="url(#phh)"/><circle cx="552.2" cy="284" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="651" cy="340" r="3.5" style="fill:var(--high)"/></svg><canvas aria-hidden="true"></canvas></div>
         <div class="side" aria-hidden="true">
           <p class="side-h">Alertes</p>
           <div class="inc">
             <div class="inc-h"><div><span class="pill sev-critical">critique</span> Incident <span class="inc-sum">score 520 · 7 alertes · 5 tactiques</span></div></div>
             <ol class="al-list">
-              <li data-k="0"><i class="sev-dot sev-critical"></i><code>SNT-0001</code><span class="al-t">Application Office lance un interpréteur de script</span></li>
+              <li data-k="0"><i class="sev-dot sev-critical"></i><code>SNT-0001</code><span class="al-t">Office lance un interpréteur</span></li>
               <li data-k="1"><i class="sev-dot sev-high"></i><code>SNT-0010</code><span class="al-t">PowerShell avec commande encodée</span></li>
               <li data-k="2"><i class="sev-dot sev-medium"></i><code>SNT-0012</code><span class="al-t">PowerShell furtif (hidden / bypass)</span></li>
-              <li data-k="3" class="sim"><i class="sev-dot sev-critical"></i><code>SNT-0300</code><span class="al-t">Accès mémoire à LSASS (vol d'identifiants par handle)</span><span class="tag-sim">sim</span></li>
+              <li data-k="3" class="sim"><i class="sev-dot sev-critical"></i><code>SNT-0300</code><span class="al-t">Accès mémoire à LSASS</span><span class="tag-sim">sim</span></li>
               <li data-k="4" class="sim"><i class="sev-dot sev-high"></i><code>SNT-0320</code><span class="al-t">Tube nommé de C2 connu</span><span class="tag-sim">sim</span></li>
-              <li data-k="5" class="sim"><i class="sev-dot sev-high"></i><code>SNT-B003</code><span class="al-t">Usurpation de parent (PPID spoofing)</span><span class="tag-sim">sim</span></li>
+              <li data-k="5" class="sim"><i class="sev-dot sev-high"></i><code>SNT-B003</code><span class="al-t">Usurpation de parent (PPID)</span><span class="tag-sim">sim</span></li>
               <li data-k="6"><i class="sev-dot sev-high"></i><code>SNT-B004</code><span class="al-t">Outil système renommé (masquerading)</span></li>
             </ol>
             <div class="compo"><i class="sev-critical" style="--w:100"></i><i class="sev-high" style="--w:70"></i><i class="sev-medium" style="--w:40"></i><i class="sev-critical sim" style="--w:100"></i><i class="sev-high sim" style="--w:70"></i><i class="sev-high sim" style="--w:70"></i><i class="sev-high" style="--w:70"></i></div>
@@ -145,7 +145,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
         </div>
       </div>
       <figcaption>Scénario écrit à la main, rejoué par le vrai moteur&nbsp;: résultat mesuré. Hachuré&nbsp;= capteur pas encore live.</figcaption>
-      <p class="sr-only">Animation&nbsp;: rejeu du scénario captures/demo.jsonl. explorer.exe lance winword.exe (facture.docm), qui lance un PowerShell encodé&nbsp;: alertes SNT-0001, SNT-0010 et SNT-0012. PowerShell accède à la mémoire de lsass.exe (SNT-0300) et crée un tube nommé (SNT-0320). evil.exe naît avec un parent falsifié (SNT-B003), puis un svchost.exe qui est PowerShell renommé (SNT-B004). Les 7 alertes forment 1 incident critique, score 520, 5 tactiques. SNT-0300, SNT-0320 et SNT-B003 sont simulation-seulement.</p>
+      <p class="sr-only">Animation&nbsp;: rejeu du scénario captures/demo.jsonl. explorer.exe lance winword.exe (facture.docm), qui lance un PowerShell encodé&nbsp;: alertes <span class="nw">SNT-0001</span>, <span class="nw">SNT-0010</span> et <span class="nw">SNT-0012</span>. PowerShell accède à la mémoire de lsass.exe (<span class="nw">SNT-0300</span>) et crée un tube nommé (<span class="nw">SNT-0320</span>). evil.exe naît avec un parent falsifié (<span class="nw">SNT-B003</span>), puis un svchost.exe qui est PowerShell renommé (<span class="nw">SNT-B004</span>). Les 7 alertes forment 1 incident critique, score 520, 5 tactiques. <span class="nw">SNT-0300</span>, <span class="nw">SNT-0320</span> et <span class="nw">SNT-B003</span> sont simulation-seulement.</p>
     </figure>
   </div>
 </section>
@@ -158,20 +158,20 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
       <p class="label">Le rejeu</p>
       <h2 id="rejeu-h">Une kill chain rejouée, seconde par seconde</h2>
       <div class="sec-aside">
-      <p class="sub">Le scénario captures/demo.jsonl, rejoué par le vrai moteur de détection. Faites défiler&nbsp;: chaque étape s'allume.</p>
+      <p class="sub">Le scénario captures/demo.jsonl, rejoué par le vrai moteur de détection. <span class="js-only">Faites défiler&nbsp;: chaque étape s'allume.</span></p>
       <fieldset class="seg js-only" id="view-switch"><legend class="sr-only">Vue du rejeu</legend>
         <label><input type="radio" name="view" value="demo" checked> Scénario de démo</label>
         <label><input type="radio" name="view" value="live"> Live aujourd'hui</label>
       </fieldset>
-      <p class="live-help" id="live-help" aria-live="polite" hidden>Sans les 3 détections simulation-seulement, il reste 4 alertes&nbsp;: score 280 (100 + 70 + 40 + 70), 2 tactiques, toujours 1 incident. <span class="tag-calc">Calcul d'après les poids du code, non mesuré.</span></p>
+      <p class="live-help" id="live-help" hidden>Sans les 3 détections simulation-seulement, il reste 4 alertes&nbsp;: score 280 (100 + 70 + 40 + 70), 2 tactiques, toujours 1 incident. <span class="tag-calc">Calcul d'après les poids du code, non mesuré.</span></p>
       </div>
     </header>
     <div class="rj-grid">
       <figure class="stage stage-rj" id="rj-stage" data-mode="steps">
-        <ol class="chips" aria-label="Étapes du pipeline">
+        <ol class="chips" tabindex="0" aria-label="Étapes du pipeline">
           <li data-chip="sensor">Capteur</li><li data-chip="tree">Arbre</li><li data-chip="rules">Règles</li><li data-chip="behav">Comportement</li><li data-chip="score">Score</li><li data-chip="corr">Corrélation</li>
         </ol>
-        <div class="stage-canvas"><svg class="poster" viewBox="0 0 815 380" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><pattern id="phc2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff3b5c"/></pattern><pattern id="phh2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff8a3d"/></pattern></defs><path class="g" d="M44 32V368"/><text class="s" x="44" y="19" text-anchor="middle">20:00:00</text><path class="g" d="M142.8 32V368"/><text class="s" x="142.8" y="19" text-anchor="middle">20:00:01</text><path class="g" d="M241.7 32V368"/><text class="s" x="241.7" y="19" text-anchor="middle">20:00:02</text><path class="g" d="M340.5 32V368"/><text class="s" x="340.5" y="19" text-anchor="middle">20:00:03</text><path class="g" d="M439.3 32V368"/><text class="s" x="439.3" y="19" text-anchor="middle">20:00:04</text><path class="g" d="M538.2 32V368"/><text class="s" x="538.2" y="19" text-anchor="middle">20:00:05</text><path class="g" d="M637 32V368"/><text class="s" x="637" y="19" text-anchor="middle">20:00:06</text><path class="ll" d="M50 60H681"/><path class="ll" d="M148.8 116H681"/><path class="ll" style="stroke:var(--crit);opacity:.6" d="M247.7 172H681"/><path class="ll" style="stroke-dasharray:3 5" d="M346.5 228H681"/><path class="ll" d="M544.2 284H681"/><path class="ll" style="stroke:var(--high);opacity:.6" d="M643 340H681"/><path class="el" d="M128.8 60V108Q128.8 116 136.8 116H136.8"/><path class="el" d="M227.7 116V164Q227.7 172 235.7 172H235.7"/><path class="dash" style="opacity:.45" d="M524.2 60V276Q524.2 284 532.2 284H532.2"/><path class="dash" d="M508.2 172V276Q508.2 284 516.2 284H532.2"/><text class="s" x="518.2" y="91" text-anchor="end">✕ parent déclaré</text><text class="s" x="502.2" y="259" text-anchor="end" style="fill:var(--ink-2)">parent réel</text><path class="el" d="M623 172V332Q623 340 631 340H631"/><path d="M340.5 176Q392.5 200 345.5 225" style="fill:none;stroke:var(--info);stroke-dasharray:3 4;stroke-width:1.3"/><text class="s" x="374.5" y="201">0x1410</text><path d="M439.3 167l5 5-5 5-5-5z" style="fill:#070a12;stroke:var(--info);stroke-dasharray:3 3"/><text class="s" x="449.3" y="191">\\.\pipe\msagent_7f</text><circle class="nd" cx="44" cy="60" r="4.5"/><text x="54" y="52">explorer.exe<tspan class="s" dx="8">pid 4000</tspan></text><circle class="nd" cx="142.8" cy="116" r="4.5"/><text x="152.8" y="108">winword.exe<tspan class="s" dx="8">facture.docm · 4100</tspan></text><circle class="nd" cx="241.7" cy="172" r="4.5"/><text x="251.7" y="164">powershell.exe<tspan class="s" dx="8">-enc · 4200</tspan></text><circle cx="340.5" cy="228" r="5" style="fill:none;stroke:var(--muted);stroke-dasharray:2 3"/><text x="350.5" y="220">lsass.exe<tspan class="s" dx="8">cible hors de l'arbre</tspan></text><circle class="nd" cx="538.2" cy="284" r="4.5"/><text x="548.2" y="276">evil.exe<tspan class="s" dx="8">pid 4300</tspan></text><circle class="nd" cx="637" cy="340" r="4.5"/><text x="599.2" y="332" style="fill:var(--accent)">PowerShell.EXE<tspan class="s" dx="8">nom d'origine PE</tspan></text><circle cx="255.7" cy="172" r="3.5" style="fill:var(--crit)"/><circle cx="269.7" cy="172" r="3.5" style="fill:var(--high)"/><circle cx="283.7" cy="172" r="3.5" style="fill:var(--med)"/><circle cx="354.5" cy="228" r="3.5" fill="url(#phc2)"/><circle cx="354.5" cy="228" r="5.5" style="fill:none;stroke:var(--crit);stroke-dasharray:2 2"/><circle cx="453.3" cy="172" r="3.5" fill="url(#phh2)"/><circle cx="453.3" cy="172" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="552.2" cy="284" r="3.5" fill="url(#phh2)"/><circle cx="552.2" cy="284" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="651" cy="340" r="3.5" style="fill:var(--high)"/></svg><canvas aria-hidden="true"></canvas></div>
+        <div class="stage-canvas"><svg class="poster" viewBox="0 0 815 380" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><pattern id="phc2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff3b5c"/></pattern><pattern id="phh2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#ff8a3d"/></pattern></defs><path class="g" d="M44 32V368"/><text class="s" x="44" y="19" text-anchor="middle">20:00:00</text><path class="g" d="M142.8 32V368"/><text class="s" x="142.8" y="19" text-anchor="middle">20:00:01</text><path class="g" d="M241.7 32V368"/><text class="s" x="241.7" y="19" text-anchor="middle">20:00:02</text><path class="g" d="M340.5 32V368"/><text class="s" x="340.5" y="19" text-anchor="middle">20:00:03</text><path class="g" d="M439.3 32V368"/><text class="s" x="439.3" y="19" text-anchor="middle">20:00:04</text><path class="g" d="M538.2 32V368"/><text class="s" x="538.2" y="19" text-anchor="middle">20:00:05</text><path class="g" d="M637 32V368"/><text class="s" x="637" y="19" text-anchor="middle">20:00:06</text><path class="ll" d="M50 60H681"/><path class="ll" d="M148.8 116H681"/><path class="ll" style="stroke:var(--crit);opacity:.6" d="M247.7 172H681"/><path class="ll" style="stroke-dasharray:3 5" d="M346.5 228H681"/><path class="ll" d="M544.2 284H681"/><path class="ll" style="stroke:var(--high);opacity:.6" d="M643 340H681"/><path class="el" d="M128.8 60V108Q128.8 116 136.8 116H136.8"/><path class="el" d="M227.7 116V164Q227.7 172 235.7 172H235.7"/><path class="dash" style="stroke:var(--crit);opacity:.6" d="M524.2 60V276Q524.2 284 532.2 284H532.2"/><path class="dash" d="M508.2 172V276Q508.2 284 516.2 284H532.2"/><text class="s" x="502.2" y="247" text-anchor="end" style="fill:var(--crit)">✕ parent déclaré</text><text class="s" x="502.2" y="259" text-anchor="end" style="fill:var(--ink-2)">parent réel</text><path class="el" d="M623 172V332Q623 340 631 340H631"/><path d="M340.5 176Q392.5 200 345.5 225" style="fill:none;stroke:var(--info);stroke-dasharray:3 4;stroke-width:1.3"/><text class="s" x="374.5" y="201">0x1410</text><path d="M439.3 167l5 5-5 5-5-5z" style="fill:#070a12;stroke:var(--info);stroke-dasharray:3 3"/><text class="s" x="449.3" y="191">\\.\pipe\msagent_7f</text><circle class="nd" cx="44" cy="60" r="4.5"/><text x="54" y="52">explorer.exe<tspan class="s" dx="8">pid 4000</tspan></text><circle class="nd" cx="142.8" cy="116" r="4.5"/><text x="152.8" y="108">winword.exe<tspan class="s" dx="8">facture.docm · 4100</tspan></text><circle class="nd" cx="241.7" cy="172" r="4.5"/><text x="251.7" y="164">powershell.exe<tspan class="s" dx="8">-enc · 4200</tspan></text><circle cx="340.5" cy="228" r="5" style="fill:none;stroke:var(--muted);stroke-dasharray:2 3"/><text x="350.5" y="220">lsass.exe<tspan class="s" dx="8">cible hors de l'arbre</tspan></text><circle class="nd" cx="538.2" cy="284" r="4.5"/><text x="548.2" y="276">evil.exe<tspan class="s" dx="8">pid 4300</tspan></text><circle class="nd" cx="637" cy="340" r="4.5"/><text x="647" y="332" style="fill:var(--accent)">PowerShell.EXE</text><text class="s" x="647" y="356.5">nom d'origine PE</text><circle cx="255.7" cy="172" r="3.5" style="fill:var(--crit)"/><circle cx="269.7" cy="172" r="3.5" style="fill:var(--high)"/><circle cx="283.7" cy="172" r="3.5" style="fill:var(--med)"/><circle cx="354.5" cy="228" r="3.5" fill="url(#phc2)"/><circle cx="354.5" cy="228" r="5.5" style="fill:none;stroke:var(--crit);stroke-dasharray:2 2"/><circle cx="453.3" cy="172" r="3.5" fill="url(#phh2)"/><circle cx="453.3" cy="172" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="552.2" cy="284" r="3.5" fill="url(#phh2)"/><circle cx="552.2" cy="284" r="5.5" style="fill:none;stroke:var(--high);stroke-dasharray:2 2"/><circle cx="651" cy="340" r="3.5" style="fill:var(--high)"/></svg><canvas aria-hidden="true"></canvas></div>
         <div class="rj-foot" aria-hidden="true">
           <div class="rj-score">
             <p class="side-h">Score</p>
@@ -204,10 +204,10 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
         <li class="beat" data-state="2" id="beat-b">
           <p class="t">20:00:02</p>
           <h3>Office lance un PowerShell encodé</h3>
-          <p><code>powershell.exe -nop -w hidden -ep bypass -enc</code>, sous Word. Trois règles façon Sigma se déclenchent&nbsp;; SNT-0001 regarde toute l'ascendance, pas seulement le parent direct.</p>
+          <p><code>powershell.exe -nop -w hidden -ep bypass -enc</code>, sous Word. Trois règles façon Sigma se déclenchent&nbsp;; <span class="nw">SNT-0001</span> regarde toute l'ascendance, pas seulement le parent direct.</p>
           <div class="eval"><p class="eval-h"><code>SNT-0010</code> <span class="pill sev-high">haute</span> 70</p>
-            <p><code>ImageName equals "powershell.exe"</code> <span class="ok" aria-label="vrai">✓</span></p>
-            <p><code>CommandLine contains "<mark>-enc </mark>"</code> <span class="ok" aria-label="vrai">✓</span></p></div>
+            <p><code>ImageName equals "powershell.exe"</code> <span class="ok" role="img" aria-label="vrai">✓</span></p>
+            <p><code>CommandLine contains "<mark>-enc </mark>"</code> <span class="ok" role="img" aria-label="vrai">✓</span></p></div>
           <ul class="mini"><li><span class="pill sev-critical">critique</span> <code>SNT-0001</code></li><li><span class="pill sev-high">haute</span> <code>SNT-0010</code></li><li><span class="pill sev-medium">moyenne</span> <code>SNT-0012</code></li></ul>
           <p class="beat-f"><span class="sc">score 210</span><a class="tlink" href="#banc-essai" data-preset-link="macro">Tester cette ligne dans le banc d'essai →</a></p>
         </li>
@@ -216,19 +216,19 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
           <h3>LSASS, puis un tube nommé</h3>
           <p>PowerShell ouvre la mémoire de lsass.exe (droits 0x1410), puis crée <code>\\.\pipe\msagent_7f</code>, un nom de tube de C2 connu.</p>
           <ul class="mini"><li><span class="pill sev-critical">critique</span> <code>SNT-0300</code> <span class="tag-sim" title="simulation-seulement&nbsp;: capteur live à venir">sim<span class="sr-only"> (simulation-seulement)</span></span></li><li><span class="pill sev-high">haute</span> <code>SNT-0320</code> <span class="tag-sim" title="simulation-seulement&nbsp;: capteur live à venir">sim<span class="sr-only"> (simulation-seulement)</span></span></li></ul>
-          <p class="beat-f"><span class="sc">score 380</span></p>
+          <p class="beat-f"><span class="sc">score <span class="v-demo">380</span><span class="v-live">210</span></span></p>
         </li>
         <li class="beat" data-state="6" id="beat-d">
           <p class="t">20:00:05 → 20:00:06</p>
           <h3>Un faux parent, un faux svchost</h3>
           <p>evil.exe déclare explorer.exe comme parent, mais c'est PowerShell qui l'a créé. Puis un svchost.exe dont le nom d'origine du PE est PowerShell.EXE. Les détecteurs comportementaux voient ce qu'une règle seule ne voit pas.</p>
           <ul class="mini"><li><span class="pill sev-high">haute</span> <code>SNT-B003</code> <span class="tag-sim" title="simulation-seulement&nbsp;: capteur live à venir">sim<span class="sr-only"> (simulation-seulement)</span></span></li><li><span class="pill sev-high">haute</span> <code>SNT-B004</code></li></ul>
-          <p class="beat-f"><span class="sc">score 520</span></p>
+          <p class="beat-f"><span class="sc">score <span class="v-demo">520</span><span class="v-live">280</span></span></p>
         </li>
         <li class="beat" data-state="7" id="beat-e">
           <p class="t">Corrélation</p>
-          <h3>7 alertes, 1 incident</h3>
-          <p>Même hôte, fenêtre de 120&nbsp;s&nbsp;: les alertes deviennent un incident critique, score 520, 5 tactiques. Un analyste lit une histoire, pas sept bruits. Depuis la console, il peut terminer le processus, en local ou à distance.</p>
+          <h3><span class="v-demo">7 alertes</span><span class="v-live">4 alertes</span>, 1 incident</h3>
+          <p>Même hôte, fenêtre de 120&nbsp;s&nbsp;: les alertes deviennent un incident critique, score <span class="v-demo">520, 5 tactiques</span><span class="v-live">280, 2 tactiques (calcul, non mesuré)</span>. Un analyste lit une histoire, pas sept bruits. Depuis la console, il peut terminer le processus, en local ou à distance.</p>
         </li>
       </ol>
     </div>
@@ -283,7 +283,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
   <div class="wrap">
     <header class="sec-head rv">
       <p class="label">Sous le capot</p>
-      <h2 id="flow-h">Comment fonctionne un EDR en Rust&nbsp;: du capteur à la console</h2>
+      <h2 id="flow-h">Comment fonctionne un EDR en Rust&nbsp;: du&nbsp;capteur à la console</h2>
       <div class="sec-aside"><p class="sub">Du noyau jusqu'à l'écran de l'analyste, tout tourne chez vous&nbsp;: aucune télémétrie n'est envoyée à un éditeur.</p></div>
     </header>
     <ol class="bento" id="fonctionnalites">
@@ -301,7 +301,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
       <li class="tile t-tree rv" style="--n:2">
         <p class="n">02</p>
         <h3>Qui a lancé qui</h3>
-        <p>Un schéma plat façon ECS/OCSF pour 7 types d'événements, et l'ascendance complète de chaque processus&nbsp;: une règle peut exiger qu'un ancêtre soit Office.</p>
+        <p>Un schéma plat façon ECS/OCSF pour 8 types d'événements, et l'ascendance complète de chaque processus&nbsp;: une règle peut exiger qu'un ancêtre soit Office.</p>
         <div class="viz lineage" aria-hidden="true">
           <span class="ln" style="--d:0">explorer.exe</span><span class="ln office" style="--d:1">winword.exe <em>ancêtre Office ✓</em></span><span class="ln cur" style="--d:2">powershell.exe</span>
         </div>
@@ -314,24 +314,26 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
         <div class="codecard" data-tabs>
           <div class="cc-bar"><span class="dots" aria-hidden="true"></span>
             <div role="tablist" aria-label="Format de la règle" class="js-only">
-              <button role="tab" type="button" id="tab-json" aria-controls="pan-json" aria-selected="true">rules.json · SNT-0010</button>
+              <button role="tab" type="button" id="tab-json" aria-controls="pan-json" aria-selected="true">rules.json · <span class="nw">SNT-0010</span></button>
               <button role="tab" type="button" id="tab-sigma" aria-controls="pan-sigma" aria-selected="false" tabindex="-1">Sigma YAML (autre règle du dépôt)</button>
             </div></div>
           <div role="tabpanel" id="pan-json" aria-labelledby="tab-json" class="cc-pan">
-<pre><code>{
+<pre tabindex="0"><code>{
   <span class="k">"id"</span>: <span class="s">"SNT-0010"</span>,
   <span class="k">"title"</span>: <span class="s">"PowerShell avec commande encodee"</span>,
   <span data-k="sev"><span class="k">"severity"</span>: <span class="s">"high"</span></span>,
   <span data-k="attack"><span class="k">"attack"</span>: [<span class="s">"T1059.001"</span>, <span class="s">"T1027"</span>]</span>,
   <span class="k">"kind"</span>: <span class="s">"process_start"</span>,
   <span data-k="all"><span class="k">"all"</span></span>: [
-    { <span data-k="field"><span class="k">"field"</span>: <span class="s">"ImageName"</span></span>, <span data-k="op"><span class="k">"op"</span>: <span class="s">"equals"</span></span>, <span data-k="values"><span class="k">"values"</span>: [<span class="s">"powershell.exe"</span>, <span class="s">"pwsh.exe"</span>]</span> },
-    { <span data-k="field"><span class="k">"field"</span>: <span class="s">"CommandLine"</span></span>, <span data-k="op"><span class="k">"op"</span>: <span class="s">"contains"</span></span>, <span data-k="values"><span class="k">"values"</span>: [<span class="s">"-encodedcommand"</span>, <span class="s">"-enc "</span>, <span class="s">" -e "</span>]</span> }
+    { <span data-k="field"><span class="k">"field"</span>: <span class="s">"ImageName"</span></span>, <span data-k="op"><span class="k">"op"</span>: <span class="s">"equals"</span></span>,
+      <span data-k="values"><span class="k">"values"</span>: [<span class="s">"powershell.exe"</span>, <span class="s">"pwsh.exe"</span>]</span> },
+    { <span data-k="field"><span class="k">"field"</span>: <span class="s">"CommandLine"</span></span>, <span data-k="op"><span class="k">"op"</span>: <span class="s">"contains"</span></span>,
+      <span data-k="values"><span class="k">"values"</span>: [<span class="s">"-encodedcommand"</span>, <span class="s">"-enc "</span>, <span class="s">" -e "</span>]</span> }
   ]
 }</code></pre>
           </div>
           <div role="tabpanel" id="pan-sigma" aria-labelledby="tab-sigma" class="cc-pan">
-<pre><code><span class="k">title</span>: PowerShell avec chaîne encodée en base64
+<pre tabindex="0"><code><span class="k">title</span>: PowerShell avec chaîne encodée en base64
 <span class="k">id</span>: snt-sigma-ps-b64
 <span data-k="sev"><span class="k">level</span>: high</span>
 <span data-k="attack"><span class="k">tags</span>: [attack.t1059.001, attack.t1027]</span>
@@ -365,7 +367,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
         <p class="n">05</p>
         <h3>Des alertes à l'incident</h3>
         <p>Un risque par hôte qui s'accumule et décroît, pondéré par la confiance de chaque règle&nbsp;; allowlist et déduplication. Même hôte, 120&nbsp;s&nbsp;: un incident.</p>
-        <ul class="weights" aria-hidden="true">
+        <ul class="weights">
           <li class="sev-critical" style="--w:100;--k:0"><span>critique 100</span><i></i></li>
           <li class="sev-high" style="--w:70;--k:1"><span>haute 70</span><i></i></li>
           <li class="sev-medium" style="--w:40;--k:2"><span>moyenne 40</span><i></i></li>
@@ -387,25 +389,25 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
       </li>
       <li class="tile t-fleet rv" id="architecture" style="--n:7">
         <p class="n">07</p>
-        <h3>Auto-hébergé&nbsp;: un poste ou tout un parc en gRPC + mTLS</h3>
+        <h3>Auto-hébergé&nbsp;: un poste ou tout un parc en gRPC&nbsp;+&nbsp;mTLS</h3>
         <p>Agents et serveur central en mTLS bidirectionnel (tonic + rustls), PKI en Rust pur (rcgen), ordres de kill poussés aux agents, heartbeat de vivacité.</p>
         <div class="viz fleet-w" aria-hidden="true">
           <svg class="fleet" id="fleet" viewBox="0 0 400 200" data-loop>
             <path class="link" d="M118 32L176 92"/><path class="link" d="M118 100H176"/><path class="link" id="l3" d="M118 168L176 108"/><path class="link" d="M272 100H300"/>
             <g class="hbs"><circle class="hb loop" r="3" style="--x1:118px;--y1:32px;--x2:176px;--y2:92px"/><circle class="hb loop" r="3" style="--x1:118px;--y1:100px;--x2:176px;--y2:100px;animation-delay:-.8s"/><circle class="hb loop hb3" r="3" style="--x1:118px;--y1:168px;--x2:176px;--y2:108px;animation-delay:-1.6s"/></g>
             <g class="host" transform="translate(8 14)"><rect width="110" height="36" rx="9"/><circle class="st" cx="16" cy="18" r="4"/><text x="28" y="22">poste-1</text></g>
-            <g class="host" id="h2" transform="translate(8 82)"><rect width="110" height="36" rx="9"/><circle class="st" cx="16" cy="18" r="4"/><text x="28" y="22">poste-2</text><path class="kchk" pathLength="1" d="M86 18l5 5 9-10"/></g>
+            <g class="host" id="h2" transform="translate(8 82)"><rect width="110" height="36" rx="9"/><circle class="st" cx="16" cy="18" r="4"/><text x="28" y="22">poste-2</text><path class="kchk" pathLength="1" d="M93 18l5 5 9-10"/></g>
             <g class="host" id="h3" transform="translate(8 150)"><rect width="110" height="36" rx="9"/><circle class="st" id="h3-st" cx="16" cy="18" r="4"/><text x="28" y="22">poste-3</text></g>
             <g class="srv" transform="translate(176 72)"><rect width="96" height="56" rx="11"/><text x="48" y="26">serveur</text><text class="sub" x="48" y="42">mTLS · gRPC</text></g>
             <g class="con" transform="translate(300 82)"><rect width="92" height="36" rx="9"/><text x="46" y="22">console</text></g>
             <circle class="kill-dot" id="kill-dot" r="4" cx="0" cy="0"/>
           </svg>
-          <span class="tag-ill">schéma · illustration</span>
+          <span class="tag-ill">schéma · illustration accélérée</span>
         </div>
         <div class="fleet-ctl js-only">
           <button class="btn sm" id="fleet-kill" type="button">Kill sur poste-2</button>
           <button class="btn sm" id="fleet-cut" type="button" aria-pressed="false">Couper poste-3</button>
-          <p class="fleet-state" aria-live="polite">poste-3&nbsp;: <span data-s="live">live</span><span data-s="stale" hidden>ralenti</span><span data-s="silent" hidden>silencieux</span></p>
+          <p class="fleet-state" aria-live="polite">poste-3&nbsp;: <span data-s="live">live</span><span data-s="stale" hidden>ralenti</span><span data-s="silent" hidden>silencieux</span> <span class="muted">(réel&nbsp;: ralenti &gt; 25&nbsp;s, silencieux &gt; 60&nbsp;s)</span></p>
         </div>
         <code class="readout">› cargo run -p sentinelle-certgen -- ./certs</code>
       </li>
@@ -459,7 +461,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
             <textarea id="b-cmd" name="cmd" rows="3">powershell.exe -nop -w hidden -ep bypass -enc SQBFAFgA</textarea>
           </form>
         </div>
-          <p class="note">Les 6 règles non-processus (SNT-0100, 0101, 0200, 0300, 0310, 0320) ne sont pas évaluables ici&nbsp;: capteur non live.</p>
+          <p class="note">Les 6 règles non-processus (<span class="nw">SNT-0100</span>, 0101, 0200, 0300, 0310, 0320) ne sont pas évaluables ici&nbsp;: capteur non live.</p>
           <div class="jsonl js-only">
             <button class="btn sm" id="b-jsonl" type="button">Copier en JSONL</button>
             <span class="jsonl-s" id="b-jsonl-s" aria-live="polite"></span>
@@ -469,20 +471,20 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
         <div class="bench-out" id="bench-out" data-max="critical">
           <p class="no-js-only side-h">Résultat statique du préréglage «&nbsp;Macro Word → PowerShell&nbsp;»</p>
           <div class="bench-head">
-            <p class="bench-sum" id="b-sum" aria-live="polite">3 règles déclenchées&nbsp;: 1 critique, 1 haute, 1 moyenne</p>
+            <p class="bench-sum" id="b-sum" aria-live="polite">3 règles déclenchées&nbsp;: 1&nbsp;critique, 1&nbsp;haute, 1&nbsp;moyenne</p>
             <p class="bench-total"><span class="side-h">Total</span><span class="num" id="b-total">210</span></p>
           </div>
           <div class="matrix js-only" id="matrix" aria-hidden="true"></div>
           <ul class="hits" id="b-hits">
-            <li class="alert-card sev-critical"><div class="ac-row"><span class="pill sev-critical">critique</span><span class="rid">SNT-0001</span><span class="ttps"><a class="ttp" href="https://attack.mitre.org/techniques/T1203/">T1203</a><a class="ttp" href="https://attack.mitre.org/techniques/T1059/">T1059</a></span><span class="sc">score 100</span></div><p class="ac-title">Application Office lance un interpréteur de script</p><div class="why"><p class="side-h">Pourquoi</p><ul><li><code>lineage ancestor "winword.exe"</code><span class="why-v">C:\Program Files\Microsoft Office\<mark>winword.exe</mark>, C:\Windows\explorer.exe</span></li></ul></div></li>
-            <li class="alert-card sev-high"><div class="ac-row"><span class="pill sev-high">haute</span><span class="rid">SNT-0010</span><span class="ttps"><a class="ttp" href="https://attack.mitre.org/techniques/T1059/001/">T1059.001</a><a class="ttp" href="https://attack.mitre.org/techniques/T1027/">T1027</a></span><span class="sc">score 70</span></div><p class="ac-title">PowerShell avec commande encodée</p><div class="why"><p class="side-h">Pourquoi</p><ul><li><code>ImageName equals "powershell.exe"</code><span class="why-v">C:\Windows\System32\WindowsPowerShell\v1.0\<mark>powershell.exe</mark></span></li><li><code>CommandLine contains "-enc "</code><span class="why-v">powershell.exe -nop -w hidden -ep bypass <mark>-enc </mark>SQBFAFgA</span></li></ul></div></li>
-            <li class="alert-card sev-medium"><div class="ac-row"><span class="pill sev-medium">moyenne</span><span class="rid">SNT-0012</span><span class="ttps"><a class="ttp" href="https://attack.mitre.org/techniques/T1059/001/">T1059.001</a><a class="ttp" href="https://attack.mitre.org/techniques/T1562/001/">T1562.001</a></span><span class="sc">score 40</span></div><p class="ac-title">PowerShell furtif (hidden / bypass)</p><div class="why"><p class="side-h">Pourquoi</p><ul><li><code>ImageName equals "powershell.exe"</code><span class="why-v">C:\Windows\System32\WindowsPowerShell\v1.0\<mark>powershell.exe</mark></span></li><li><code>CommandLine contains "-w hidden"</code><span class="why-v">powershell.exe -nop <mark>-w hidden</mark> -ep bypass -enc SQBFAFgA</span></li></ul></div></li>
+            <li class="alert-card sev-critical"><div class="ac-row"><span class="pill sev-critical">critique</span><span class="rid"><span class="nw">SNT-0001</span></span><span class="ttps"><a class="ttp" href="https://attack.mitre.org/techniques/T1203/">T1203</a><a class="ttp" href="https://attack.mitre.org/techniques/T1059/">T1059</a></span><span class="sc">score 100</span></div><p class="ac-title">Application Office lance un interpréteur de script</p><div class="why"><p class="side-h">Pourquoi</p><ul><li><code>lineage ancestor "winword.exe"</code><span class="why-v">C:\Program Files\Microsoft Office\<mark>winword.exe</mark>, C:\Windows\explorer.exe</span></li></ul></div></li>
+            <li class="alert-card sev-high"><div class="ac-row"><span class="pill sev-high">haute</span><span class="rid"><span class="nw">SNT-0010</span></span><span class="ttps"><a class="ttp" href="https://attack.mitre.org/techniques/T1059/001/">T1059.001</a><a class="ttp" href="https://attack.mitre.org/techniques/T1027/">T1027</a></span><span class="sc">score 70</span></div><p class="ac-title">PowerShell avec commande encodée</p><div class="why"><p class="side-h">Pourquoi</p><ul><li><code>ImageName equals "powershell.exe"</code><span class="why-v">C:\Windows\System32\WindowsPowerShell\v1.0\<mark>powershell.exe</mark></span></li><li><code>CommandLine contains "-enc "</code><span class="why-v">powershell.exe -nop -w hidden -ep bypass <mark>-enc </mark>SQBFAFgA</span></li></ul></div></li>
+            <li class="alert-card sev-medium"><div class="ac-row"><span class="pill sev-medium">moyenne</span><span class="rid"><span class="nw">SNT-0012</span></span><span class="ttps"><a class="ttp" href="https://attack.mitre.org/techniques/T1059/001/">T1059.001</a><a class="ttp" href="https://attack.mitre.org/techniques/T1562/001/">T1562.001</a></span><span class="sc">score 40</span></div><p class="ac-title">PowerShell furtif (hidden / bypass)</p><div class="why"><p class="side-h">Pourquoi</p><ul><li><code>ImageName equals "powershell.exe"</code><span class="why-v">C:\Windows\System32\WindowsPowerShell\v1.0\<mark>powershell.exe</mark></span></li><li><code>CommandLine contains "-w hidden"</code><span class="why-v">powershell.exe -nop <mark>-w hidden</mark> -ep bypass -enc SQBFAFgA</span></li></ul></div></li>
           </ul>
           <div class="b-none" id="b-none" hidden>
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 20 5v6c0 5-3.4 8.6-8 11-4.6-2.4-8-6-8-11V5l8-3Z" stroke="#2ce6a6" stroke-width="1.5" stroke-linejoin="round"/><path class="chk" pathLength="1" d="M8.5 12.2 11 14.7l5-5.4" stroke="#2ce6a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span id="b-none-t">Aucune règle déclenchée</span>
           </div>
-          <p class="lesson" data-lesson="svchost" hidden>La leçon&nbsp;: aucune règle fondée sur le nom de fichier ne voit ce svchost.exe. C'est SNT-B004 qui l'attrape, via le nom d'origine (OriginalFilename) du PE, non simulé ici.</p>
+          <p class="lesson" data-lesson="svchost" hidden>La leçon&nbsp;: aucune règle fondée sur le nom de fichier ne voit ce svchost.exe. C'est <span class="nw">SNT-B004</span> qui l'attrape, via le nom d'origine (OriginalFilename) du PE, non simulé ici.</p>
         </div>
       </div>
     </div>
@@ -516,7 +518,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
 <div class="eq-col" style="--col:12"><span class="eq-v">1</span><div class="eq-bar"><i style="--i:0"></i></div><span class="eq-l">Exfiltration</span></div>
 <div class="eq-col" style="--col:13"><span class="eq-v">3</span><div class="eq-bar"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i></div><span class="eq-l">Impact</span></div>
 <!-- /gen:eq --></div>
-    <p class="legend">Règles par tactique&nbsp;; une règle peut couvrir plusieurs tactiques. Initial Access n'est pas couvert.</p>
+    <p class="legend">Règles par tactique&nbsp;; une règle peut couvrir plusieurs tactiques (64 associations pour 51 règles), mais chaque technique n'est comptée que dans sa tactique principale (<code>tactic_of</code> du code). Initial Access n'est pas couvert.</p>
     <!-- gen:eqtable --><div class="sr-only-lg"><table><caption>Nombre de règles Sentinelle par tactique MITRE ATT&CK Enterprise</caption><thead><tr><th scope="col">Tactique</th><th scope="col">Règles</th></tr></thead><tbody><tr><th scope="row">Reconnaissance</th><td>0 (non couvert)</td></tr><tr><th scope="row">Resource Development</th><td>0 (non couvert)</td></tr><tr><th scope="row">Initial Access</th><td>0 (non couvert)</td></tr><tr><th scope="row">Execution</th><td>14</td></tr><tr><th scope="row">Persistence</th><td>9</td></tr><tr><th scope="row">Privilege Escalation</th><td>2</td></tr><tr><th scope="row">Defense Evasion</th><td>17</td></tr><tr><th scope="row">Credential Access</th><td>5</td></tr><tr><th scope="row">Discovery</th><td>3</td></tr><tr><th scope="row">Lateral Movement</th><td>2</td></tr><tr><th scope="row">Collection</th><td>0 (non couvert)</td></tr><tr><th scope="row">Command and Control</th><td>8</td></tr><tr><th scope="row">Exfiltration</th><td>1</td></tr><tr><th scope="row">Impact</th><td>3</td></tr></tbody></table></div><!-- /gen:eqtable -->
     <div class="att-low">
       <div class="sevbar-wrap">
@@ -528,7 +530,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
     </div>
     <details class="catalog-d">
       <summary>Voir les 51 règles</summary>
-      <div class="table-scroll"><!-- gen:catalog -->
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Catalogue des 51 règles"><!-- gen:catalog -->
 <table class="catalog"><caption>Catalogue des 51 règles de détection natives de Sentinelle EDR</caption><thead><tr><th scope="col">ID</th><th scope="col">Titre</th><th scope="col">Sévérité</th><th scope="col">Techniques ATT&amp;CK</th><th scope="col">Tactiques</th><th scope="col">Statut</th></tr></thead><tbody>
 <tr><th scope="row"><code>SNT-0001</code></th><td>Application Office lance un interpréteur de script</td><td><span class="pill sev-critical">critique</span></td><td><a class="ttp" href="https://attack.mitre.org/techniques/T1203/">T1203</a> <a class="ttp" href="https://attack.mitre.org/techniques/T1059/">T1059</a></td><td>Execution</td><td><span class="st-live">live</span></td></tr>
 <tr><th scope="row"><code>SNT-0002</code></th><td>Navigateur web lance un interpréteur de script</td><td><span class="pill sev-high">haute</span></td><td><a class="ttp" href="https://attack.mitre.org/techniques/T1059/">T1059</a></td><td>Execution</td><td><span class="st-live">live</span></td></tr>
@@ -593,7 +595,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
     <header class="sec-head rv">
       <p class="label">Angles morts</p>
       <h2 id="reality-h">Couverture réelle&nbsp;: ce que Sentinelle ne voit pas encore</h2>
-      <div class="sec-aside"><p class="sub">Un angle mort affiché est un angle mort que l'on peut traiter. La console l'expose elle-même&nbsp;: <code>GET /api/coverage/reality</code>.</p></div>
+      <div class="sec-aside"><p class="sub">Un angle mort affiché est un angle mort que l'on peut traiter. Son API l'expose elle-même&nbsp;: <code>GET /api/coverage/reality</code>.</p></div>
     </header>
     <div class="reality-grid">
       <div class="truth-col">
@@ -613,7 +615,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
           <li data-rule="SNT-0310"><code>SNT-0310</code> thread distant</li>
           <li data-rule="SNT-0320"><code>SNT-0320</code> tube nommé</li>
         </ul>
-        <p>S'y ajoutent les détecteurs SNT-B002 (écritures de fichiers) et SNT-B003 (parent réel), sans source live&nbsp;; l'endpoint ne recense que les règles.</p>
+        <p>S'y ajoutent les détecteurs <span class="nw">SNT-B002</span> (écritures de fichiers) et <span class="nw">SNT-B003</span> (parent réel), sans source live&nbsp;; l'endpoint ne recense que les règles.</p>
         <div class="cmd"><pre><code>curl http://localhost:8787/api/coverage/reality</code></pre><button class="copy js-only" type="button" aria-label="Copier la commande de couverture réelle"><span class="copy-l">Copier</span></button></div>
       </div>
     </div>
@@ -621,9 +623,9 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
       <div class="rv">
         <h3>Validé sur vrai matériel</h3>
         <ul class="ok-list">
-          <li>Windows 11 Pro&nbsp;: ETW noyau live, détections SNT-0012, SNT-B001 et SNT-B004 sur de vrais processus</li>
+          <li>Windows 11 Pro&nbsp;: ETW noyau live, détections <span class="nw">SNT-0012</span>, <span class="nw">SNT-B001</span> et <span class="nw">SNT-B004</span> sur de vrais processus</li>
           <li>Kill Win32 réel, parc mTLS live, SQLite qui survit au redémarrage, import Sigma, YARA</li>
-          <li>macOS&nbsp;: vrai capteur, détection réelle SNT-1002&nbsp;; un faux positif trouvé puis corrigé</li>
+          <li>macOS&nbsp;: vrai capteur, détection réelle <span class="nw">SNT-1002</span>&nbsp;; un faux positif trouvé puis corrigé</li>
           <li>CI Ubuntu + Windows à chaque commit (fmt + clippy -D warnings), 63 tests</li>
           <li>Corpus bénin Windows et Linux&nbsp;: 0 faux positif sur ce corpus</li>
         </ul>
@@ -637,7 +639,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
           <li>Hors Windows, la scrutation peut rater les processus très brefs</li>
           <li>Alpha, un seul mainteneur</li>
         </ul>
-        <p class="roadmap">Feuille de route&nbsp;: brancher les sources capteur des 6 règles et de SNT-B002 / SNT-B003. <a href="https://github.com/Pazificateur69/sentinelle-edr">Contribuer sur GitHub ↗</a></p>
+        <p class="roadmap">Feuille de route&nbsp;: brancher les sources capteur des 6 règles et de <span class="nw">SNT-B002</span> / <span class="nw">SNT-B003</span>. <a href="https://github.com/Pazificateur69/sentinelle-edr">Contribuer sur GitHub ↗</a></p>
       </div>
     </div>
   </div>
@@ -650,7 +652,7 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
     <header class="sec-head center rv">
       <p class="label">Démarrer</p>
       <h2 id="start-h" class="h2-xl">Installer l'EDR auto-hébergé en trois commandes</h2>
-      <p class="sub">Prérequis&nbsp;: la chaîne d'outils Rust (cargo). Puis la console sur http://localhost:8787.</p>
+      <p class="sub">Prérequis&nbsp;: la chaîne d'outils Rust (cargo). Puis la console sur http://localhost:8787 (en parc&nbsp;: celle du serveur, http://localhost:8080).</p>
     </header>
     <div class="term rv" data-tabs>
       <div class="term-bar"><span class="dots" aria-hidden="true"></span><span class="term-t" aria-hidden="true">sentinelle — zsh</span>
@@ -661,17 +663,17 @@ sev:{critical:"critique",high:"haute",medium:"moyenne",low:"basse",info:"info"},
         </div></div>
       <div role="tabpanel" id="pan-solo" aria-labelledby="tab-solo" class="term-pan">
         <h3 class="term-h">Mono-poste</h3>
-        <div class="cmd"><pre><code>git clone https://github.com/Pazificateur69/sentinelle-edr
+        <div class="cmd"><pre tabindex="0"><code>git clone https://github.com/Pazificateur69/sentinelle-edr
 cd sentinelle-edr
 cargo run --release -p sentinelle-agentd<span class="caret" aria-hidden="true"></span></code></pre><button class="copy js-only" type="button" aria-label="Copier les commandes&nbsp;: mono-poste"><span class="copy-l">Copier</span></button></div>
       </div>
       <div role="tabpanel" id="pan-replay" aria-labelledby="tab-replay" class="term-pan">
         <h3 class="term-h">Rejouer la démo</h3>
-        <div class="cmd"><pre><code>SENTINELLE_REPLAY_FILE=./captures/demo.jsonl cargo run --release -p sentinelle-agentd<span class="caret" aria-hidden="true"></span></code></pre><button class="copy js-only" type="button" aria-label="Copier la commande&nbsp;: rejouer la démo"><span class="copy-l">Copier</span></button></div>
+        <div class="cmd"><pre tabindex="0"><code>SENTINELLE_REPLAY_FILE=./captures/demo.jsonl cargo run --release -p sentinelle-agentd<span class="caret" aria-hidden="true"></span></code></pre><button class="copy js-only" type="button" aria-label="Copier la commande&nbsp;: rejouer la démo"><span class="copy-l">Copier</span></button></div>
       </div>
       <div role="tabpanel" id="pan-fleet" aria-labelledby="tab-fleet" class="term-pan">
         <h3 class="term-h">Parc mTLS</h3>
-        <div class="cmd"><pre><code>cargo run -p sentinelle-certgen -- ./certs
+        <div class="cmd"><pre tabindex="0"><code>cargo run -p sentinelle-certgen -- ./certs
 cargo run --release -p sentinelle-server
 SENTINELLE_HOST=poste-1 cargo run --release -p sentinelle-agent<span class="caret" aria-hidden="true"></span></code></pre><button class="copy js-only" type="button" aria-label="Copier les commandes&nbsp;: parc mTLS"><span class="copy-l">Copier</span></button></div>
         <p class="note">Définissez <code>SENTINELLE_TOKEN</code> avant d'exposer le serveur&nbsp;: sans jeton, sa route de réponse <code>kill</code> est ouverte. L'agent mono-poste, lui, écoute sur 127.0.0.1 et laisse <code>kill</code> et <code>simulate</code> ouvertes tant qu'aucun jeton n'est défini.</p>
@@ -728,7 +730,7 @@ SENTINELLE_HOST=poste-1 cargo run --release -p sentinelle-agent<span class="care
       </details>
       <details class="faq-item">
         <summary>Que signifie «&nbsp;simulation-seulement&nbsp;»&nbsp;?</summary>
-        <div class="faq-a"><p>6 règles (réseau, écriture fichier, chargement d'image, accès handle LSASS, thread distant, tube nommé) existent mais n'ont pas encore de capteur live. Elles se déclenchent en rejeu. L'endpoint /api/coverage/reality l'indique. Les détecteurs comportementaux SNT-B002 (écritures de fichiers) et SNT-B003 (parent réel) n'ont pas non plus de source live&nbsp;; cet endpoint ne les mentionne pas.</p></div>
+        <div class="faq-a"><p>6 règles (réseau, écriture fichier, chargement d'image, accès handle LSASS, thread distant, tube nommé) existent mais n'ont pas encore de capteur live. Elles se déclenchent en rejeu. L'endpoint /api/coverage/reality l'indique. Les détecteurs comportementaux <span class="nw">SNT-B002</span> (écritures de fichiers) et <span class="nw">SNT-B003</span> (parent réel) n'ont pas non plus de source live&nbsp;; cet endpoint ne les mentionne pas.</p></div>
       </details>
       <details class="faq-item">
         <summary>Pourquoi Windows Defender met-il Sentinelle en quarantaine&nbsp;?</summary>

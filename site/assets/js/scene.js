@@ -28,7 +28,7 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
   const ctx = cv.getContext('2d');
   if (!ctx) throw new Error('canvas 2d');
   const css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
-  const C = { txt: v('--txt'), ink: v('--ink-2'), mut: v('--muted'), acc: v('--accent'), info: v('--info') };
+  const C = { txt: v('--txt'), ink: v('--ink-2'), mut: v('--muted'), acc: v('--accent'), info: v('--info'), bg: v('--surface-1') };
   const sevC = s => v(SEVC[s]);
   const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${a})`; };
   const al = timeline(data), rows = data.rows, R = Object.fromEntries(rows.map((r, i) => [r.id, i]));
@@ -56,7 +56,7 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
   })());
 
   let cw = 0, ch = 0, dpr = 1, port = false, X, Y, NX, dots = null, dotPath = null, bg = null, tgt = [], slow = 0, noDots = false;
-  let T = mode === 'loop' ? (RM || paused() ? REST : 0) : targetT(0), target = T, liveK = 0, liveTo = 0;
+  let T = mode === 'loop' ? (RM || paused() ? REST : 2.4) : targetT(0), target = T, liveK = 0, liveTo = 0;
   let raf = 0, last = 0, visible = false, local = false, shown = null, key = '';
 
   function layout() {
@@ -96,7 +96,8 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
   // cibles des fils de corrélation : chaque li de la carte Incident, ramenée au bord du canvas
   function targets() {
     const cr = cv.getBoundingClientRect();
-    tgt = lis.map(li => { const r = li.getBoundingClientRect(); return [cl(r.left - cr.left, 8, cw - 2), cl(r.top + r.height / 2 - cr.top, 8, ch - 2)]; });
+    // li sans boîte (liste masquée) ou sous le canvas : pas de fil (sinon écheveau ou coin haut-gauche)
+    tgt = lis.map(li => { const r = li.getBoundingClientRect(), cy = r.top + r.height / 2 - cr.top; return r.width && cy <= ch ? [cl(r.left - cr.left, 8, cw - 2), cl(cy, 8, ch - 2)] : null; });
   }
 
   const rowPos = i => [NX(i), Y(i)];
@@ -115,6 +116,8 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
     ctx.stroke();
   }
   const font = (w, s) => { ctx.font = `${w} ${s}px ${MONO}`; };
+  // étiquette avec halo couleur du fond (jamais barrée par un trait) ; pointillé coupé pour le halo
+  const lab = (s, x, y) => { ctx.save(); ctx.setLineDash([]); ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = C.bg; ctx.strokeText(s, x, y); ctx.restore(); ctx.fillText(s, x, y); };
   const scramble = (a, b, q, seed) => {
     const n = Math.round(a.length + (b.length - a.length) * q), lock = Math.floor(q * b.length);
     let s = ''; for (let i = 0; i < n; i++) s += i < lock ? b[i] : GLYPHS[(i * 7 + seed * 13) % GLYPHS.length];
@@ -142,6 +145,30 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
     }
     ctx.globalAlpha = fadeA;
     const p = cl(T - .6, 0, 6), head = port ? cw : X(p) + (T > 6.6 ? 44 * eo(cl((T - 6.6) / .4)) : 0);
+    // tête de lecture et fils de corrélation : sous les étiquettes (qui portent un halo)
+    // tête de lecture
+    if (!port && T > .6) {
+      const pa = fadeA * (T < CORR ? 1 : cl(1 - (T - CORR) / .6)), x = X(p);
+      if (pa > 0) {
+        ctx.save(); ctx.globalAlpha = pa;
+        let g = ctx.createLinearGradient(x - 20, 0, x + 20, 0); g.addColorStop(0, rgba(C.acc, 0)); g.addColorStop(.5, rgba(C.acc, .07)); g.addColorStop(1, rgba(C.acc, 0));
+        ctx.fillStyle = g; ctx.fillRect(x - 20, 30, 40, ch - 40);
+        g = ctx.createLinearGradient(0, 30, 0, ch - 10); g.addColorStop(0, rgba(C.acc, .5)); g.addColorStop(1, rgba(C.acc, 0));
+        ctx.fillStyle = g; ctx.fillRect(x - .75, 30, 1.5, ch - 40);
+        ctx.fillStyle = C.acc; ctx.beginPath(); ctx.arc(x, 28, 2.5, 0, 7); ctx.fill(); ctx.restore();
+      }
+    }
+    // fils de corrélation vers la carte Incident
+    if (!port && T >= CORR && T < CORR + 1.2) targets();
+    if (!port && T >= CORR) al.forEach((a, j) => {
+      const q = eo(cl((T - CORR - .05 * j) / .5)); if (q <= 0 || !tgt[j]) return;
+      const [x1, y1] = tickPos(a), [x2, y2] = tgt[j], len = Math.hypot(x2 - x1, y2 - y1) * 1.25;
+      ctx.save(); ctx.globalAlpha = fadeA * .75 * (a.sim ? sim * .7 : 1); ctx.strokeStyle = sevC(a.sev); ctx.lineWidth = 1.2;
+      ctx.setLineDash([len * q, len]);
+      ctx.beginPath(); ctx.moveTo(x1, y1);
+      ctx.bezierCurveTo(x1 + (x2 - x1) * .5, y1, x2 - (x2 - x1) * .35, y2, x2, y2);
+      ctx.stroke(); ctx.restore();
+    });
     // lignes de vie
     if (!port) rows.forEach((r, i) => {
       const x0 = NX(i), y = Y(i); if (T < at(r.t) || head <= x0) return;
@@ -164,19 +191,20 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
       ctx.save();
       if (r.real) {
         const lie = cl((T - t0 - .3) / .2);
-        ctx.strokeStyle = rgba(C.ink, .7 - .35 * lie); if (lie > 0) ctx.setLineDash([2, 4]);
+        ctx.strokeStyle = lie > 0 ? rgba(sevC('critical'), .6) : rgba(C.ink, .7); if (lie > 0) ctx.setLineDash([2, 4]);
         elbow(xv, y1, y, xn - 6, eo(cl((T - t0) / .25)));
         if (lie > 0) {
-          const my = port ? (Y(1) + Y(2)) / 2 : (Y(0) + Y(1)) / 2;
-          ctx.globalAlpha = fadeA * lie; ctx.fillStyle = C.mut; font(500, 10); ctx.textBaseline = 'middle';
-          ctx.textAlign = port ? 'left' : 'right'; ctx.fillText('✕ ' + (I.declared || ''), port ? xv + 6 : xv - 6, my);
+          // « ✕ parent déclaré » en rouge, empilé au-dessus de « parent réel », juste au-dessus d'evil.exe
+          const my = port ? (Y(1) + Y(2)) / 2 : (Y(R[r.real] + 1) + y) / 2 - 12;
+          ctx.globalAlpha = fadeA * lie; ctx.fillStyle = sevC('critical'); font(500, 10); ctx.textBaseline = 'middle';
+          ctx.textAlign = port ? 'left' : 'right'; lab('✕ ' + (I.declared || ''), port ? xv + 6 : xn - 36, my);
         }
         const rp = cl((T - t0 - .5) / .25);
         if (rp > 0) {
           const ri = R[r.real], xr = port ? NX(ri) : xn - 30;
           ctx.setLineDash([2, 4]); ctx.globalAlpha = fadeA * .85 * sim; ctx.strokeStyle = C.ink;
           elbow(xr, Y(ri) + (port ? 6 : 0), y, xn - 6, eo(rp));
-          if (!port && rp >= 1) { ctx.fillStyle = C.ink; ctx.textAlign = 'right'; ctx.fillText(I.real || '', xr - 6, (Y(ri + 1) + y) / 2); }
+          if (!port && rp >= 1) { ctx.fillStyle = C.ink; ctx.textAlign = 'right'; lab(I.real || '', xr - 6, (Y(ri + 1) + y) / 2); }
         }
       } else { ctx.strokeStyle = 'rgba(180,195,225,.55)'; elbow(xv, y1, y, xn - 6, eo(cl((T - t0) / .25))); }
       ctx.restore();
@@ -190,12 +218,12 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
         const [x1, y1] = rowPos(R[m.from]), [x2, y2] = rowPos(R[m.to]), bx = port ? x2 + 4 : X(m.t) + 52;
         const sx = port ? x1 : X(m.t);
         ctx.beginPath(); ctx.moveTo(sx, y1 + 4); ctx.quadraticCurveTo(bx, (y1 + y2) / 2, x2 + 5, y2 - 3); ctx.stroke();
-        if (!port) ctx.fillText(m.label, X(m.t) + 34, (y1 + y2) / 2 - 2);
+        if (!port) lab(m.label, X(m.t) + 34, (y1 + y2) / 2 - 2);
       } else {
         const y = Y(R[m.row]), x = port ? cw - 16 - 14 * 4 - 12 : X(m.t), s = 5 * pop(q);
         ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s, y); ctx.closePath();
         ctx.fillStyle = 'rgba(7,10,18,.9)'; ctx.fill(); ctx.stroke();
-        if (!port) { ctx.fillStyle = C.mut; ctx.fillText(m.label, x + 10, y + 16); }
+        if (!port) { ctx.fillStyle = C.mut; lab(m.label, x + 10, y + 16); }
       }
       ctx.restore();
     }
@@ -214,12 +242,12 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
       }
       ctx.globalAlpha *= q; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
       font(500, 12); const nw = ctx.measureText(name).width; font(400, 10); const sw = ctx.measureText(sub).width;
-      let lx = x + 10, ly = port ? y : y - 12;
+      const lx = x + 10, ly = port ? y : y - 12;
       const own = al.filter(a => a.row === r.id), lim = !port ? cw - 8 : r.id === 'ps' ? cw - 96 : own.length ? tickPos(own[0])[0] - 10 : cw - 8;
       const showSub = !port || lx + nw + 8 + sw <= lim;
-      if (!port && lx + nw + 8 + sw > cw - 8) lx = cw - 8 - nw - 8 - sw;
-      font(500, 12); ctx.fillStyle = r.alias && name === r.alias ? C.acc : C.txt; ctx.fillText(name, lx, ly);
-      if (showSub) { font(400, 10); ctx.fillStyle = C.mut; ctx.fillText(sub, lx + nw + 8, ly + 1); }
+      const below = !port && lx + nw + 8 + sw > cw - 8; // trop long : la sub passe sous la ligne de vie
+      font(500, 12); ctx.fillStyle = r.alias && name === r.alias ? C.acc : C.txt; lab(name, lx, ly);
+      if (showSub) { font(400, 10); ctx.fillStyle = C.mut; if (below) lab(sub, lx, y + 13); else lab(sub, lx + nw + 8, ly + 1); }
       ctx.restore();
     });
     // tics d'alerte + anneaux d'allumage
@@ -237,31 +265,6 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
       else { ctx.fillStyle = col; ctx.fill(); }
       ctx.restore();
     }
-    // tête de lecture
-    if (!port && T > .6) {
-      const pa = fadeA * (T < CORR ? 1 : cl(1 - (T - CORR) / .6)), x = X(p);
-      if (pa > 0) {
-        ctx.save(); ctx.globalAlpha = pa;
-        let g = ctx.createLinearGradient(x - 20, 0, x + 20, 0); g.addColorStop(0, rgba(C.acc, 0)); g.addColorStop(.5, rgba(C.acc, .07)); g.addColorStop(1, rgba(C.acc, 0));
-        ctx.fillStyle = g; ctx.fillRect(x - 20, 30, 40, ch - 40);
-        g = ctx.createLinearGradient(0, 30, 0, ch - 10); g.addColorStop(0, rgba(C.acc, .5)); g.addColorStop(1, rgba(C.acc, 0));
-        ctx.fillStyle = g; ctx.fillRect(x - .75, 30, 1.5, ch - 40);
-        ctx.fillStyle = C.acc; ctx.beginPath(); ctx.arc(x, 28, 2.5, 0, 7); ctx.fill(); ctx.restore();
-      }
-    }
-    // fils de corrélation vers la carte Incident
-    if (!port && T >= CORR && T < CORR + 1.2) targets();
-    if (!port && T >= CORR) al.forEach((a, j) => {
-      const q = eo(cl((T - CORR - .05 * j) / .5)); if (q <= 0 || !tgt[j]) return;
-      const [x1, y1] = tickPos(a), [x2, y2] = tgt[j], len = Math.hypot(x2 - x1, y2 - y1) * 1.25;
-      ctx.save(); ctx.globalAlpha = fadeA * .75 * (a.sim ? sim * .7 : 1); ctx.strokeStyle = sevC(a.sev); ctx.lineWidth = 1.2;
-      ctx.setLineDash([len * q, len]);
-      const vert = y2 >= ch - 3;
-      ctx.beginPath(); ctx.moveTo(x1, y1);
-      if (vert) ctx.bezierCurveTo(x1, y1 + (y2 - y1) * .6, x2, y2 - (y2 - y1) * .5, x2, y2);
-      else ctx.bezierCurveTo(x1 + (x2 - x1) * .5, y1, x2 - (x2 - x1) * .35, y2, x2, y2);
-      ctx.stroke(); ctx.restore();
-    });
   }
 
   // HTML piloté par T : on ne touche le DOM que sur changement
@@ -289,7 +292,10 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
   const frozen = () => RM || paused() || local;
   const wants = () => visible && document.visibilityState === 'visible' && !frozen() &&
     (mode === 'loop' || T !== target || liveK !== liveTo);
-  function render() { if (!cw && !layout()) return; draw(); sync(); fig.classList.add('is-live-canvas'); }
+  function render() {
+    if ((!cw || Math.min(devicePixelRatio || 1, 2) !== dpr) && !layout()) return;
+    draw(); sync(); if (!fig.classList.contains('is-live-canvas')) fig.classList.add('is-live-canvas');
+  }
   function frame(now) {
     raf = 0;
     const dt = Math.min((now - last) / 1000, .05); last = now;
@@ -318,6 +324,9 @@ export function mountStage(fig, data, { mode = 'loop', I = {} } = {}) {
   document.addEventListener('snt-motion', settle);
   if (document.fonts) document.fonts.load(`500 12px ${MONO}`).then(() => { if (layout()) render(); }, () => {});
   if (layout()) render();
+  // changement de DPR sans changement de taille (écran Retina, zoom) : le ResizeObserver ne le voit pas
+  const onDpr = () => { render(); matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', onDpr, { once: true }); };
+  matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', onDpr, { once: true });
 
   return {
     setTarget(s) {
